@@ -1,0 +1,40 @@
+Import('env')
+
+sources = Split('''
+	host.c
+	model_editing.c
+	widget.c
+	widget_graphics.c
+''')
+
+shaders = Split('''
+	shaders/widget.vert
+	shaders/widget.frag
+	shaders/model.vert
+	shaders/model.frag
+	shaders/text.vert
+	shaders/text.frag
+	shaders/cursor.vert
+	shaders/cursor.frag
+''')
+
+scripts = Split('''
+	scripts/widget.lua
+	scripts/model.lua
+	scripts/draggable.lua
+	scripts/toolbar.lua
+	scripts/slider_widget.lua
+	scripts/colour_widget.lua
+	scripts/model_widget.lua
+''')
+
+images = Split('''
+	images/font.png
+	images/cursor.png
+''')
+
+sources.append(env.Resources('shaders', shaders))
+sources.append(env.Resources('scripts', scripts))
+sources.append(env.Resources('images', images))
+
+env.Library('../lib/alice', sources)

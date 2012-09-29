@@ -1,0 +1,33 @@
+Import('env')
+
+sources = Split('''
+	commands.c
+	common.c
+	error.c
+	file.c
+	geometry.c
+	model_shape.c
+	vars.c
+	script.c
+	gl/framebuffer.c
+	gl/model.c
+	gl/shader.c
+	gl/texture.c
+''')
+
+scripts = Split('''
+	scripts/common.lua
+	scripts/class.lua
+	scripts/wrapper.lua
+''')
+
+if env['PLATFORM'] == 'darwin':
+	sources.append('gl/system_sdl.c')
+
+if env['PLATFORM'] == 'raspi':
+	sources.append('gl/system_raspi.c')
+
+
+sources.append(env.Resources('scripts', scripts))
+
+env.Library('../lib/albase', sources)

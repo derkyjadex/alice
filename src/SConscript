@@ -1,0 +1,12 @@
+Import('env')
+env = env.Clone()
+
+env.Replace(CCFLAGS=['-O2', '-std=c99'])
+env.Replace(CPPPATH=['.', '../../include'])
+
+if env['PLATFORM'] == 'raspi':
+	env.Append(CCFLAGS=['-D_GNU_SOURCE', '-DRASPI'])
+	env.Append(CPPPATH=['/opt/vc/include', '/opt/vc/include/interface/vcos/pthreads'])
+
+for lib in ['albase', 'alice']:
+	SConscript('%s/SConscript' % lib, 'env')

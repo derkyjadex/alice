@@ -1,0 +1,8 @@
+.DS_Store
+.sconsign.dblite
+build/
+*.pyc
+xcuserdata
+*.xcworkspace
+*.derived.c
+font/*
