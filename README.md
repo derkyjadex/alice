@@ -37,6 +37,12 @@ You will also need to install scons. Simply run `scons` from the root of the
 project in order to build the library.
 
 
+Usage
+-----
+
+For some sample code using Alice, see the Alice Demo project, <https://github.com/derkyjadex/alice-demo>.
+
+
 Licence
 -------
 
