@@ -13,11 +13,10 @@ end)
 
 Widget.prototype.free = make_free(commands.widget_free)
 
-Widget.prototype.get_next = make_wrapped_accessor(commands.widget_get_next, Widget)
-Widget.prototype.get_next = make_wrapped_accessor(commands.widget_get_next, Widget)
-Widget.prototype.get_prev = make_wrapped_accessor(commands.widget_get_prev, Widget)
-Widget.prototype.get_parent = make_wrapped_accessor(commands.widget_get_parent, Widget)
-Widget.prototype.get_first_child = make_wrapped_accessor(commands.widget_get_first_child, Widget)
+Widget.prototype.next = make_wrapped_accessor(commands.widget_get_next, nil, Widget)
+Widget.prototype.prev = make_wrapped_accessor(commands.widget_get_prev, nil, Widget)
+Widget.prototype.parent = make_wrapped_accessor(commands.widget_get_parent, nil, Widget)
+Widget.prototype.first_child = make_wrapped_accessor(commands.widget_get_first_child, nil, Widget)
 
 local vars = {
 	'location', 'bounds', 'fill_colour',
@@ -27,13 +26,10 @@ local vars = {
 	'text', 'text_colour', 'text_size', 'text_location'}
 
 for i,var in ipairs(vars) do
-	Widget.prototype['get_' .. var] = make_var_getter('widget_' .. var)
-	Widget.prototype['set_' .. var] = make_var_setter('widget_' .. var)
+	Widget.prototype[var] = make_var_accessor('widget_' .. var)
 end
 
-Widget.prototype.set_model = make_accessor(commands.widget_set_model)
-
-function Widget.prototype.set_model(self, model)
+function Widget.prototype.model(self, model)
 	if type(model) == 'table' then
 		model = model._ptr
 	end
@@ -46,10 +42,10 @@ end
 function Widget.prototype.add_sibling(self, sibling)
 	commands.widget_add_sibling(self._ptr, child._ptr)
 end
-Widget.prototype.remove = make_accessor(commands.widget_remove)
+Widget.prototype.remove = wrap_command(commands.widget_remove)
 
-Widget.prototype.bind_up = make_accessor(commands.widget_bind_up)
-Widget.prototype.bind_down = make_accessor(commands.widget_bind_down)
+Widget.prototype.bind_up = wrap_command(commands.widget_bind_up)
+Widget.prototype.bind_down = wrap_command(commands.widget_bind_down)
 function Widget.prototype.bind_motion(self, command)
 	commands.widget_bind_motion(self._ptr, function(_, x, y)
 		if self._grabbing then

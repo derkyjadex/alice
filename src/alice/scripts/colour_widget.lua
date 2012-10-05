@@ -37,9 +37,9 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 		green = g + m
 		blue = b + m
 
-		self:set_fill_colour(red, green, blue, 1)
-		hue_handle:set_fill_colour(1 - red, 1 - green, 1 - blue, 1)
-		val_handle:set_fill_colour(1 - red, 1 - green, 1 - blue, 1)
+		self:fill_colour(red, green, blue, 1)
+		hue_handle:fill_colour(1 - red, 1 - green, 1 - blue, 1)
+		val_handle:fill_colour(1 - red, 1 - green, 1 - blue, 1)
 
 		callback(red, green, blue)
 	end
@@ -61,7 +61,7 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 	end
 
 	function set_hue_handle_location()
-		hue_handle:set_location(get_hue_handle_location())
+		hue_handle:location(get_hue_handle_location())
 	end
 
 	function val_handle_drag(x, y)
@@ -76,26 +76,26 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 	end
 
 	function set_val_handle_location()
-		val_handle:set_location(get_val_handle_location())
+		val_handle:location(get_val_handle_location())
 	end
 
-	self:set_location(x + 100, y + 100)
-	self:set_bounds(-100, -100, 120, 100)
-	self:set_border_width(2)
+	self:location(x + 100, y + 100)
+	self:bounds(-100, -100, 120, 100)
+	self:border_width(2)
 
 	hue_handle = Widget()
-	hue_handle:set_bounds(-10, -10, 10, 10)
-	hue_handle:set_fill_colour(0.5, 0.5, 0.5, 0.8)
+	hue_handle:bounds(-10, -10, 10, 10)
+	hue_handle:fill_colour(0.5, 0.5, 0.5, 0.8)
 	make_draggable(hue_handle, nil, nil, hue_handle_drag)
 	self:add_child(hue_handle)
 
 	val_handle = Widget()
-	val_handle:set_bounds(-10, -10, 10, 10)
-	val_handle:set_fill_colour(0.5, 0.5, 0.5, 0.8)
+	val_handle:bounds(-10, -10, 10, 10)
+	val_handle:fill_colour(0.5, 0.5, 0.5, 0.8)
 	make_draggable(val_handle, nil, nil, val_handle_drag)
 	self:add_child(val_handle)
 
 	set_rgb()
-	hue_handle:set_location(get_hue_handle_location())
-	val_handle:set_location(get_val_handle_location())
+	hue_handle:location(get_hue_handle_location())
+	val_handle:location(get_val_handle_location())
 end)

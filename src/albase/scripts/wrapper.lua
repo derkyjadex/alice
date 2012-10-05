@@ -25,18 +25,36 @@ function make_free(command)
 	end
 end
 
-function make_accessor(command)
+function wrap_command(command)
 	return function(self, ...) return command(self._ptr, ...) end
 end
 
-function make_wrapped_accessor(command, class)
-	return function(self, ...) return wrap(command(self._ptr, ...), class) end
+function make_accessor(getter, setter)
+	return function(self, ...)
+		if select('#', ...) == 0 then
+			return getter(self._ptr)
+		else
+			return setter(self._ptr, ...)
+		end
+	end
 end
 
-function make_var_getter(var)
-	return function(self) return commands.get(var, self._ptr) end
+function make_wrapped_accessor(getter, setter, class)
+	return function(self,  ...)
+		if select('#') == 0 then
+			return wrap(getter(self._ptr), class)
+		else
+			return wrap(setter(self._ptr, ...), class)
+		end
+	end
 end
 
-function make_var_setter(var)
-	return function(self, ...) return commands.set(var, self._ptr, ...) end
+function make_var_accessor(var)
+	return function(self, ...)
+		if select('#', ...) == 0 then
+			return commands.get(var, self._ptr)
+		else
+			return commands.set(var, self._ptr, ...)
+		end
+	end
 end
