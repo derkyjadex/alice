@@ -171,7 +171,7 @@ end
 
 function ModelWidget.prototype.set_path_colour(self, r, g, b)
 	if self._current then
-		self._current.path:set_colour(r, g, b)
+		self._current.path:colour(r, g, b)
 		finish_changes(self)
 	end
 end
