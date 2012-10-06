@@ -7,16 +7,11 @@
 #ifndef SHADERS_H
 #define SHADERS_H
 
-extern const char shaders_widget_vert[];
-extern const char shaders_widget_frag[];
+#include "albase/gl/shader.h"
 
-extern const char shaders_model_vert[];
-extern const char shaders_model_frag[];
-
-extern const char shaders_text_vert[];
-extern const char shaders_text_frag[];
-
-extern const char shaders_cursor_vert[];
-extern const char shaders_cursor_frag[];
+AL_SHADER_DECLARE(widget)
+AL_SHADER_DECLARE(model)
+AL_SHADER_DECLARE(text)
+AL_SHADER_DECLARE(cursor)
 
 #endif

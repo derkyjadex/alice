@@ -10,8 +10,8 @@
 #include "albase/gl/shader.h"
 #include "albase/file.h"
 
-static AlError build_program(AlGlShader *shader, const char *vertexSource, const char *fragmentSource);
-static AlError compile_shader(GLenum type, const char *source, GLuint *shader);
+static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource);
+static AlError compile_shader(GLenum type, AlGLShaderSource source, GLuint *shader);
 
 AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFilename, const char *fragmentFilename)
 {
@@ -24,13 +24,14 @@ AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFile
 	TRY(al_read_file_to_string(vertexFilename, &vertexSource));
 	TRY(al_read_file_to_string(fragmentFilename, &fragmentSource));
 
-	TRY(al_gl_shader_init_with_sources(&shader, vertexSource, fragmentSource));
+	TRY(al_gl_shader_init_with_sources(&shader,
+		(AlGLShaderSource){vertexFilename, vertexSource},
+		(AlGLShaderSource){fragmentFilename, fragmentSource}));
 
 	*result = shader;
 
 	CATCH(
 		al_gl_shader_free(shader);
-		al_log_error("Error compiling shaders %s and %s", vertexFilename, fragmentFilename);
 	)
 	FINALLY(
 		free(vertexSource);
@@ -38,7 +39,7 @@ AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFile
 	)
 }
 
-AlError al_gl_shader_init_with_sources(AlGlShader **result, const char *vertexSource, const char *fragmentSource)
+AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource)
 {
 	BEGIN()
 
@@ -69,7 +70,7 @@ void al_gl_shader_free(AlGlShader *shader)
 	}
 }
 
-static AlError build_program(AlGlShader *shader, const char *vertexSource, const char *fragmentSource)
+static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource)
 {
 	BEGIN()
 
@@ -91,14 +92,15 @@ static AlError build_program(AlGlShader *shader, const char *vertexSource, const
 
 		glGetProgramInfoLog(shader->id, sizeof(log), &logLength, log);
 
-		al_log_error("Error linking program:\n%s\n", log);
+		al_log_error("Error linking program (%s + %s):\n%s\n",
+			vertexSource.name, fragmentSource.name, log);
 		THROW(AL_ERROR_GRAPHICS)
 	}
 
 	PASS()
 }
 
-static AlError compile_shader(GLenum type, const char *source, GLuint *result)
+static AlError compile_shader(GLenum type, AlGLShaderSource source, GLuint *result)
 {
 	BEGIN()
 
@@ -108,7 +110,7 @@ static AlError compile_shader(GLenum type, const char *source, GLuint *result)
 #else
 		"#version 100\n",
 #endif
-		source
+		source.source
 	};
 
 	GLuint shader = glCreateShader(type);
@@ -124,7 +126,7 @@ static AlError compile_shader(GLenum type, const char *source, GLuint *result)
 
 		glGetShaderInfoLog(shader, sizeof(log), &logLength, log);
 
-		al_log_error("Error compiling shader:\n%s\n", log);
+		al_log_error("Error compiling shader (%s):\n%s\n", source.name, log);
 		THROW(AL_ERROR_GRAPHICS)
 	}
 
