@@ -23,6 +23,7 @@ AlError al_init_lua(lua_State **result)
 			{LUA_MATHLIBNAME, luaopen_math},
 			{LUA_LOADLIBNAME, luaopen_package},
 			{LUA_TABLIBNAME, luaopen_table},
+			{LUA_DBLIBNAME, luaopen_debug},
 			{NULL, NULL}
 		};
 
