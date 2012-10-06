@@ -80,15 +80,15 @@ AlError al_host_init(AlHost **result)
 
 	TRY(widget_register_vars(host->vars));
 
-	const char *scripts[] = {
-		scripts_widget_lua,
-		scripts_model_lua,
-		scripts_draggable_lua,
-		scripts_toolbar_lua,
-		scripts_slider_widget_lua,
-		scripts_colour_widget_lua,
-		scripts_model_widget_lua,
-		NULL
+	AlScript scripts[] = {
+		AL_SCRIPT(widget),
+		AL_SCRIPT(model),
+		AL_SCRIPT(draggable),
+		AL_SCRIPT(toolbar),
+		AL_SCRIPT(slider_widget),
+		AL_SCRIPT(colour_widget),
+		AL_SCRIPT(model_widget),
+		AL_SCRIPT_END
 	};
 
 	TRY(al_load_base_scripts(host->lua));

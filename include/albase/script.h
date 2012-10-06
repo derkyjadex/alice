@@ -10,8 +10,23 @@
 #include "albase/common.h"
 #include "albase/lua.h"
 
+#define AL_SCRIPT_VAR(name) scripts_##name##_lua
+#define AL_SCRIPT_SIZE_VAR(name) scripts_##name##_lua_size
+#define AL_SCRIPT_DECLARE(name) \
+	extern const char AL_SCRIPT_VAR(name)[]; \
+	extern const size_t AL_SCRIPT_SIZE_VAR(name);
+
+#define AL_SCRIPT(name) {#name".lua", AL_SCRIPT_VAR(name), AL_SCRIPT_SIZE_VAR(name)}
+#define AL_SCRIPT_END {NULL, NULL, 0}
+
+typedef struct {
+	const char *name;
+	const char *source;
+	size_t length;
+} AlScript;
+
 AlError al_init_lua(lua_State **L);
 AlError al_load_base_scripts(lua_State *L);
-AlError al_load_scripts(lua_State *L, const char **scripts);
+AlError al_load_scripts(lua_State *L, const AlScript *scripts);
 
 #endif

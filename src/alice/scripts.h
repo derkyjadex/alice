@@ -7,13 +7,15 @@
 #ifndef SCRIPTS_H
 #define SCRIPTS_H
 
-extern const char scripts_widget_lua[];
-extern const char scripts_model_lua[];
+#include "albase/script.h"
 
-extern const char scripts_draggable_lua[];
-extern const char scripts_toolbar_lua[];
-extern const char scripts_slider_widget_lua[];
-extern const char scripts_colour_widget_lua[];
-extern const char scripts_model_widget_lua[];
+AL_SCRIPT_DECLARE(widget)
+AL_SCRIPT_DECLARE(model)
+
+AL_SCRIPT_DECLARE(draggable)
+AL_SCRIPT_DECLARE(toolbar)
+AL_SCRIPT_DECLARE(slider_widget)
+AL_SCRIPT_DECLARE(colour_widget)
+AL_SCRIPT_DECLARE(model_widget)
 
 #endif

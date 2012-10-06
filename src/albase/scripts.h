@@ -7,8 +7,10 @@
 #ifndef SCRIPTS_H
 #define SCRIPTS_H
 
-extern const char scripts_common_lua[];
-extern const char scripts_class_lua[];
-extern const char scripts_wrapper_lua[];
+#include "albase/script.h"
+
+AL_SCRIPT_DECLARE(common)
+AL_SCRIPT_DECLARE(class)
+AL_SCRIPT_DECLARE(wrapper)
 
 #endif

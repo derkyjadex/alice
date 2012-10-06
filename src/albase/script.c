@@ -40,11 +40,14 @@ AlError al_init_lua(lua_State **result)
 	FINALLY()
 }
 
-static AlError run_script(lua_State *L, const char *script)
+#define luaL_dobuffer(L, b, s, n) \
+	(luaL_loadbuffer(L, b, s, n) || lua_pcall(L, 0, LUA_MULTRET, 0))
+
+static AlError run_script(lua_State *L, const AlScript *script)
 {
 	BEGIN()
 
-	int result = luaL_dostring(L, script);
+	int result = luaL_dobuffer(L, script->source, script->length, script->name);
 	if (result) {
 		const char *message = lua_tostring(L, -1);
 		al_log_error("Error running script: %s", message);
@@ -59,11 +62,11 @@ AlError al_load_base_scripts(lua_State *L)
 {
 	BEGIN()
 
-	const char *scripts[] = {
-		scripts_common_lua,
-		scripts_class_lua,
-		scripts_wrapper_lua,
-		NULL
+	AlScript scripts[] = {
+		AL_SCRIPT(common),
+		AL_SCRIPT(class),
+		AL_SCRIPT(wrapper),
+		AL_SCRIPT_END
 	};
 
 	TRY(al_load_scripts(L, scripts));
@@ -71,11 +74,11 @@ AlError al_load_base_scripts(lua_State *L)
 	PASS()
 }
 
-AlError al_load_scripts(lua_State *L, const char **scripts)
+AlError al_load_scripts(lua_State *L, const AlScript *scripts)
 {
 	BEGIN()
 
-	FOR_EACH(const char, script, scripts) {
+	for (const AlScript *script = scripts; script->source; script++) {
 		TRY(run_script(L, script));
 	}
 
