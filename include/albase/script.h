@@ -25,8 +25,9 @@ typedef struct {
 	size_t length;
 } AlScript;
 
-AlError al_init_lua(lua_State **L);
-AlError al_load_base_scripts(lua_State *L);
-AlError al_load_scripts(lua_State *L, const AlScript *scripts);
+AlError al_script_init(lua_State **L);
+AlError al_script_run_base_scripts(lua_State *L);
+AlError al_script_run_scripts(lua_State *L, const AlScript *scripts);
+AlError al_script_run_file(lua_State *L, const char *filename);
 
 #endif

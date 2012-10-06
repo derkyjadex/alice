@@ -65,7 +65,7 @@ AlError al_host_init(AlHost **result)
 
 	host->screenSize = widget_graphics_screen_size();
 
-	TRY(al_init_lua(&host->lua));
+	TRY(al_script_init(&host->lua));
 	TRY(al_commands_init(&host->commands, host->lua));
 	TRY(al_vars_init(&host->vars, host->lua, host->commands));
 	TRY(widget_init(&host->widgets, host->lua, host->commands));
@@ -91,8 +91,8 @@ AlError al_host_init(AlHost **result)
 		AL_SCRIPT_END
 	};
 
-	TRY(al_load_base_scripts(host->lua));
-	TRY(al_load_scripts(host->lua, scripts));
+	TRY(al_script_run_base_scripts(host->lua));
+	TRY(al_script_run_scripts(host->lua, scripts));
 
 	*result = host;
 
@@ -115,19 +115,7 @@ void al_host_free(AlHost *host)
 
 AlError al_host_run_script(AlHost *host, const char *filename)
 {
-	BEGIN()
-
-	lua_State *L = host->lua;
-
-	int result = luaL_dofile(L, filename);
-	if (result) {
-		const char *message = lua_tostring(L, -1);
-		al_log_error("Error running script: %s", message);
-		lua_pop(L, 1);
-		THROW(AL_ERROR_SCRIPT)
-	}
-
-	PASS()
+	return al_script_run_file(host->lua, filename);
 }
 
 static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
