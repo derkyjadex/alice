@@ -69,9 +69,7 @@ static AlError run_script(lua_State *L, int loadResult)
 	BEGIN()
 
 	if (!loadResult) {
-		lua_pushlightuserdata(L, &tracebackKey);
-		lua_gettable(L, LUA_REGISTRYINDEX);
-
+		al_script_push_traceback(L);
 		lua_pushvalue(L, -2);
 
 		loadResult = lua_pcall(L, 0, 0, -2);
@@ -126,4 +124,10 @@ AlError al_script_run_file(lua_State *L, const char *filename)
 	TRY(run_script(L, result));
 
 	PASS()
+}
+
+void al_script_push_traceback(lua_State *L)
+{
+	lua_pushlightuserdata(L, &tracebackKey);
+	lua_gettable(L, LUA_REGISTRYINDEX);
 }

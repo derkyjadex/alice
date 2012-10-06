@@ -9,17 +9,16 @@
 
 #include "albase/commands.h"
 #include "albase/lua.h"
+#include "albase/script.h"
 
 struct AlCommands {
 	lua_State *lua;
 	AlLuaKey queue;
-	AlLuaKey traceback;
 	lua_Number first;
 	lua_Number last;
 };
 
 static int cmd_enqueue(lua_State *L);
-static int traceback(lua_State *L);
 
 AlError al_commands_init(AlCommands **result, lua_State *lua)
 {
@@ -38,14 +37,6 @@ AlError al_commands_init(AlCommands **result, lua_State *lua)
 	lua_pushlightuserdata(lua, &commands->queue);
 	lua_newtable(lua);
 	lua_settable(lua, LUA_REGISTRYINDEX);
-
-	lua_getfield(lua, LUA_GLOBALSINDEX, "debug");
-	lua_getfield(lua, -1, "traceback");
-	lua_pushcclosure(lua, traceback, 1);
-	lua_pushlightuserdata(lua, &commands->traceback);
-	lua_pushvalue(lua, -2);
-	lua_settable(lua, LUA_REGISTRYINDEX);
-	lua_pop(lua, 2);
 
 	TRY(al_commands_register(commands, "enqueue", &cmd_enqueue, commands));
 
@@ -96,24 +87,10 @@ AlError al_commands_enqueue(AlCommands *commands)
 	return AL_NO_ERROR;
 }
 
-static int traceback(lua_State *L)
-{
-	if (!lua_isstring(L, 1))
-		return 1;
-
-	lua_pushvalue(L, lua_upvalueindex(1));
-	lua_pushvalue(L, 1);
-	lua_pushinteger(L, 2);
-	lua_call(L, 2, 1);
-
-	return 1;
-}
-
 AlError al_commands_process_queue(AlCommands *commands)
 {
 	lua_State *L = commands->lua;
-	lua_pushlightuserdata(L, &commands->traceback);
-	lua_gettable(L, LUA_REGISTRYINDEX);
+	al_script_push_traceback(L);
 
 	lua_pushlightuserdata(L, &commands->queue);
 	lua_gettable(L, LUA_REGISTRYINDEX);
@@ -128,7 +105,7 @@ AlError al_commands_process_queue(AlCommands *commands)
 			lua_pushnumber(L, i);
 			lua_gettable(L, -1 - i);
 		}
-		int result = lua_pcall(L, n - 1, 0, n - 3);
+		int result = lua_pcall(L, n - 1, 0, -n - 3);
 		if (result != 0) {
 			const char *message = lua_tostring(L, -1);
 			al_log_error("Error executing command: \n%s", message);
