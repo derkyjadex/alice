@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "albase/commands.h"
 #include "albase/lua.h"
@@ -38,7 +39,7 @@ AlError al_commands_init(AlCommands **result, lua_State *lua)
 	lua_newtable(lua);
 	lua_settable(lua, LUA_REGISTRYINDEX);
 
-	TRY(al_commands_register(commands, "enqueue", &cmd_enqueue, commands));
+	TRY(al_commands_register(commands, "enqueue", &cmd_enqueue, commands, NULL));
 
 	*result = commands;
 
@@ -59,13 +60,23 @@ void al_commands_free(AlCommands *commands)
 	}
 }
 
-AlError al_commands_register(AlCommands *commands, const char *name, lua_CFunction function, void *data)
+AlError al_commands_register(AlCommands *commands, const char *name, lua_CFunction function, ...)
 {
 	lua_State *L = commands->lua;
 	lua_getglobal(L, "commands");
 	lua_pushstring(L, name);
-	lua_pushlightuserdata(L, data);
-	lua_pushcclosure(L, function, 1);
+
+	void *data;
+	int n = 0;
+	va_list ap;
+	va_start(ap, function);
+	while ((data = va_arg(ap, void *))) {
+		lua_pushlightuserdata(L, data);
+		n++;
+	}
+	va_end(ap);
+
+	lua_pushcclosure(L, function, n);
 	lua_settable(L, -3);
 	lua_pop(L, 1);
 

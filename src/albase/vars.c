@@ -47,10 +47,10 @@ AlError al_vars_init(AlVars **result, lua_State *lua, AlCommands *commands)
 	lua_newtable(lua);
 	lua_settable(lua, LUA_REGISTRYINDEX);
 
-	TRY(al_commands_register(commands, "get", cmd_get, vars));
-	TRY(al_commands_register(commands, "getter", cmd_getter, vars));
-	TRY(al_commands_register(commands, "set", cmd_set, vars));
-	TRY(al_commands_register(commands, "setter", cmd_setter, vars));
+	TRY(al_commands_register(commands, "get", cmd_get, vars, NULL));
+	TRY(al_commands_register(commands, "getter", cmd_getter, vars, NULL));
+	TRY(al_commands_register(commands, "set", cmd_set, vars, NULL));
+	TRY(al_commands_register(commands, "setter", cmd_setter, vars, NULL));
 
 	*result = vars;
 

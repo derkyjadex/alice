@@ -71,10 +71,10 @@ AlError al_host_init(AlHost **result)
 	TRY(widget_init(&host->widgets, host->lua, host->commands));
 	host->widgets->bounds = (Box){{0, 0}, host->screenSize};
 
-	TRY(al_commands_register(host->commands, "exit", cmd_exit, host));
-	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host));
-	TRY(al_commands_register(host->commands, "grab_mouse", cmd_grab_mouse, host));
-	TRY(al_commands_register(host->commands, "release_mouse", cmd_release_mouse, host));
+	TRY(al_commands_register(host->commands, "exit", cmd_exit, host, NULL));
+	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host, NULL));
+	TRY(al_commands_register(host->commands, "grab_mouse", cmd_grab_mouse, host, NULL));
+	TRY(al_commands_register(host->commands, "release_mouse", cmd_release_mouse, host, NULL));
 	TRY(widget_register_commands(host->commands));
 	TRY(model_editing_register_commands(host->commands));
 

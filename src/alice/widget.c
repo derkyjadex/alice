@@ -417,7 +417,7 @@ AlError widget_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
-	TRY(al_commands_register(commands, "widget_new", cmd_widget_new, commands));
+	TRY(al_commands_register(commands, "widget_new", cmd_widget_new, commands, NULL));
 	REG_CMD(free);
 
 	REG_CMD(get_next);
