@@ -263,8 +263,9 @@ static AlVarEntry *get_entry(lua_State *L)
 	lua_pushvalue(L, 1);
 	lua_gettable(L, -2);
 	AlVarEntry *entry = lua_touserdata(L, -1);
+	lua_pop(L, 2);
 
-	if (entry == NULL) {
+	if (!entry) {
 		luaL_error(L, "no such var: '%s'", name);
 	}
 
@@ -322,6 +323,12 @@ static int cmd_getter(lua_State *L)
 
 	if (entry->global) {
 		lua_pushlightuserdata(L, entry->data.ptr);
+		lua_pushcclosure(L, getGlobal, 1);
+
+	} else if (lua_gettop(L) >= 2) {
+		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
+		void *ptr = lua_touserdata(L, 2) + entry->data.offset;
+		lua_pushlightuserdata(L, ptr);
 		lua_pushcclosure(L, getGlobal, 1);
 
 	} else {
@@ -412,6 +419,12 @@ static int cmd_setter(lua_State *L)
 
 	if (entry->global) {
 		lua_pushlightuserdata(L, entry->data.ptr);
+		lua_pushcclosure(L, setGlobal, 1);
+
+	} else if (lua_gettop(L) >= 2) {
+		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
+		void *ptr = lua_touserdata(L, 2);
+		lua_pushlightuserdata(L, ptr + entry->data.offset);
 		lua_pushcclosure(L, setGlobal, 1);
 
 	} else {
