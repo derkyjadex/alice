@@ -50,11 +50,5 @@ function make_wrapped_accessor(getter, setter, class)
 end
 
 function make_var_accessor(var)
-	return function(self, ...)
-		if select('#', ...) == 0 then
-			return commands.get(var, self._ptr)
-		else
-			return commands.set(var, self._ptr, ...)
-		end
-	end
+	return make_accessor(commands.getter(var), commands.setter(var))
 end

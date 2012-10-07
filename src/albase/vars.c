@@ -17,7 +17,7 @@ typedef struct AlVarEntry {
 	AlVarType type;
 	bool global;
 	union {
-		void *value;
+		void *ptr;
 		size_t offset;
 	} data;
 } AlVarEntry;
@@ -27,8 +27,12 @@ struct AlVars {
 	AlLuaKey entries;
 };
 
+typedef char * String;
+
 static int cmd_get(lua_State *L);
+static int cmd_getter(lua_State *L);
 static int cmd_set(lua_State *L);
+static int cmd_setter(lua_State *L);
 
 AlError al_vars_init(AlVars **result, lua_State *lua, AlCommands *commands)
 {
@@ -44,7 +48,9 @@ AlError al_vars_init(AlVars **result, lua_State *lua, AlCommands *commands)
 	lua_settable(lua, LUA_REGISTRYINDEX);
 
 	TRY(al_commands_register(commands, "get", cmd_get, vars));
+	TRY(al_commands_register(commands, "getter", cmd_getter, vars));
 	TRY(al_commands_register(commands, "set", cmd_set, vars));
+	TRY(al_commands_register(commands, "setter", cmd_setter, vars));
 
 	*result = vars;
 
@@ -76,7 +82,7 @@ void al_vars_free(AlVars *vars)
 	}
 }
 
-static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *value, size_t offset)
+static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *ptr, size_t offset)
 {
 	BEGIN()
 
@@ -90,7 +96,7 @@ static AlError vars_register(AlVars *vars, const char *name, AlVarType type, boo
 	entry->type = type;
 	entry->global = global;
 	if (global) {
-		entry->data.value = value;
+		entry->data.ptr = ptr;
 	} else {
 		entry->data.offset = offset;
 	}
@@ -109,9 +115,9 @@ static AlError vars_register(AlVars *vars, const char *name, AlVarType type, boo
 	FINALLY()
 }
 
-AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *value)
+AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr)
 {
-	return vars_register(vars, name, type, true, value, 0);
+	return vars_register(vars, name, type, true, ptr, 0);
 }
 
 AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset)
@@ -119,97 +125,135 @@ AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type
 	return vars_register(vars, name, type, false, NULL, offset);
 }
 
-static int cmd_get(lua_State *L)
+static bool tobool(lua_State *L, int n)
 {
-	AlVars *vars = lua_touserdata(L, lua_upvalueindex(1));
-	const char *name = luaL_checkstring(L, 1);
-
-	lua_pushlightuserdata(L, &vars->entries);
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	lua_pushvalue(L, 1);
-	lua_gettable(L, -2);
-	AlVarEntry *entry = lua_touserdata(L, -1);
-
-	if (entry == NULL) {
-		return luaL_error(L, "get: no such var: '%s'", name);
-	}
-
-	void *value;
-
-	if (entry->global) {
-		value = entry->data.value;
-
-	} else {
-		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
-		value = lua_touserdata(L, 2) + entry->data.offset;
-	}
-
-	switch (entry->type) {
-		case VAR_BOOL:
-			lua_pushboolean(L, *(bool *)value);
-			return 1;
-
-		case VAR_INT:
-			lua_pushinteger(L, *(int *)value);
-			return 1;
-
-		case VAR_DOUBLE:
-			lua_pushnumber(L, *(double *)value);
-			return 1;
-
-		case VAR_VEC2:
-			lua_pushnumber(L, (*(Vec2 *)value).x);
-			lua_pushnumber(L, (*(Vec2 *)value).y);
-			return 2;
-
-		case VAR_VEC3:
-			lua_pushnumber(L, (*(Vec3 *)value).x);
-			lua_pushnumber(L, (*(Vec3 *)value).y);
-			lua_pushnumber(L, (*(Vec3 *)value).z);
-			return 3;
-
-		case VAR_VEC4:
-			lua_pushnumber(L, (*(Vec4 *)value).x);
-			lua_pushnumber(L, (*(Vec4 *)value).y);
-			lua_pushnumber(L, (*(Vec4 *)value).z);
-			lua_pushnumber(L, (*(Vec4 *)value).w);
-			return 4;
-
-		case VAR_BOX:
-			lua_pushnumber(L, (*(Box *)value).min.x);
-			lua_pushnumber(L, (*(Box *)value).min.y);
-			lua_pushnumber(L, (*(Box *)value).max.x);
-			lua_pushnumber(L, (*(Box *)value).max.y);
-			return 4;
-
-		case VAR_STRING:
-			lua_pushstring(L, *(char **)value);
-			return 1;
-
-		default:
-			return 0;
-	}
+	luaL_checkany(L, n);
+	return lua_toboolean(L, n);
 }
 
-static AlError cmd_set_string(lua_State *L, int valueArg, char **value)
+static Vec2 toVec2(lua_State *L, int n)
 {
-	BEGIN()
+	double x = luaL_checknumber(L, n + 0);
+	double y = luaL_checknumber(L, n + 1);
 
+	return (Vec2){x, y};
+}
+
+static void pushVec2(lua_State *L, Vec2 v)
+{
+	lua_pushnumber(L, v.x);
+	lua_pushnumber(L, v.y);
+}
+
+static Vec3 toVec3(lua_State *L, int n)
+{
+	double x = luaL_checknumber(L, n + 0);
+	double y = luaL_checknumber(L, n + 1);
+	double z = luaL_checknumber(L, n + 2);
+
+	return (Vec3){x, y, z};
+}
+
+static void pushVec3(lua_State *L, Vec3 v)
+{
+	lua_pushnumber(L, v.x);
+	lua_pushnumber(L, v.y);
+	lua_pushnumber(L, v.z);
+}
+
+static Vec4 toVec4(lua_State *L, int n)
+{
+	double x = luaL_checknumber(L, n + 0);
+	double y = luaL_checknumber(L, n + 1);
+	double z = luaL_checknumber(L, n + 2);
+	double w = luaL_checknumber(L, n + 3);
+
+	return (Vec4){x, y, z, w};
+}
+
+static void pushVec4(lua_State *L, Vec4 v)
+{
+	lua_pushnumber(L, v.x);
+	lua_pushnumber(L, v.y);
+	lua_pushnumber(L, v.z);
+	lua_pushnumber(L, v.w);
+}
+
+static Box toBox(lua_State *L, int n)
+{
+	Vec2 min = toVec2(L, n + 0);
+	Vec2 max = toVec2(L, n + 2);
+
+	return (Box){min, max};
+}
+
+static void pushBox(lua_State *L, Box b)
+{
+	pushVec2(L, b.min);
+	pushVec2(L, b.max);
+}
+
+static String tonewString(lua_State *L, int valueArg, char *oldValue)
+{
 	size_t length;
 	const char *luaValue = luaL_checklstring(L, valueArg, &length);
 	char *newValue = NULL;
 
-	TRY(al_malloc(&newValue, sizeof(char), length + 1));
+	AlError error = al_malloc(&newValue, sizeof(char), length + 1);
+	if (error) {
+		luaL_error(L, "error setting string value");
+	}
+
 	strcpy(newValue, luaValue);
+	free(oldValue);
 
-	free(*value);
-
-	*value = newValue;
-
-	PASS()
+	return newValue;
 }
 
-static int cmd_set(lua_State *L)
+#define ACCESSOR(type, get, n, set) \
+	static int get_##type##_global(lua_State *L) \
+	{ \
+		type *ptr = lua_touserdata(L, lua_upvalueindex(1)); \
+		get(L, *ptr); \
+		return n; \
+	} \
+	static int get_##type##_instance(lua_State *L) \
+	{ \
+		size_t offset = lua_tointeger(L, lua_upvalueindex(1)); \
+		luaL_checktype(L, 1, LUA_TLIGHTUSERDATA); \
+		void *p = lua_touserdata(L, 1); \
+		type *ptr = p + offset; \
+		get(L, *ptr); \
+		return n; \
+	} \
+	static int set_##type##_global(lua_State *L) \
+	{ \
+		type *ptr = lua_touserdata(L, lua_upvalueindex(1)); \
+		const int arg = 1; \
+		*ptr = set; \
+		return 0; \
+	} \
+	static int set_##type##_instance(lua_State *L) \
+	{ \
+		size_t offset = lua_tointeger(L, lua_upvalueindex(1)); \
+		luaL_checktype(L, 1, LUA_TLIGHTUSERDATA); \
+		void *p = lua_touserdata(L, 1); \
+		type *ptr = p + offset; \
+		const int arg = 2; \
+		*ptr = set; \
+		return 0; \
+	}
+
+ACCESSOR(bool, lua_pushboolean, 1, tobool(L, arg))
+ACCESSOR(int, lua_pushinteger, 1, luaL_checkint(L, arg))
+ACCESSOR(double, lua_pushnumber, 1, luaL_checknumber(L, arg))
+ACCESSOR(Vec2, pushVec2, 2, toVec2(L, arg))
+ACCESSOR(Vec3, pushVec3, 3, toVec3(L, arg))
+ACCESSOR(Vec4, pushVec4, 4, toVec4(L, arg))
+ACCESSOR(Box, pushBox, 4, toBox(L, arg))
+ACCESSOR(String, lua_pushstring, 1, tonewString(L, arg, *ptr))
+
+static AlVarEntry *get_entry(lua_State *L)
 {
 	AlVars *vars = lua_touserdata(L, lua_upvalueindex(1));
 	const char *name = luaL_checkstring(L, 1);
@@ -221,72 +265,159 @@ static int cmd_set(lua_State *L)
 	AlVarEntry *entry = lua_touserdata(L, -1);
 
 	if (entry == NULL) {
-		return luaL_error(L, "set: no such var: '%s'", name);
+		luaL_error(L, "no such var: '%s'", name);
 	}
 
+	return entry;
+}
+
+static int cmd_get(lua_State *L)
+{
+	AlVarEntry *entry = get_entry(L);
+	void *ptr;
+
+	if (entry->global) {
+		ptr = entry->data.ptr;
+
+	} else {
+		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
+		ptr = lua_touserdata(L, 2) + entry->data.offset;
+	}
+
+	switch (entry->type) {
+		case VAR_BOOL: lua_pushboolean(L, *(bool *)ptr); return 1;
+		case VAR_INT: lua_pushinteger(L, *(int *)ptr); return 1;
+		case VAR_DOUBLE: lua_pushnumber(L, *(double *)ptr); return 1;
+		case VAR_VEC2: pushVec2(L, *(Vec2 *)ptr); return 2;
+		case VAR_VEC3: pushVec3(L, *(Vec3 *)ptr); return 3;
+		case VAR_VEC4: pushVec4(L, *(Vec4 *)ptr); return 4;
+		case VAR_BOX: pushBox(L, *(Box *)ptr); return 4;
+		case VAR_STRING: lua_pushstring(L, *(char **)ptr); return 1;
+		default: return 0;
+	}
+}
+
+static int cmd_getter(lua_State *L)
+{
+	AlVarEntry *entry = get_entry(L);
+	lua_CFunction getGlobal, getInstance;
+
+#define USE(type) \
+	getGlobal = get_##type##_global; \
+	getInstance = get_##type##_instance;
+
+	switch (entry->type) {
+		case VAR_BOOL: USE(bool); break;
+		case VAR_INT: USE(int); break;
+		case VAR_DOUBLE: USE(double); break;
+		case VAR_VEC2: USE(Vec2); break;
+		case VAR_VEC3: USE(Vec3); break;
+		case VAR_VEC4: USE(Vec4); break;
+		case VAR_BOX: USE(Box); break;
+		case VAR_STRING: USE(String); break;
+		default:
+			return 0;
+	}
+#undef USE
+
+	if (entry->global) {
+		lua_pushlightuserdata(L, entry->data.ptr);
+		lua_pushcclosure(L, getGlobal, 1);
+
+	} else {
+		lua_pushinteger(L, entry->data.offset);
+		lua_pushcclosure(L, getInstance, 1);
+	}
+
+	return 1;
+}
+
+static int cmd_set(lua_State *L)
+{
+	AlVarEntry *entry = get_entry(L);
 	void *value;
 	int valueArg;
 
 	if (entry->global) {
-		value = entry->data.value;
+		value = entry->data.ptr;
 		valueArg = 2;
+
 	} else {
 		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
 		value = lua_touserdata(L, 2) + entry->data.offset;
 		valueArg = 3;
 	}
 
-	double x, y, z, w;
-
 	switch (entry->type) {
 		case VAR_BOOL:
 			luaL_checkany(L, 2);
-			*(bool *)value = lua_toboolean(L, valueArg + 0);
+			*(bool *)value = lua_toboolean(L, valueArg);
 			break;
 
 		case VAR_INT:
-			*(int *)value = luaL_checkint(L, valueArg + 0);
+			*(int *)value = luaL_checkint(L, valueArg);
 			break;
 
 		case VAR_DOUBLE:
-			*(double *)value = luaL_checknumber(L, valueArg + 0);
+			*(double *)value = luaL_checknumber(L, valueArg);
 			break;
 
 		case VAR_VEC2:
-			x = luaL_checknumber(L, valueArg + 0);
-			y = luaL_checknumber(L, valueArg + 1);
-			*(Vec2 *)value = (Vec2){x, y};
+			*(Vec2 *)value = toVec2(L, valueArg);
 			break;
 
 		case VAR_VEC3:
-			x = luaL_checknumber(L, valueArg + 0);
-			y = luaL_checknumber(L, valueArg + 1);
-			z = luaL_checknumber(L, valueArg + 2);
-			*(Vec3 *)value = (Vec3){x, y, z};
+			*(Vec3 *)value = toVec3(L, valueArg);
 			break;
 
 		case VAR_VEC4:
-			x = luaL_checknumber(L, valueArg + 0);
-			y = luaL_checknumber(L, valueArg + 1);
-			z = luaL_checknumber(L, valueArg + 2);
-			w = luaL_checknumber(L, valueArg + 3);
-			*(Vec4 *)value = (Vec4){x, y, z, w};
+			*(Vec4 *)value = toVec4(L, valueArg);
 			break;
 
 		case VAR_BOX:
-			x = luaL_checknumber(L, valueArg + 0);
-			y = luaL_checknumber(L, valueArg + 1);
-			z = luaL_checknumber(L, valueArg + 2);
-			w = luaL_checknumber(L, valueArg + 3);
-			*(Box *)value = (Box){{x, y}, {z, w}};
+			*(Box *)value = toBox(L, valueArg);
 			break;
 
 		case VAR_STRING:
-			if (cmd_set_string(L, valueArg, (char **)value) != AL_NO_ERROR) {
-				return luaL_error(L, "set: error setting string value");
-			}
+			*(String *)value = tonewString(L, valueArg, *(String *)value);
 			break;
 	}
 
 	return 0;
+}
+
+static int cmd_setter(lua_State *L)
+{
+	AlVarEntry *entry = get_entry(L);
+	lua_CFunction setGlobal, setInstance;
+
+#define USE(type) \
+	setGlobal = set_##type##_global; \
+	setInstance = set_##type##_instance;
+
+	switch (entry->type) {
+		case VAR_BOOL: USE(bool); break;
+		case VAR_INT: USE(int); break;
+		case VAR_DOUBLE: USE(double); break;
+		case VAR_VEC2: USE(Vec2); break;
+		case VAR_VEC3: USE(Vec3); break;
+		case VAR_VEC4: USE(Vec4); break;
+		case VAR_BOX: USE(Box); break;
+		case VAR_STRING: USE(String); break;
+		default:
+			return 0;
+
+	}
+#undef USE
+
+	if (entry->global) {
+		lua_pushlightuserdata(L, entry->data.ptr);
+		lua_pushcclosure(L, setGlobal, 1);
+
+	} else {
+		lua_pushinteger(L, entry->data.offset);
+		lua_pushcclosure(L, setInstance, 1);
+	}
+
+	return 1;
 }
