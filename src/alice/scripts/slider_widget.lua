@@ -3,11 +3,10 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-SliderWidget = class(Widget, function(self, x, y, length, callback)
+SliderWidget = class(Widget, function(self, callback)
 	Widget.init(self)
 
-	self:location(x, y)
-	self:bounds(0, 0, 20, length + 20)
+	local length
 	self:fill_colour(0, 0, 0, 1)
 	self:border_colour(1, 1, 1, 1)
 	self:border_width(2)
@@ -19,4 +18,11 @@ SliderWidget = class(Widget, function(self, x, y, length, callback)
 		callback(y / length)
 	end)
 	self:add_child(handle)
+
+	function self.layout(self, left, width, right, bottom, height, top)
+		Widget.prototype.layout(self, left, 20, right, bottom, height, top)
+
+		local bounds = {self:bounds()}
+		length = bounds[4] - bounds[2] - 20
+	end
 end)
