@@ -63,4 +63,26 @@ Widget.prototype.release_mouse = function(self, x, y)
 	commands.release_mouse(x, y)
 end
 
+Widget.prototype.layout = function(self, left, width, right, bottom, height, top)
+	local parent = self:parent()
+	local parent_bounds = {parent:bounds()}
+	parent_width = parent_bounds[3] - parent_bounds[1]
+	parent_height = parent_bounds[4] - parent_bounds[2]
+
+	if left == nil then
+		left = parent_width - width - right
+	elseif width == nil then
+		width = parent_width - left - right
+	end
+
+	if bottom == nil then
+		bottom = parent_height - height - top
+	elseif height == nil then
+		height = parent_height - bottom - top
+	end
+
+	self:location(left, bottom)
+	self:bounds(0, 0, width, height)
+end
+
 Widget.root = Widget(commands.get_root_widget())
