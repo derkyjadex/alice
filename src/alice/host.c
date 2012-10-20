@@ -120,6 +120,10 @@ AlError al_host_run_script(AlHost *host, const char *filename)
 
 static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 {
+	if (event.button != SDL_BUTTON_LEFT) {
+		return;
+	}
+
 	if (host->grabbingWidget) {
 		widget_send_up(host->grabbingWidget);
 		return;
