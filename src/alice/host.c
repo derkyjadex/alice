@@ -152,7 +152,8 @@ void al_host_run(AlHost *host)
 
 	while (!host->finished) {
 
-		while (SDL_PollEvent(&event)) {
+		SDL_WaitEvent(&event);
+		do {
 			switch (event.type) {
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
@@ -179,7 +180,7 @@ void al_host_run(AlHost *host)
 					host->finished = true;
 					break;
 			}
-		}
+		} while (SDL_PollEvent(&event));
 
 		al_commands_process_queue(host->commands);
 

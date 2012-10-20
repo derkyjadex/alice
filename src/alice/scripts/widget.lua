@@ -44,6 +44,8 @@ function Widget.prototype.add_sibling(self, sibling)
 end
 Widget.prototype.remove = wrap_command(commands.widget_remove)
 
+Widget.prototype.invalidate = wrap_command(commands.widget_invalidate)
+
 Widget.prototype.bind_up = wrap_command(commands.widget_bind_up)
 Widget.prototype.bind_down = wrap_command(commands.widget_bind_down)
 function Widget.prototype.bind_motion(self, command)
@@ -83,6 +85,7 @@ Widget.prototype.layout = function(self, left, width, right, bottom, height, top
 
 	self:location(left, bottom)
 	self:bounds(0, 0, width, height)
+	self:invalidate()
 end
 
 Widget.root = Widget(commands.get_root_widget())

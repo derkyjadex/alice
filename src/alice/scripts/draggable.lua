@@ -48,6 +48,7 @@ function make_draggable(widget, on_down, on_up, on_motion)
 		end
 
 		widget:location(x, y)
+		widget:invalidate()
 	end
 
 	widget:bind_down(start_drag, widget, on_down)

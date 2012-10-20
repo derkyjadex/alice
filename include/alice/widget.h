@@ -26,6 +26,7 @@ typedef struct AlWidget {
 	struct AlWidget *firstChild;
 	struct AlWidget *lastChild;
 
+	bool valid;
 	Vec2 location;
 	Box bounds;
 
@@ -65,6 +66,7 @@ void widget_free(AlWidget *widget);
 void widget_add_child(AlWidget *widget, AlWidget *child);
 void widget_add_sibling(AlWidget *widget, AlWidget *sibling);
 void widget_remove(AlWidget *widget);
+void widget_invalidate(AlWidget *widget);
 
 AlError widget_send_down(AlWidget *widget);
 AlError widget_send_up(AlWidget *widget);

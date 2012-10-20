@@ -306,6 +306,8 @@ static void render_widget(AlWidget *widget, Vec2 translate)
 	FOR_EACH_WIDGET(child, widget) {
 		render_widget(child, location);
 	}
+
+	widget->valid = true;
 }
 
 static void render_cursor(Vec2 location)
@@ -331,13 +333,15 @@ static void render_cursor(Vec2 location)
 
 void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (!root->valid) {
+		glClear(GL_COLOR_BUFFER_BIT);
 
-	render_widget(root, (Vec2){0, 0});
+		render_widget(root, (Vec2){0, 0});
 
-	if (renderCursor) {
-		render_cursor(cursorLocation);
+		if (renderCursor) {
+			render_cursor(cursorLocation);
+		}
+
+		al_gl_system_swap_buffers();
 	}
-
-	al_gl_system_swap_buffers();
 }

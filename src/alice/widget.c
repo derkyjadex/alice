@@ -23,6 +23,7 @@ AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 	widget->firstChild = NULL;
 	widget->lastChild = NULL;
 
+	widget->valid = false;
 	widget->location = (Vec2){0, 0};
 	widget->bounds = (Box){{0, 0}, {0, 0}};
 	widget->fillColour = (Vec4){1, 1, 1, 1};
@@ -84,6 +85,8 @@ void widget_add_child(AlWidget *widget, AlWidget *child)
 
 	widget->lastChild = child;
 	child->parent = widget;
+
+	widget_invalidate(child);
 }
 
 void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
@@ -101,6 +104,8 @@ void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 	widget->next = sibling;
 	sibling->prev = widget;
 	sibling->parent = widget->parent;
+
+	widget_invalidate(sibling);
 }
 
 void widget_remove(AlWidget *widget)
@@ -117,11 +122,23 @@ void widget_remove(AlWidget *widget)
 
 	} else if (widget->parent) {
 		widget->parent->firstChild = widget->next;
+		widget_invalidate(widget->parent);
 	}
 
 	widget->prev = NULL;
 	widget->next = NULL;
 	widget->parent = NULL;
+}
+
+void widget_invalidate(AlWidget *widget)
+{
+	if (widget->valid) {
+		widget->valid = false;
+
+		if (widget->parent) {
+			widget_invalidate(widget->parent);
+		}
+	}
 }
 
 static AlError widget_send(AlWidget *widget, AlLuaKey *binding)
@@ -356,6 +373,13 @@ static int cmd_widget_remove(lua_State *L)
 	return 0;
 }
 
+static int cmd_widget_invalidate(lua_State *L)
+{
+	widget_invalidate(cmd_accessor(L, "invalidate", 1));
+
+	return 0;
+}
+
 static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 {
 	int n = lua_gettop(L);
@@ -428,6 +452,8 @@ AlError widget_register_commands(AlCommands *commands)
 	REG_CMD(add_child);
 	REG_CMD(add_sibling);
 	REG_CMD(remove);
+
+	REG_CMD(invalidate);
 
 	REG_CMD(set_model);
 
