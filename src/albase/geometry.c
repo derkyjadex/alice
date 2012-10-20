@@ -90,18 +90,55 @@ bool vec2_is_near_box(Vec2 v, Box box, double distance)
 	return vec2_norm_sq(vec2_subtract(v, boxPoint)) <= distSq;
 }
 
+Vec2 vec2_floor(Vec2 v)
+{
+	return (Vec2){floor(v.x), floor(v.y)};
+}
+
+Vec2 vec2_ceil(Vec2 v)
+{
+	return (Vec2){ceil(v.x), ceil(v.y)};
+}
+
 Box box_add_vec2(Box box, Vec2 v)
 {
-	Box result = {
+	return (Box){
 		{box.min.x + v.x, box.min.y + v.y},
 		{box.max.x + v.x, box.max.y + v.y}
 	};
-
-	return result;
 }
 
 bool box_contains(Box box, Vec2 v)
 {
 	return v.x >= box.min.x && v.x < box.max.x
 		&& v.y >= box.min.y && v.y < box.max.y;
+}
+
+bool box_is_valid(Box box)
+{
+	return box.min.x <= box.max.x && box.min.y <= box.max.y;
+}
+
+Box box_intersect(Box a, Box b)
+{
+	return (Box){
+		{
+			(a.min.x > b.min.x) ? a.min.x : b.min.x,
+			(a.min.y > b.min.y) ? a.min.y : b.min.y
+		},
+		{
+			(a.max.x < b.max.x) ? a.max.x : b.max.x,
+			(a.max.y < b.max.y) ? a.max.y : b.max.y
+		}
+	};
+}
+
+Vec2 box_size(Box box)
+{
+	return vec2_subtract(box.max, box.min);
+}
+
+Box box_round(Box box)
+{
+	return (Box){vec2_floor(box.min), vec2_ceil(box.max)};
 }

@@ -37,7 +37,14 @@ Vec2 vec2_random(void);
 bool vec2_equals(Vec2 a, Vec2 b);
 bool vec2_near(Vec2 a, Vec2 b, double epsilon);
 bool vec2_is_near_box(Vec2 v, Box box, double distance);
+Vec2 vec2_floor(Vec2 v);
+Vec2 vec2_ceil(Vec2 v);
+
 Box box_add_vec2(Box box, Vec2 v);
 bool box_contains(Box box, Vec2 v);
+bool box_is_valid(Box box);
+Box box_intersect(Box a, Box b);
+Vec2 box_size(Box box);
+Box box_round(Box box);
 
 #endif
