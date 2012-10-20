@@ -1,0 +1,3 @@
+#!/bin/sh
+
+convert -font UbuntuMono-R.ttf -pointsize 200 label:@chars.txt font.png
