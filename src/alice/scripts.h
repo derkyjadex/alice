@@ -17,5 +17,6 @@ AL_SCRIPT_DECLARE(toolbar)
 AL_SCRIPT_DECLARE(slider_widget)
 AL_SCRIPT_DECLARE(colour_widget)
 AL_SCRIPT_DECLARE(model_widget)
+AL_SCRIPT_DECLARE(file_widget)
 
 #endif

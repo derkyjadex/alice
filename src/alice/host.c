@@ -90,6 +90,7 @@ AlError al_host_init(AlHost **result)
 		AL_SCRIPT(slider_widget),
 		AL_SCRIPT(colour_widget),
 		AL_SCRIPT(model_widget),
+		AL_SCRIPT(file_widget),
 		AL_SCRIPT_END
 	};
 

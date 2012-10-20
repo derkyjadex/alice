@@ -92,6 +92,7 @@
 		1AA0058D160A79DB005195DF /* scripts.derived.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = scripts.derived.c; sourceTree = "<group>"; };
 		1AE55F8416298ACE00FA402E /* file_system.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_system.c; sourceTree = "<group>"; };
 		1AE55F8716298AEE00FA402E /* file_system.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file_system.h; sourceTree = "<group>"; };
+		1AE55F8816298C7D00FA402E /* file_widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = file_widget.lua; sourceTree = "<group>"; };
 		1AF523AF1608FD6400B3DDE1 /* framebuffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = framebuffer.c; sourceTree = "<group>"; };
 		1AF523B01608FD6400B3DDE1 /* model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = model.c; sourceTree = "<group>"; };
 		1AF523B11608FD6400B3DDE1 /* shader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = shader.c; sourceTree = "<group>"; };
@@ -193,10 +194,11 @@
 		1A42FD77160DEE2900807A51 /* scripts */ = {
 			isa = PBXGroup;
 			children = (
-				1A42FD7E160DEF2900807A51 /* model_widget.lua */,
 				1A42FD78160DEE2900807A51 /* colour_widget.lua */,
 				1A42FD79160DEE2900807A51 /* draggable.lua */,
+				1AE55F8816298C7D00FA402E /* file_widget.lua */,
 				1A42FD7A160DEE2900807A51 /* model.lua */,
+				1A42FD7E160DEF2900807A51 /* model_widget.lua */,
 				1A42FD7B160DEE2900807A51 /* slider_widget.lua */,
 				1A42FD7C160DEE2900807A51 /* toolbar.lua */,
 				1A42FD7D160DEE2900807A51 /* widget.lua */,
@@ -441,6 +443,7 @@
 				"$(SRCROOT)/src/alice/scripts/slider_widget.lua",
 				"$(SRCROOT)/src/alice/scripts/toolbar.lua",
 				"$(SRCROOT)/src/alice/scripts/widget.lua",
+				"$(SRCROOT)/src/alice/scripts/file_widget.lua",
 			);
 			name = "Compile Scripts";
 			outputPaths = (
