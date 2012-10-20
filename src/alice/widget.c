@@ -86,6 +86,7 @@ void widget_add_child(AlWidget *widget, AlWidget *child)
 	widget->lastChild = child;
 	child->parent = widget;
 
+	child->valid = true;
 	widget_invalidate(child);
 }
 
@@ -105,6 +106,7 @@ void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 	sibling->prev = widget;
 	sibling->parent = widget->parent;
 
+	sibling->valid = true;
 	widget_invalidate(sibling);
 }
 
