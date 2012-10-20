@@ -122,6 +122,9 @@ void widget_remove(AlWidget *widget)
 
 	} else if (widget->parent) {
 		widget->parent->firstChild = widget->next;
+	}
+
+	if (widget->parent) {
 		widget_invalidate(widget->parent);
 	}
 
