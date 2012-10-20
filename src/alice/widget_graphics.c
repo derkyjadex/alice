@@ -269,42 +269,50 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	}
 }
 
-static void render_widget(AlWidget *widget, Vec2 translate)
+static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 {
 	Vec2 location = vec2_add(widget->location, translate);
 	Box bounds = box_add_vec2(widget->bounds, location);
-	Vec2 size = vec2_subtract(bounds.max, bounds.min);
-	Vec4 fillColour = widget->fillColour;
-	Vec4 borderColour = widget->border.colour;
 
-	glUseProgram(widgetShader.shader->id);
-	glUniform2fv(widgetShader.viewportSize, 1, viewportSize);
-	glUniform2f(widgetShader.min, bounds.min.x, bounds.min.y);
-	glUniform2f(widgetShader.size, size.x, size.y);
-	glUniform1f(widgetShader.borderWidth, widget->border.width);
-	glUniform2f(widgetShader.gridSize, widget->grid.size.x, widget->grid.size.y);
-	glUniform2f(widgetShader.gridOffset, widget->grid.offset.x, widget->grid.offset.y);
-	glUniform4f(widgetShader.fillColour, fillColour.x, fillColour.y, fillColour.z, fillColour.w);
-	glUniform4f(widgetShader.borderColour, borderColour.x, borderColour.y, borderColour.z, borderColour.w);
-	glUniform3f(widgetShader.gridColour, widget->grid.colour.x, widget->grid.colour.y, widget->grid.colour.z);
+	scissor = box_round(box_intersect(scissor, bounds));
 
-	float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+	if (box_is_valid(scissor)) {
+		Vec2 scissorSize = box_size(scissor);
+		Vec2 size = box_size(bounds);
+		Vec4 fillColour = widget->fillColour;
+		Vec4 borderColour = widget->border.colour;
 
-	glEnableVertexAttribArray(widgetShader.position);
-	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+		glUseProgram(widgetShader.shader->id);
+		glUniform2fv(widgetShader.viewportSize, 1, viewportSize);
+		glUniform2f(widgetShader.min, bounds.min.x, bounds.min.y);
+		glUniform2f(widgetShader.size, size.x, size.y);
+		glUniform1f(widgetShader.borderWidth, widget->border.width);
+		glUniform2f(widgetShader.gridSize, widget->grid.size.x, widget->grid.size.y);
+		glUniform2f(widgetShader.gridOffset, widget->grid.offset.x, widget->grid.offset.y);
+		glUniform4f(widgetShader.fillColour, fillColour.x, fillColour.y, fillColour.z, fillColour.w);
+		glUniform4f(widgetShader.borderColour, borderColour.x, borderColour.y, borderColour.z, borderColour.w);
+		glUniform3f(widgetShader.gridColour, widget->grid.colour.x, widget->grid.colour.y, widget->grid.colour.z);
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		const float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
 
-	if (widget->model.model) {
-		render_model(widget->model.model, vec2_add(widget->model.location, location) , widget->model.scale);
-	}
+		glEnableVertexAttribArray(widgetShader.position);
+		glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
 
-	if (widget->text.value) {
-		render_text(widget->text.value, widget->text.colour, vec2_add(widget->text.location, location), widget->text.size);
-	}
+		glScissor(scissor.min.x, scissor.min.y, scissorSize.x, scissorSize.y);
 
-	FOR_EACH_WIDGET(child, widget) {
-		render_widget(child, location);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+		if (widget->model.model) {
+			render_model(widget->model.model, vec2_add(widget->model.location, location) , widget->model.scale);
+		}
+
+		if (widget->text.value) {
+			render_text(widget->text.value, widget->text.colour, vec2_add(widget->text.location, location), widget->text.size);
+		}
+
+		FOR_EACH_WIDGET(child, widget) {
+			render_widget(child, location, scissor);
+		}
 	}
 
 	widget->valid = true;
@@ -336,7 +344,9 @@ void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocati
 	if (!root->valid) {
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		render_widget(root, (Vec2){0, 0});
+		glEnable(GL_SCISSOR_TEST);
+		render_widget(root, (Vec2){0, 0}, (Box){{0, 0}, {viewportSize[0], viewportSize[1]}});
+		glDisable(GL_SCISSOR_TEST);
 
 		if (renderCursor) {
 			render_cursor(cursorLocation);
