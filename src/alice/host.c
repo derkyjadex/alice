@@ -14,6 +14,7 @@
 #include "albase/script.h"
 #include "scripts.h"
 #include "albase/lua.h"
+#include "file_system.h"
 
 static const int IGNORE_NEXT_MOTION_EVENT = 1;
 static int cmd_exit(lua_State *L);
@@ -77,6 +78,7 @@ AlError al_host_init(AlHost **result)
 	TRY(al_commands_register(host->commands, "release_mouse", cmd_release_mouse, host, NULL));
 	TRY(widget_register_commands(host->commands));
 	TRY(model_editing_register_commands(host->commands));
+	TRY(file_system_register_commands(host->commands));
 
 	TRY(widget_register_vars(host->vars));
 
