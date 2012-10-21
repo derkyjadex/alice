@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <SDL/SDL.h>
+#include <locale.h>
 
 #include "alice/host.h"
 #include "albase/geometry.h"
@@ -36,6 +37,13 @@ AlError al_host_systems_init()
 	}
 
 	TRY(widget_graphics_system_init());
+
+	const char *locale = "UTF-8";
+	char *result = setlocale(LC_CTYPE, locale);
+	if (strcmp(locale, result)) {
+		al_log_error("Could not set locale to %s", locale);
+		THROW(AL_ERROR_GENERIC);
+	}
 
 	CATCH(
 		al_host_systems_free();

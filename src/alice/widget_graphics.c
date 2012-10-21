@@ -13,6 +13,7 @@
 #include "albase/gl/system.h"
 #include "shaders.h"
 #include "images.h"
+#include "graphics_text.h"
 
 static float viewportSize[2];
 
@@ -256,9 +257,12 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	glEnableVertexAttribArray(widgetShader.position);
 	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
 
-	for (const unsigned char *c = (unsigned char*)text; *c; c++) {
-		float x = (float)(*c % fontInfo.numCharsW) / fontInfo.numCharsW;
-		float y = (float)(*c / fontInfo.numCharsW) / fontInfo.numCharsH;
+	struct TextReadState state;
+	graphics_text_read_init(&state, text);
+	uint8_t c;
+	while ((c = graphics_text_read_next(&state))) {
+		float x = (float)(c % fontInfo.numCharsW) / fontInfo.numCharsW;
+		float y = (float)(c / fontInfo.numCharsW) / fontInfo.numCharsH;
 
 		glUniform2f(textShader.min, location.x, location.y);
 		glUniform2f(textShader.charMin, x, y);
