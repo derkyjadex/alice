@@ -258,7 +258,7 @@ uint8_t graphics_text_read_next(struct TextReadState *state)
 {
 	wchar_t output;
 	int numBytes = mbtowc(&output, state->input, state->length);
-	if (numBytes == 0) {
+	if (numBytes <= 0) {
 		return 0;
 	}
 
