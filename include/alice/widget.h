@@ -8,6 +8,7 @@
 #define __ALICE_WIDGET_H__
 
 #include <stdbool.h>
+#include <SDL/SDL_keysym.h>
 
 #include "albase/common.h"
 #include "albase/geometry.h"
@@ -57,6 +58,8 @@ typedef struct AlWidget {
 	AlLuaKey downBinding;
 	AlLuaKey upBinding;
 	AlLuaKey motionBinding;
+	AlLuaKey keyBinding;
+	AlLuaKey textBinding;
 } AlWidget;
 
 AlError widget_register_commands(AlCommands *commands);
@@ -71,6 +74,8 @@ void widget_invalidate(AlWidget *widget);
 AlError widget_send_down(AlWidget *widget);
 AlError widget_send_up(AlWidget *widget);
 AlError widget_send_motion(AlWidget *widget, Vec2 motion);
+AlError widget_send_key(AlWidget *widget, SDLKey key);
+AlError widget_send_text(AlWidget *widget, const char *text);
 
 AlWidget *widget_hit_test(AlWidget *widget, Vec2 location);
 

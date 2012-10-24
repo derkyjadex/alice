@@ -55,6 +55,16 @@ function Widget.prototype.bind_motion(self, command)
 		end
 	end)
 end
+function Widget.prototype.bind_key(self, command)
+	commands.widget_bind_key(self._ptr, function(_, key)
+		command(self, key)
+	end)
+end
+function Widget.prototype.bind_text(self, command)
+	commands.widget_bind_text(self._ptr, function(_, text)
+		command(self, text)
+	end)
+end
 
 Widget.prototype.grab_mouse = function(self)
 	self._grabbing = true

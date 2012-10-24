@@ -45,6 +45,8 @@ AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 	widget->downBinding = false;
 	widget->upBinding = false;
 	widget->motionBinding = false;
+	widget->keyBinding = false;
+	widget->textBinding = false;
 
 	*result = widget;
 
@@ -52,6 +54,18 @@ AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 		widget_free(widget);
 	)
 	FINALLY()
+}
+
+static void free_binding(AlWidget *widget, size_t bindingOffset)
+{
+	AlLuaKey *binding = (void *)widget + bindingOffset;
+	if (*binding) {
+		lua_State *L = widget->lua;
+
+		lua_pushlightuserdata(L, binding);
+		lua_pushnil(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
+	}
 }
 
 void widget_free(AlWidget *widget)
@@ -66,6 +80,12 @@ void widget_free(AlWidget *widget)
 
 		al_model_unuse(widget->model.model);
 		free(widget->text.value);
+
+		free_binding(widget, offsetof(AlWidget, downBinding));
+		free_binding(widget, offsetof(AlWidget, upBinding));
+		free_binding(widget, offsetof(AlWidget, motionBinding));
+		free_binding(widget, offsetof(AlWidget, keyBinding));
+		free_binding(widget, offsetof(AlWidget, textBinding));
 
 		free(widget);
 	}
@@ -194,6 +214,60 @@ AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 
 		lua_pushinteger(L, 4);
 		lua_pushnumber(L, motion.y);
+		lua_settable(L, -3);
+
+		TRY(al_commands_enqueue(widget->commands));
+	}
+
+	PASS()
+}
+
+AlError widget_send_key(AlWidget *widget, SDLKey key)
+{
+	BEGIN()
+
+	if (widget->keyBinding) {
+		lua_State *L = widget->lua;
+
+		lua_newtable(L);
+		lua_pushinteger(L, 1);
+		lua_pushlightuserdata(L, &widget->keyBinding);
+		lua_gettable(L, LUA_REGISTRYINDEX);
+		lua_settable(L, -3);
+
+		lua_pushinteger(L, 2);
+		lua_pushlightuserdata(L, widget);
+		lua_settable(L, -3);
+
+		lua_pushinteger(L, 3);
+		lua_pushinteger(L, key);
+		lua_settable(L, -3);
+
+		TRY(al_commands_enqueue(widget->commands));
+	}
+
+	PASS()
+}
+
+AlError widget_send_text(AlWidget *widget, const char *text)
+{
+	BEGIN()
+
+	if (widget->textBinding) {
+		lua_State *L = widget->lua;
+
+		lua_newtable(L);
+		lua_pushinteger(L, 1);
+		lua_pushlightuserdata(L, &widget->textBinding);
+		lua_gettable(L, LUA_REGISTRYINDEX);
+		lua_settable(L, -3);
+
+		lua_pushinteger(L, 2);
+		lua_pushlightuserdata(L, widget);
+		lua_settable(L, -3);
+
+		lua_pushinteger(L, 3);
+		lua_pushstring(L, text);
 		lua_settable(L, -3);
 
 		TRY(al_commands_enqueue(widget->commands));
@@ -385,11 +459,11 @@ static int cmd_widget_invalidate(lua_State *L)
 	return 0;
 }
 
-static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
+static int cmd_widget_bind_button(lua_State *L, const char *name, size_t bindingOffset)
 {
 	int n = lua_gettop(L);
 	if (n < 2) {
-		return luaL_error(L, "%s: requires at least two arguments", name);
+		return luaL_error(L, "widget_bind_%s: requires at least two arguments", name);
 	}
 
 	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
@@ -409,35 +483,49 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 	lua_pushlightuserdata(L, binding);
 	lua_pushvalue(L, -2);
 	lua_settable(L, LUA_REGISTRYINDEX);
-	lua_pop(L, n + 1);
+
+	return 0;
+}
+
+static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
+{
+	if (lua_gettop(L) != 2)
+		return luaL_error(L, "widget_bind_%s: requires 2 arguments", name);
+
+	AlWidget *widget = lua_touserdata(L, -2);
+	AlLuaKey *binding = (void *)widget + bindingOffset;
+	*binding = true;
+
+	lua_pushlightuserdata(L, binding);
+	lua_pushvalue(L, -2);
+	lua_settable(L, LUA_REGISTRYINDEX);
 
 	return 0;
 }
 
 static int cmd_widget_bind_up(lua_State *L)
 {
-	return cmd_widget_bind(L, "bind_up", offsetof(AlWidget, upBinding));
+	return cmd_widget_bind_button(L, "up", offsetof(AlWidget, upBinding));
 }
 
 static int cmd_widget_bind_down(lua_State *L)
 {
-	return cmd_widget_bind(L, "bind_down", offsetof(AlWidget, downBinding));
+	return cmd_widget_bind_button(L, "down", offsetof(AlWidget, downBinding));
 }
 
 static int cmd_widget_bind_motion(lua_State *L)
 {
-	if (lua_gettop(L) != 2)
-		return luaL_error(L, "widget_bind_motion: requires 2 arguments");
+	return cmd_widget_bind(L, "motion", offsetof(AlWidget, motionBinding));
+}
 
-	AlWidget *widget = lua_touserdata(L, -2);
-	widget->motionBinding = true;
+static int cmd_widget_bind_key(lua_State *L)
+{
+	return cmd_widget_bind(L, "key", offsetof(AlWidget, keyBinding));
+}
 
-	lua_pushlightuserdata(L, &widget->motionBinding);
-	lua_pushvalue(L, -2);
-	lua_settable(L, LUA_REGISTRYINDEX);
-	lua_pop(L, 2);
-
-	return 0;
+static int cmd_widget_bind_text(lua_State *L)
+{
+	return cmd_widget_bind(L, "text", offsetof(AlWidget, textBinding));
 }
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
@@ -465,6 +553,8 @@ AlError widget_register_commands(AlCommands *commands)
 	REG_CMD(bind_up);
 	REG_CMD(bind_down);
 	REG_CMD(bind_motion);
+	REG_CMD(bind_key);
+	REG_CMD(bind_text);
 
 	PASS()
 }
