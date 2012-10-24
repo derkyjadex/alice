@@ -6,7 +6,9 @@
 
 #include <stdlib.h>
 #include <SDL/SDL.h>
+#include <wchar.h>
 #include <locale.h>
+#include <wctype.h>
 
 #include "alice/host.h"
 #include "albase/geometry.h"
@@ -44,6 +46,8 @@ AlError al_host_systems_init()
 		al_log_error("Could not set locale to %s", locale);
 		THROW(AL_ERROR_GENERIC);
 	}
+
+	SDL_EnableUNICODE(1);
 
 	CATCH(
 		al_host_systems_free();
@@ -160,6 +164,26 @@ static Vec2 get_mouse_pos(AlHost *host)
 	return (Vec2){x, y};
 }
 
+static bool is_char(wchar_t c)
+{
+	return (c & 0xFF00) != 0xF700 && c > 0x001F && c != 0x007F;
+}
+
+static void handle_key_down(AlHost *host, SDL_KeyboardEvent event)
+{
+	static char text[MB_LEN_MAX + 1] = "";
+
+	if (is_char(event.keysym.unicode)) {
+		int numBytes = wctomb(text, event.keysym.unicode);
+		text[numBytes] = '\0';
+
+		widget_send_text(host->widgets, text);
+
+	} else {
+		widget_send_key(host->widgets, event.keysym.sym);
+	}
+}
+
 void al_host_run(AlHost *host)
 {
 	SDL_Event event;
@@ -183,6 +207,10 @@ void al_host_run(AlHost *host)
 						Vec2 motion = {event.motion.xrel, -event.motion.yrel};
 						widget_send_motion(host->grabbingWidget, motion);
 					}
+					break;
+
+				case SDL_KEYDOWN:
+					handle_key_down(host, event.key);
 					break;
 
 				case SDL_USEREVENT:
