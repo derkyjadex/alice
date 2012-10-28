@@ -204,6 +204,9 @@ void al_host_run(AlHost *host)
 					break;
 
 				case SDL_MOUSEMOTION:
+#ifdef RASPI
+					widget_invalidate(host->widgets);
+#endif
 					if (ignoreNextMotion) {
 						ignoreNextMotion = false;
 
