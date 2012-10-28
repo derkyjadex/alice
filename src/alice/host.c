@@ -40,9 +40,13 @@ AlError al_host_systems_init()
 
 	TRY(widget_graphics_system_init());
 
+#if defined(__APPLE__)
 	const char *locale = "UTF-8";
+#else
+	const char *locale = "C.UTF-8";
+#endif
 	char *result = setlocale(LC_CTYPE, locale);
-	if (strcmp(locale, result)) {
+	if (!result || strcmp(locale, result)) {
 		al_log_error("Could not set locale to %s", locale);
 		THROW(AL_ERROR_GENERIC);
 	}
