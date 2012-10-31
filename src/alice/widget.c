@@ -47,6 +47,7 @@ AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 	widget->motionBinding = false;
 	widget->keyBinding = false;
 	widget->textBinding = false;
+	widget->keyboardLostBinding = false;
 
 	*result = widget;
 
@@ -86,6 +87,7 @@ void widget_free(AlWidget *widget)
 		free_binding(widget, offsetof(AlWidget, motionBinding));
 		free_binding(widget, offsetof(AlWidget, keyBinding));
 		free_binding(widget, offsetof(AlWidget, textBinding));
+		free_binding(widget, offsetof(AlWidget, keyboardLostBinding));
 
 		free(widget);
 	}
@@ -276,6 +278,11 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 	PASS()
 }
 
+AlError widget_send_keyboard_lost(AlWidget *widget)
+{
+	return widget_send(widget, &widget->keyboardLostBinding);
+}
+
 AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
 {
 	AlWidget *result = NULL;
@@ -459,7 +466,7 @@ static int cmd_widget_invalidate(lua_State *L)
 	return 0;
 }
 
-static int cmd_widget_bind_button(lua_State *L, const char *name, size_t bindingOffset)
+static int cmd_widget_bind_plain(lua_State *L, const char *name, size_t bindingOffset)
 {
 	int n = lua_gettop(L);
 	if (n < 2) {
@@ -487,7 +494,7 @@ static int cmd_widget_bind_button(lua_State *L, const char *name, size_t binding
 	return 0;
 }
 
-static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
+static int cmd_widget_bind_data(lua_State *L, const char *name, size_t bindingOffset)
 {
 	if (lua_gettop(L) != 2)
 		return luaL_error(L, "widget_bind_%s: requires 2 arguments", name);
@@ -505,27 +512,32 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 
 static int cmd_widget_bind_up(lua_State *L)
 {
-	return cmd_widget_bind_button(L, "up", offsetof(AlWidget, upBinding));
+	return cmd_widget_bind_plain(L, "up", offsetof(AlWidget, upBinding));
 }
 
 static int cmd_widget_bind_down(lua_State *L)
 {
-	return cmd_widget_bind_button(L, "down", offsetof(AlWidget, downBinding));
+	return cmd_widget_bind_plain(L, "down", offsetof(AlWidget, downBinding));
 }
 
 static int cmd_widget_bind_motion(lua_State *L)
 {
-	return cmd_widget_bind(L, "motion", offsetof(AlWidget, motionBinding));
+	return cmd_widget_bind_data(L, "motion", offsetof(AlWidget, motionBinding));
 }
 
 static int cmd_widget_bind_key(lua_State *L)
 {
-	return cmd_widget_bind(L, "key", offsetof(AlWidget, keyBinding));
+	return cmd_widget_bind_data(L, "key", offsetof(AlWidget, keyBinding));
 }
 
 static int cmd_widget_bind_text(lua_State *L)
 {
-	return cmd_widget_bind(L, "text", offsetof(AlWidget, textBinding));
+	return cmd_widget_bind_data(L, "text", offsetof(AlWidget, textBinding));
+}
+
+static int cmd_widget_bind_keyboard_lost(lua_State *L)
+{
+	return cmd_widget_bind_plain(L, "keyboard_lost", offsetof(AlWidget, keyboardLostBinding));
 }
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
@@ -555,6 +567,7 @@ AlError widget_register_commands(AlCommands *commands)
 	REG_CMD(bind_motion);
 	REG_CMD(bind_key);
 	REG_CMD(bind_text);
+	REG_CMD(bind_keyboard_lost);
 
 	PASS()
 }

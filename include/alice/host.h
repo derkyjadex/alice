@@ -26,6 +26,7 @@ typedef struct {
 
 	AlWidget *root;
 	AlWidget *grabbingWidget;
+	AlWidget *keyboardWidget;
 } AlHost;
 
 AlError al_host_systems_init(void);

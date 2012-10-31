@@ -24,6 +24,8 @@ static int cmd_exit(lua_State *L);
 static int cmd_get_root_widget(lua_State *L);
 static int cmd_grab_mouse(lua_State *L);
 static int cmd_release_mouse(lua_State *L);
+static int cmd_grab_keyboard(lua_State *L);
+static int cmd_release_keyboard(lua_State *L);
 
 #ifdef RASPI
 static bool showMouse = true;
@@ -79,6 +81,7 @@ AlError al_host_init(AlHost **result)
 	host->screenSize = (Vec2){1, 1};
 	host->root = NULL;
 	host->grabbingWidget = NULL;
+	host->keyboardWidget = NULL;
 
 	host->screenSize = widget_graphics_screen_size();
 
@@ -87,11 +90,14 @@ AlError al_host_init(AlHost **result)
 	TRY(al_vars_init(&host->vars, host->lua, host->commands));
 	TRY(widget_init(&host->root, host->lua, host->commands));
 	host->root->bounds = (Box){{0, 0}, host->screenSize};
+	host->keyboardWidget = host->root;
 
 	TRY(al_commands_register(host->commands, "exit", cmd_exit, host, NULL));
 	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host, NULL));
 	TRY(al_commands_register(host->commands, "grab_mouse", cmd_grab_mouse, host, NULL));
 	TRY(al_commands_register(host->commands, "release_mouse", cmd_release_mouse, host, NULL));
+	TRY(al_commands_register(host->commands, "grab_keyboard", cmd_grab_keyboard, host, NULL));
+	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
 	TRY(widget_register_commands(host->commands));
 	TRY(model_editing_register_commands(host->commands));
 	TRY(file_system_register_commands(host->commands));
@@ -181,10 +187,10 @@ static void handle_key_down(AlHost *host, SDL_KeyboardEvent event)
 		int numBytes = wctomb(text, event.keysym.unicode);
 		text[numBytes] = '\0';
 
-		widget_send_text(host->widgets, text);
+		widget_send_text(host->keyboardWidget, text);
 
 	} else {
-		widget_send_key(host->widgets, event.keysym.sym);
+		widget_send_key(host->keyboardWidget, event.keysym.sym);
 	}
 }
 
@@ -305,7 +311,6 @@ static int cmd_grab_mouse(lua_State *L)
 
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
 	AlWidget *widget = lua_touserdata(L, -1);
-	lua_pop(L, 1);
 
 	Vec2 location = host_grab_mouse(host, widget);
 
@@ -326,6 +331,38 @@ static int cmd_release_mouse(lua_State *L)
 	lua_pop(L, 2);
 
 	host_release_mouse(host, (Vec2){x, y});
+
+	return 0;
+}
+
+static int cmd_grab_keyboard(lua_State *L)
+{
+	if (lua_gettop(L) != 1)
+		return luaL_error(L, "grab_keyboard: required 1 argument");
+
+	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
+	AlWidget *widget = lua_touserdata(L, -1);
+
+	AlWidget *oldWidget = host->keyboardWidget;
+	host->keyboardWidget = widget;
+
+	if (widget != oldWidget) {
+		widget_send_keyboard_lost(oldWidget);
+	}
+
+	return 0;
+}
+
+static int cmd_release_keyboard(lua_State *L)
+{
+	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
+
+	AlWidget *oldWidget = host->keyboardWidget;
+	host->keyboardWidget = host->root;
+
+	if (oldWidget != host->root) {
+		widget_send_keyboard_lost(oldWidget);
+	}
 
 	return 0;
 }

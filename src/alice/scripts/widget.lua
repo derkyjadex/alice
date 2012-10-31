@@ -65,6 +65,7 @@ function Widget.prototype.bind_text(self, command)
 		command(self, text)
 	end)
 end
+Widget.prototype.bind_keyboard_lost = wrap_command(commands.widget_bind_keyboard_lost)
 
 function Widget.prototype.grab_mouse(self)
 	self._grabbing = true
@@ -73,6 +74,13 @@ end
 function Widget.prototype.release_mouse(self, x, y)
 	self._grabbing = false
 	commands.release_mouse(x, y)
+end
+
+function Widget.prototype.grab_keyboard(self)
+	commands.grab_keyboard(self._ptr)
+end
+function Widget.prototype.release_keyboard(self)
+	commands.release_keyboard()
 end
 
 function Widget.prototype.layout(self, left, width, right, bottom, height, top)
