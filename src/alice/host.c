@@ -77,7 +77,7 @@ AlError al_host_init(AlHost **result)
 	host->vars = NULL;
 	host->finished = false;
 	host->screenSize = (Vec2){1, 1};
-	host->widgets = NULL;
+	host->root = NULL;
 	host->grabbingWidget = NULL;
 
 	host->screenSize = widget_graphics_screen_size();
@@ -85,8 +85,8 @@ AlError al_host_init(AlHost **result)
 	TRY(al_script_init(&host->lua));
 	TRY(al_commands_init(&host->commands, host->lua));
 	TRY(al_vars_init(&host->vars, host->lua, host->commands));
-	TRY(widget_init(&host->widgets, host->lua, host->commands));
-	host->widgets->bounds = (Box){{0, 0}, host->screenSize};
+	TRY(widget_init(&host->root, host->lua, host->commands));
+	host->root->bounds = (Box){{0, 0}, host->screenSize};
 
 	TRY(al_commands_register(host->commands, "exit", cmd_exit, host, NULL));
 	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host, NULL));
@@ -126,7 +126,7 @@ void al_host_free(AlHost *host)
 	if (host) {
 		al_commands_free(host->commands);
 		al_vars_free(host->vars);
-		widget_free(host->widgets);
+		widget_free(host->root);
 		lua_close(host->lua);
 		free(host);
 	}
@@ -149,7 +149,7 @@ static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 	}
 
 	Vec2 location = {event.x, host->screenSize.y - event.y};
-	AlWidget *hit = widget_hit_test(host->widgets, location);
+	AlWidget *hit = widget_hit_test(host->root, location);
 
 	if (hit) {
 		if (event.state == SDL_PRESSED)
@@ -237,7 +237,7 @@ void al_host_run(AlHost *host)
 #ifdef RASPI
 		widget_graphics_render(host->widgets, showMouse, get_mouse_pos(host));
 #else
-		widget_graphics_render(host->widgets, false, (Vec2){0, 0});
+		widget_graphics_render(host->root, false, (Vec2){0, 0});
 #endif
 	}
 }
@@ -293,7 +293,7 @@ static int cmd_get_root_widget(lua_State *L)
 {
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
 
-	lua_pushlightuserdata(L, host->widgets);
+	lua_pushlightuserdata(L, host->root);
 
 	return 1;
 }

@@ -24,7 +24,7 @@ typedef struct {
 
 	Vec2 screenSize;
 
-	AlWidget *widgets;
+	AlWidget *root;
 	AlWidget *grabbingWidget;
 } AlHost;
 
