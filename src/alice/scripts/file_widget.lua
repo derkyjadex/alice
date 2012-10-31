@@ -77,7 +77,7 @@ FileWidget = class(Widget, function(self, callback)
 		end
 	end
 
-	self.layout = function(self, left, width, right, bottom, height, top)
+	function self.layout(self, left, width, right, bottom, height, top)
 		Widget.prototype.layout(self, left, width, right, bottom, height, top)
 
 		cancel_widget:layout(10, 70, nil, 10, 30, nil)

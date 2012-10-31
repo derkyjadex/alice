@@ -66,16 +66,16 @@ function Widget.prototype.bind_text(self, command)
 	end)
 end
 
-Widget.prototype.grab_mouse = function(self)
+function Widget.prototype.grab_mouse(self)
 	self._grabbing = true
 	return commands.grab_mouse(self._ptr)
 end
-Widget.prototype.release_mouse = function(self, x, y)
+function Widget.prototype.release_mouse(self, x, y)
 	self._grabbing = false
 	commands.release_mouse(x, y)
 end
 
-Widget.prototype.layout = function(self, left, width, right, bottom, height, top)
+function Widget.prototype.layout(self, left, width, right, bottom, height, top)
 	local parent = self:parent()
 	local parent_bounds = {parent:bounds()}
 	parent_width = parent_bounds[3] - parent_bounds[1]
