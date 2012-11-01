@@ -5,6 +5,7 @@ sources = Split('''
 	file_system.c
 	graphics_text.c
 	model_editing.c
+	text.c
 	widget.c
 	widget_graphics.c
 ''')
@@ -29,6 +30,7 @@ scripts = Split('''
 	scripts/slider_widget.lua
 	scripts/colour_widget.lua
 	scripts/model_widget.lua
+	scripts/text_box.lua
 ''')
 
 images = Split('''
