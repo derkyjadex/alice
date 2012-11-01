@@ -92,6 +92,7 @@
 		1AA0058A160A71BC005195DF /* common.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = common.lua; sourceTree = "<group>"; };
 		1AA0058B160A71BC005195DF /* wrapper.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = wrapper.lua; sourceTree = "<group>"; };
 		1AA0058D160A79DB005195DF /* scripts.derived.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = scripts.derived.c; sourceTree = "<group>"; };
+		1AE04D77164173D900AE072E /* text_box.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = text_box.lua; sourceTree = "<group>"; };
 		1AE04D791641ABEA00AE072E /* text.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = text.h; sourceTree = "<group>"; };
 		1AE04D7A1641AC4400AE072E /* text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = text.c; sourceTree = "<group>"; };
 		1AE55F8416298ACE00FA402E /* file_system.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_system.c; sourceTree = "<group>"; };
@@ -210,6 +211,7 @@
 				1A42FD7A160DEE2900807A51 /* model.lua */,
 				1A42FD7E160DEF2900807A51 /* model_widget.lua */,
 				1A42FD7B160DEE2900807A51 /* slider_widget.lua */,
+				1AE04D77164173D900AE072E /* text_box.lua */,
 				1A42FD7C160DEE2900807A51 /* toolbar.lua */,
 				1A42FD7D160DEE2900807A51 /* widget.lua */,
 			);
@@ -454,6 +456,7 @@
 				"$(SRCROOT)/src/alice/scripts/toolbar.lua",
 				"$(SRCROOT)/src/alice/scripts/widget.lua",
 				"$(SRCROOT)/src/alice/scripts/file_widget.lua",
+				"$(SRCROOT)/src/alice/scripts/text_box.lua",
 			);
 			name = "Compile Scripts";
 			outputPaths = (

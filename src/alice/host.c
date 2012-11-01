@@ -54,6 +54,7 @@ AlError al_host_systems_init()
 		THROW(AL_ERROR_GENERIC);
 	}
 
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_EnableUNICODE(1);
 
 	CATCH(
@@ -115,6 +116,7 @@ AlError al_host_init(AlHost **result)
 		AL_SCRIPT(colour_widget),
 		AL_SCRIPT(model_widget),
 		AL_SCRIPT(file_widget),
+		AL_SCRIPT(text_box),
 		AL_SCRIPT_END
 	};
 
