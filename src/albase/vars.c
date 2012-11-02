@@ -17,8 +17,13 @@ typedef struct AlVarEntry {
 	AlVarType type;
 	bool global;
 	union {
-		void *ptr;
-		size_t offset;
+		struct {
+			void *ptr;
+		} global;
+		struct {
+			size_t offset;
+			AlWrapper *wrapper;
+		} instance;
 	} data;
 } AlVarEntry;
 
@@ -82,7 +87,7 @@ void al_vars_free(AlVars *vars)
 	}
 }
 
-static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *ptr, size_t offset)
+static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *ptr, size_t offset, AlWrapper *wrapper)
 {
 	BEGIN()
 
@@ -96,9 +101,10 @@ static AlError vars_register(AlVars *vars, const char *name, AlVarType type, boo
 	entry->type = type;
 	entry->global = global;
 	if (global) {
-		entry->data.ptr = ptr;
+		entry->data.global.ptr = ptr;
 	} else {
-		entry->data.offset = offset;
+		entry->data.instance.offset = offset;
+		entry->data.instance.wrapper = wrapper;
 	}
 
 	lua_State *L = vars->lua;
@@ -117,12 +123,12 @@ static AlError vars_register(AlVars *vars, const char *name, AlVarType type, boo
 
 AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr)
 {
-	return vars_register(vars, name, type, true, ptr, 0);
+	return vars_register(vars, name, type, true, ptr, 0, NULL);
 }
 
-AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset)
+AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset, AlWrapper *wrapper)
 {
-	return vars_register(vars, name, type, false, NULL, offset);
+	return vars_register(vars, name, type, false, NULL, offset, wrapper);
 }
 
 static bool tobool(lua_State *L, int n)
@@ -210,6 +216,34 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	return newValue;
 }
 
+static void *get_instance_ptr(lua_State *L, AlVarEntry *entry, int n)
+{
+	luaL_checkany(L, n);
+	switch (lua_type(L, n)) {
+		case LUA_TLIGHTUSERDATA:
+			return lua_touserdata(L, n) + entry->data.instance.offset;
+
+		case LUA_TTABLE:
+			if (!entry->data.instance.wrapper) {
+				luaL_error(L, "this var, %s, cannot be used on a table", entry->name);
+			}
+
+			lua_pushvalue(L, n);
+			void *ptr = al_wrapper_unwrap(entry->data.instance.wrapper);
+			if (!ptr) {
+				luaL_error(L, "the supplied table cannot be used on this var, %s", entry->name);
+			}
+
+			ptr += entry->data.instance.offset;
+
+			return ptr;
+
+		default:
+			luaL_error(L, "must supply a pointer or table for this var, %s", entry->name);
+			return NULL;
+	}
+}
+
 #define ACCESSOR(type, get, n, set) \
 	static int get_##type##_global(lua_State *L) \
 	{ \
@@ -219,10 +253,8 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	} \
 	static int get_##type##_instance(lua_State *L) \
 	{ \
-		size_t offset = lua_tointeger(L, lua_upvalueindex(1)); \
-		luaL_checktype(L, 1, LUA_TLIGHTUSERDATA); \
-		void *p = lua_touserdata(L, 1); \
-		type *ptr = p + offset; \
+		AlVarEntry *entry = lua_touserdata(L, lua_upvalueindex(1)); \
+		type *ptr = get_instance_ptr(L, entry, 1); \
 		get(L, *ptr); \
 		return n; \
 	} \
@@ -235,10 +267,8 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	} \
 	static int set_##type##_instance(lua_State *L) \
 	{ \
-		size_t offset = lua_tointeger(L, lua_upvalueindex(1)); \
-		luaL_checktype(L, 1, LUA_TLIGHTUSERDATA); \
-		void *p = lua_touserdata(L, 1); \
-		type *ptr = p + offset; \
+		AlVarEntry *entry = lua_touserdata(L, lua_upvalueindex(1)); \
+		type *ptr = get_instance_ptr(L, entry, 1); \
 		const int arg = 2; \
 		*ptr = set; \
 		return 0; \
@@ -278,11 +308,10 @@ static int cmd_get(lua_State *L)
 	void *ptr;
 
 	if (entry->global) {
-		ptr = entry->data.ptr;
+		ptr = entry->data.global.ptr;
 
 	} else {
-		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
-		ptr = lua_touserdata(L, 2) + entry->data.offset;
+		ptr = get_instance_ptr(L, entry, 2);
 	}
 
 	switch (entry->type) {
@@ -322,17 +351,16 @@ static int cmd_getter(lua_State *L)
 #undef USE
 
 	if (entry->global) {
-		lua_pushlightuserdata(L, entry->data.ptr);
+		lua_pushlightuserdata(L, entry->data.global.ptr);
 		lua_pushcclosure(L, getGlobal, 1);
 
 	} else if (lua_gettop(L) >= 2) {
-		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
-		void *ptr = lua_touserdata(L, 2) + entry->data.offset;
+		void *ptr = get_instance_ptr(L, entry, 2);
 		lua_pushlightuserdata(L, ptr);
 		lua_pushcclosure(L, getGlobal, 1);
 
 	} else {
-		lua_pushinteger(L, entry->data.offset);
+		lua_pushlightuserdata(L, entry);
 		lua_pushcclosure(L, getInstance, 1);
 	}
 
@@ -346,12 +374,11 @@ static int cmd_set(lua_State *L)
 	int valueArg;
 
 	if (entry->global) {
-		value = entry->data.ptr;
+		value = entry->data.global.ptr;
 		valueArg = 2;
 
 	} else {
-		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
-		value = lua_touserdata(L, 2) + entry->data.offset;
+		value = get_instance_ptr(L, entry, 2);
 		valueArg = 3;
 	}
 
@@ -418,17 +445,16 @@ static int cmd_setter(lua_State *L)
 #undef USE
 
 	if (entry->global) {
-		lua_pushlightuserdata(L, entry->data.ptr);
+		lua_pushlightuserdata(L, entry->data.global.ptr);
 		lua_pushcclosure(L, setGlobal, 1);
 
 	} else if (lua_gettop(L) >= 2) {
-		luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
-		void *ptr = lua_touserdata(L, 2);
-		lua_pushlightuserdata(L, ptr + entry->data.offset);
+		void *ptr = get_instance_ptr(L, entry, 2);
+		lua_pushlightuserdata(L, ptr);
 		lua_pushcclosure(L, setGlobal, 1);
 
 	} else {
-		lua_pushinteger(L, entry->data.offset);
+		lua_pushlightuserdata(L, entry);
 		lua_pushcclosure(L, setInstance, 1);
 	}
 
