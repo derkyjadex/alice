@@ -9,6 +9,7 @@ sources = Split('''
 	model_shape.c
 	vars.c
 	script.c
+	wrapper.c
 	gl/framebuffer.c
 	gl/model.c
 	gl/shader.c
