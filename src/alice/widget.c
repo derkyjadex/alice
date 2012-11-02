@@ -213,7 +213,7 @@ AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
-		al_wrapper_wrap(wrapper, widget);
+		al_wrapper_wrap(wrapper, widget, 0);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 3);
@@ -244,7 +244,7 @@ AlError widget_send_key(AlWidget *widget, SDLKey key)
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
-		al_wrapper_wrap(wrapper, widget);
+		al_wrapper_wrap(wrapper, widget, 0);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 3);
@@ -271,7 +271,7 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
-		al_wrapper_wrap(wrapper, widget);
+		al_wrapper_wrap(wrapper, widget, 0);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 3);
@@ -310,7 +310,7 @@ AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
 
 void widget_wrap(AlWidget *widget)
 {
-	al_wrapper_wrap(wrapper, widget);
+	al_wrapper_wrap(wrapper, widget, 0);
 }
 
 AlWidget *widget_unwrap()
@@ -395,7 +395,7 @@ static int cmd_widget_get_relation(lua_State *L, const char *name, size_t offset
 	AlWidget **relation = (void *)widget + offset;
 
 	if (*relation) {
-		al_wrapper_wrap(wrapper, *relation);
+		al_wrapper_wrap(wrapper, *relation, 0);
 	} else {
 		lua_pushnil(L);
 	}
@@ -591,7 +591,7 @@ static int cmd_widget_bind_keyboard_lost(lua_State *L)
 
 AlError widget_init_lua(lua_State *L)
 {
-	return al_wrapper_init(&wrapper, L);
+	return al_wrapper_init(&wrapper, L, false, NULL);
 }
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))

@@ -99,7 +99,7 @@ static int cmd_model_get_paths(lua_State *L)
 	AlModelShape *model = cmd_model_accessor(L, "get_paths", 1);
 
 	for (int i = 0; i < model->numPaths; i++) {
-		al_wrapper_wrap(pathWrapper, &model->paths[i]);
+		al_wrapper_wrap(pathWrapper, &model->paths[i], 0);
 	}
 
 	return model->numPaths;
@@ -282,8 +282,8 @@ AlError model_editing_init_lua(lua_State *L)
 {
 	BEGIN()
 
-	TRY(al_wrapper_init(&modelWrapper, L));
-	TRY(al_wrapper_init(&pathWrapper, L));
+	TRY(al_wrapper_init(&modelWrapper, L, false, NULL));
+	TRY(al_wrapper_init(&pathWrapper, L, false, NULL));
 
 	PASS()
 }
