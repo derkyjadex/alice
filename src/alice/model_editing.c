@@ -7,82 +7,54 @@
 #include "model_editing.h"
 #include "albase/model_shape.h"
 #include "albase/lua.h"
+#include "albase/wrapper.h"
 
-static int cmd_model_new(lua_State *L);
-static int cmd_model_free(lua_State *L);
-static int cmd_model_load(lua_State *L);
-static int cmd_model_save(lua_State *L);
+static AlWrapper *modelWrapper = NULL;
+static AlWrapper *pathWrapper = NULL;
 
-static int cmd_model_get_paths(lua_State *L);
-static int cmd_model_add_path(lua_State *L);
-static int cmd_model_remove_path(lua_State *L);
-
-static int cmd_model_path_get_colour(lua_State *L);
-static int cmd_model_path_set_colour(lua_State *L);
-static int cmd_model_path_get_points(lua_State *L);
-static int cmd_model_path_set_point(lua_State *L);
-static int cmd_model_path_add_point(lua_State *L);
-static int cmd_model_path_remove_point(lua_State *L);
-
-AlError model_editing_register_commands(AlCommands *commands)
+AlModelShape *model_editing_unwrap(lua_State *L)
 {
-	BEGIN()
-
-	TRY(al_commands_register(commands, "model_new", cmd_model_new, NULL));
-	TRY(al_commands_register(commands, "model_free", cmd_model_free, NULL));
-	TRY(al_commands_register(commands, "model_load", cmd_model_load, NULL));
-	TRY(al_commands_register(commands, "model_save", cmd_model_save, NULL));
-
-	TRY(al_commands_register(commands, "model_get_paths", cmd_model_get_paths, NULL));
-	TRY(al_commands_register(commands, "model_add_path", cmd_model_add_path, NULL));
-	TRY(al_commands_register(commands, "model_remove_path", cmd_model_remove_path, NULL));
-
-	TRY(al_commands_register(commands, "model_path_get_colour", cmd_model_path_get_colour, NULL));
-	TRY(al_commands_register(commands, "model_path_set_colour", cmd_model_path_set_colour, NULL));
-	TRY(al_commands_register(commands, "model_path_get_points", cmd_model_path_get_points, NULL));
-	TRY(al_commands_register(commands, "model_path_set_point", cmd_model_path_set_point, NULL));
-	TRY(al_commands_register(commands, "model_path_add_point", cmd_model_path_add_point, NULL));
-	TRY(al_commands_register(commands, "model_path_remove_point", cmd_model_path_remove_point, NULL));
-
-	PASS()
+	return al_wrapper_unwrap(modelWrapper);
 }
 
-static void *cmd_accessor(lua_State *L, const char *name, int numArgs)
+static AlModelShape *cmd_model_accessor(lua_State *L, const char *name, int numArgs)
 {
 	if (lua_gettop(L) != numArgs) {
-		luaL_error(L, "%s: requires %d argument(s)", name, numArgs);
+		luaL_error(L, "model_%s: requires %d argument(s)", name, numArgs);
 	}
 
-	void *ptr = lua_touserdata(L, -numArgs);
-	if (!ptr) {
-		luaL_error(L, "%s: first argument cannot be nil", name);
-	}
-
-	return ptr;
+	lua_pushvalue(L, 1);
+	return al_wrapper_unwrap(modelWrapper);
 }
 
 static int cmd_model_new(lua_State *L)
 {
 	BEGIN()
 
+	luaL_checktype(L, 1, LUA_TTABLE);
+
 	AlModelShape *model = NULL;
 	TRY(al_model_shape_init(&model));
-
-	lua_pushlightuserdata(L, model);
+	TRY(al_wrapper_register(modelWrapper, model, 1));
 
 	CATCH(
-		  return luaL_error(L, "Error creating model");
+		al_model_shape_free(model);
+		return luaL_error(L, "Error creating model");
 	)
 	FINALLY(
-		return 1;
+		return 0;
 	)
 }
 
 static int cmd_model_free(lua_State *L)
 {
-	AlModelShape *model = cmd_accessor(L, "model_free", 1);
-	lua_pop(L, 1);
+	AlModelShape *model = cmd_model_accessor(L, "free", 1);
 
+	for (int i = 0; i < model->numPaths; i++) {
+		al_wrapper_unregister(pathWrapper, &model->paths[i]);
+	}
+
+	al_wrapper_unregister(modelWrapper, model);
 	al_model_shape_free(model);
 
 	return 0;
@@ -92,14 +64,13 @@ static int cmd_model_load(lua_State *L)
 {
 	BEGIN()
 
-	AlModelShape *model = cmd_accessor(L, "model_load", 2);
+	AlModelShape *model = cmd_model_accessor(L, "load", 2);
 	const char *filename = lua_tostring(L, -1);
 
 	TRY(al_model_shape_load(model, filename));
-	lua_pop(L, 2);
 
 	CATCH(
-		  return luaL_error(L, "Error loading model");
+		return luaL_error(L, "Error loading model");
 	)
 	FINALLY(
 		return 0;
@@ -110,11 +81,10 @@ static int cmd_model_save(lua_State *L)
 {
 	BEGIN()
 
-	AlModelShape *model = cmd_accessor(L, "model_save", 2);
+	AlModelShape *model = cmd_model_accessor(L, "save", 2);
 	const char *filename = lua_tostring(L, -1);
 
 	TRY(al_model_shape_save(model, filename));
-	lua_pop(L, 2);
 
 	CATCH(
 		return luaL_error(L, "Error saving model");
@@ -126,11 +96,10 @@ static int cmd_model_save(lua_State *L)
 
 static int cmd_model_get_paths(lua_State *L)
 {
-	AlModelShape *model = cmd_accessor(L, "model_get_paths", 1);
-	lua_pop(L, 1);
+	AlModelShape *model = cmd_model_accessor(L, "get_paths", 1);
 
 	for (int i = 0; i < model->numPaths; i++) {
-		lua_pushlightuserdata(L, &model->paths[i]);
+		al_wrapper_wrap(pathWrapper, &model->paths[i]);
 	}
 
 	return model->numPaths;
@@ -140,7 +109,7 @@ static int cmd_model_add_path(lua_State *L)
 {
 	BEGIN()
 
-	AlModelShape *model = cmd_accessor(L, "model_add_path", 6);
+	AlModelShape *model = cmd_model_accessor(L, "add_path", 6);
 	int index = (int)lua_tointeger(L, -5) - 1;
 	double startX = lua_tonumber(L, -4);
 	double startY = lua_tonumber(L, -3);
@@ -162,10 +131,11 @@ static int cmd_model_remove_path(lua_State *L)
 {
 	BEGIN()
 
-	AlModelShape *model = cmd_accessor(L, "model_remove_path", 2);
+	AlModelShape *model = cmd_model_accessor(L, "remove_path", 2);
 	int index = (int)lua_tointeger(L, -1) - 1;
 	lua_pop(L, -1);
 
+	al_wrapper_unregister(pathWrapper, &model->paths[index]);
 	TRY(model_shape_remove_path(model, index));
 
 	CATCH(
@@ -176,9 +146,52 @@ static int cmd_model_remove_path(lua_State *L)
 	)
 }
 
+static int cmd_model_path_register_ctor(lua_State *L)
+{
+	BEGIN()
+
+	luaL_checkany(L, 1);
+	lua_pushvalue(L, 1);
+	TRY(al_wrapper_register_ctor(pathWrapper));
+
+	CATCH(
+		return luaL_error(L, "Error registering model path constructor");
+	)
+	FINALLY(
+		return 0;
+	)
+}
+
+static int cmd_model_path_register(lua_State *L)
+{
+	BEGIN()
+
+	luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
+	AlModelPath *path = lua_touserdata(L, 2);
+
+	TRY(al_wrapper_register(pathWrapper, path, 1));
+
+	CATCH(
+		return luaL_error(L, "Error registering model path");
+	)
+	FINALLY(
+		return 0;
+	)
+}
+
+static AlModelPath *cmd_path_accessor(lua_State *L, const char *name, int numArgs)
+{
+	if (lua_gettop(L) != numArgs) {
+		luaL_error(L, "model_path_%s: requires %d argument(s)", name, numArgs);
+	}
+
+	lua_pushvalue(L, 1);
+	return al_wrapper_unwrap(pathWrapper);
+}
+
 static int cmd_model_path_get_colour(lua_State *L)
 {
-	AlModelPath *path = cmd_accessor(L, "model_path_get_colour", 1);
+	AlModelPath *path = cmd_path_accessor(L, "get_colour", 1);
 	lua_pop(L, 1);
 
 	lua_pushnumber(L, path->colour.x);
@@ -190,7 +203,7 @@ static int cmd_model_path_get_colour(lua_State *L)
 
 static int cmd_model_path_set_colour(lua_State *L)
 {
-	AlModelPath *path = cmd_accessor(L, "model_path_set_colour", 4);
+	AlModelPath *path = cmd_path_accessor(L, "set_colour", 4);
 	double r = lua_tonumber(L, -3);
 	double g = lua_tonumber(L, -2);
 	double b = lua_tonumber(L, -1);
@@ -203,7 +216,7 @@ static int cmd_model_path_set_colour(lua_State *L)
 
 static int cmd_model_path_get_points(lua_State *L)
 {
-	AlModelPath *path = cmd_accessor(L, "model_path_get_points", 1);
+	AlModelPath *path = cmd_path_accessor(L, "get_points", 1);
 	lua_pop(L, 1);
 
 	for (int i = 0; i < path->numPoints; i++) {
@@ -216,7 +229,7 @@ static int cmd_model_path_get_points(lua_State *L)
 
 static int cmd_model_path_set_point(lua_State *L)
 {
-	AlModelPath *path = cmd_accessor(L, "model_path_set_point", 4);
+	AlModelPath *path = cmd_path_accessor(L, "set_point", 4);
 	int index = (int)lua_tointeger(L, -3) - 1;
 	double x = lua_tonumber(L, -2);
 	double y = lua_tonumber(L, -1);
@@ -231,7 +244,7 @@ static int cmd_model_path_add_point(lua_State *L)
 {
 	BEGIN()
 
-	AlModelPath *path = cmd_accessor(L, "model_path_add_point", 4);
+	AlModelPath *path = cmd_path_accessor(L, "add_point", 4);
 	int index = (int)lua_tointeger(L, -3) - 1;
 	double x = lua_tonumber(L, -2);
 	double y = lua_tonumber(L, -1);
@@ -251,7 +264,7 @@ static int cmd_model_path_remove_point(lua_State *L)
 {
 	BEGIN()
 
-	AlModelPath *path = cmd_accessor(L, "model_path_add_point", 2);
+	AlModelPath *path = cmd_path_accessor(L, "add_point", 2);
 	int index = (int)lua_tointeger(L, -1) - 1;
 	lua_pop(L, 2);
 
@@ -263,4 +276,42 @@ static int cmd_model_path_remove_point(lua_State *L)
 	FINALLY(
 		return 0;
 	)
+}
+
+AlError model_editing_init_lua(lua_State *L)
+{
+	BEGIN()
+
+	TRY(al_wrapper_init(&modelWrapper, L));
+	TRY(al_wrapper_init(&pathWrapper, L));
+
+	PASS()
+}
+
+#define REG_MODEL_CMD(x) TRY(al_commands_register(commands, "model_"#x, cmd_model_ ## x, NULL))
+#define REG_PATH_CMD(x) TRY(al_commands_register(commands, "model_path_"#x, cmd_model_path_ ## x, NULL))
+
+AlError model_editing_register_commands(AlCommands *commands)
+{
+	BEGIN()
+
+	REG_MODEL_CMD(new);
+	REG_MODEL_CMD(free);
+	REG_MODEL_CMD(load);
+	REG_MODEL_CMD(save);
+
+	REG_MODEL_CMD(get_paths);
+	REG_MODEL_CMD(add_path);
+	REG_MODEL_CMD(remove_path);
+
+	REG_PATH_CMD(register_ctor);
+	REG_PATH_CMD(register);
+	REG_PATH_CMD(get_colour);
+	REG_PATH_CMD(set_colour);
+	REG_PATH_CMD(get_points);
+	REG_PATH_CMD(set_point);
+	REG_PATH_CMD(add_point);
+	REG_PATH_CMD(remove_point);
+
+	PASS()
 }

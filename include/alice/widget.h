@@ -63,8 +63,10 @@ typedef struct AlWidget {
 	AlLuaKey keyboardLostBinding;
 } AlWidget;
 
+AlError widget_init_lua(lua_State *L);
 AlError widget_register_commands(AlCommands *commands);
 AlError widget_register_vars(AlVars *vars);
+
 AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands);
 void widget_free(AlWidget *widget);
 void widget_add_child(AlWidget *widget, AlWidget *child);
@@ -80,5 +82,8 @@ AlError widget_send_text(AlWidget *widget, const char *text);
 AlError widget_send_keyboard_lost(AlWidget *widget);
 
 AlWidget *widget_hit_test(AlWidget *widget, Vec2 location);
+
+void widget_wrap(AlWidget *widget);
+AlWidget *widget_unwrap(void);
 
 #endif

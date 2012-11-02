@@ -4,19 +4,15 @@
 -- See COPYING for details.
 
 Widget = class(function(self, ptr)
-	if not ptr then
-		ptr = commands.widget_new()
+	if ptr then
+		commands.widget_register(self, ptr)
+	else
+		commands.widget_new(self)
 	end
-	self._ptr = ptr
+
 	self._grabbing = false
 end)
-
-Widget.prototype.free = make_free(commands.widget_free)
-
-Widget.prototype.next = make_wrapped_accessor(commands.widget_get_next, nil, Widget)
-Widget.prototype.prev = make_wrapped_accessor(commands.widget_get_prev, nil, Widget)
-Widget.prototype.parent = make_wrapped_accessor(commands.widget_get_parent, nil, Widget)
-Widget.prototype.first_child = make_wrapped_accessor(commands.widget_get_first_child, nil, Widget)
+commands.widget_register_ctor(Widget)
 
 local vars = {
 	'location', 'bounds', 'fill_colour',
@@ -29,58 +25,38 @@ for i,var in ipairs(vars) do
 	Widget.prototype[var] = make_var_accessor('widget_' .. var)
 end
 
-function Widget.prototype.model(self, model)
-	if type(model) == 'table' then
-		model = model._ptr
-	end
-	commands.widget_set_model(self._ptr, model)
-end
+Widget.prototype.free = commands.widget_free
+Widget.prototype.next = commands.widget_get_next
+Widget.prototype.prev = commands.widget_get_prev
+Widget.prototype.parent = commands.widget_get_parent
+Widget.prototype.first_child = commands.widget_get_first_child
+Widget.prototype.model = commands.widget_set_model
+Widget.prototype.add_child = commands.widget_add_child
+Widget.prototype.add_sibling = commands.widget_add_sibling
+Widget.prototype.remove = commands.widget_remove
+Widget.prototype.invalidate = commands.widget_invalidate
+Widget.prototype.bind_up = commands.widget_bind_up
+Widget.prototype.bind_down = commands.widget_bind_down
+Widget.prototype.bind_key = commands.widget_bind_key
+Widget.prototype.bind_text = commands.widget_bind_text
+Widget.prototype.bind_keyboard_lost = commands.widget_bind_keyboard_lost
+Widget.prototype.grab_keyboard = commands.grab_keyboard
+Widget.prototype.release_keyboard = commands.release_keyboard
 
-function Widget.prototype.add_child(self, child)
-	commands.widget_add_child(self._ptr, child._ptr)
-end
-function Widget.prototype.add_sibling(self, sibling)
-	commands.widget_add_sibling(self._ptr, child._ptr)
-end
-Widget.prototype.remove = wrap_command(commands.widget_remove)
-
-Widget.prototype.invalidate = wrap_command(commands.widget_invalidate)
-
-Widget.prototype.bind_up = wrap_command(commands.widget_bind_up)
-Widget.prototype.bind_down = wrap_command(commands.widget_bind_down)
 function Widget.prototype.bind_motion(self, command)
-	commands.widget_bind_motion(self._ptr, function(_, x, y)
+	commands.widget_bind_motion(self, function(_, x, y)
 		if self._grabbing then
 			command(self, x, y)
 		end
 	end)
 end
-function Widget.prototype.bind_key(self, command)
-	commands.widget_bind_key(self._ptr, function(_, key)
-		command(self, key)
-	end)
-end
-function Widget.prototype.bind_text(self, command)
-	commands.widget_bind_text(self._ptr, function(_, text)
-		command(self, text)
-	end)
-end
-Widget.prototype.bind_keyboard_lost = wrap_command(commands.widget_bind_keyboard_lost)
-
 function Widget.prototype.grab_mouse(self)
 	self._grabbing = true
-	return commands.grab_mouse(self._ptr)
+	return commands.grab_mouse(self)
 end
 function Widget.prototype.release_mouse(self, x, y)
 	self._grabbing = false
 	commands.release_mouse(x, y)
-end
-
-function Widget.prototype.grab_keyboard(self)
-	commands.grab_keyboard(self._ptr)
-end
-function Widget.prototype.release_keyboard(self)
-	commands.release_keyboard()
 end
 
 function Widget.prototype.layout(self, left, width, right, bottom, height, top)
@@ -106,4 +82,4 @@ function Widget.prototype.layout(self, left, width, right, bottom, height, top)
 	self:invalidate()
 end
 
-Widget.root = Widget(commands.get_root_widget())
+Widget.root = commands.get_root_widget()

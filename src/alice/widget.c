@@ -9,6 +9,10 @@
 
 #include "alice/widget.h"
 #include "albase/lua.h"
+#include "albase/wrapper.h"
+#include "model_editing.h"
+
+static AlWrapper *wrapper = NULL;
 
 AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 {
@@ -88,6 +92,8 @@ void widget_free(AlWidget *widget)
 		free_binding(widget, offsetof(AlWidget, keyBinding));
 		free_binding(widget, offsetof(AlWidget, textBinding));
 		free_binding(widget, offsetof(AlWidget, keyboardLostBinding));
+
+		al_wrapper_unregister(wrapper, widget);
 
 		free(widget);
 	}
@@ -207,7 +213,7 @@ AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
-		lua_pushlightuserdata(L, widget);
+		al_wrapper_wrap(wrapper, widget);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 3);
@@ -238,7 +244,7 @@ AlError widget_send_key(AlWidget *widget, SDLKey key)
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
-		lua_pushlightuserdata(L, widget);
+		al_wrapper_wrap(wrapper, widget);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 3);
@@ -265,7 +271,7 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
-		lua_pushlightuserdata(L, widget);
+		al_wrapper_wrap(wrapper, widget);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 3);
@@ -302,22 +308,67 @@ AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
 	return result;
 }
 
+void widget_wrap(AlWidget *widget)
+{
+	al_wrapper_wrap(wrapper, widget);
+}
+
+AlWidget *widget_unwrap()
+{
+	return al_wrapper_unwrap(wrapper);
+}
+
+static int cmd_widget_register_ctor(lua_State *L)
+{
+	BEGIN()
+
+	luaL_checkany(L, 1);
+	lua_pushvalue(L, 1);
+	TRY(al_wrapper_register_ctor(wrapper));
+
+	CATCH(
+		return luaL_error(L, "Error registering widget constructor");
+	)
+	FINALLY(
+		return 0;
+	)
+}
+
+static int cmd_widget_register(lua_State *L)
+{
+	BEGIN()
+
+	luaL_checktype(L, 2, LUA_TLIGHTUSERDATA);
+	AlWidget *widget = lua_touserdata(L, 2);
+
+	TRY(al_wrapper_register(wrapper, widget, 1));
+
+	CATCH(
+		return luaL_error(L, "Error registering widget");
+	)
+	FINALLY(
+		return 0;
+	)
+}
+
 static int cmd_widget_new(lua_State *L)
 {
 	BEGIN()
 
 	AlCommands *commands = lua_touserdata(L, lua_upvalueindex(1));
 
+	luaL_checktype(L, 1, LUA_TTABLE);
+
 	AlWidget *widget = NULL;
 	TRY(widget_init(&widget, L, commands));
-
-	lua_pushlightuserdata(L, widget);
+	TRY(al_wrapper_register(wrapper, widget, 1));
 
 	CATCH(
+		widget_free(widget);
 		return luaL_error(L, "Error creating widget");
 	)
 	FINALLY(
-		return 1;
+		return 0;
 	)
 }
 
@@ -327,12 +378,8 @@ static AlWidget *cmd_accessor(lua_State *L, const char *name, int numArgs)
 		luaL_error(L, "widget_%s: requires %d argument(s)", name, numArgs);
 	}
 
-	AlWidget *widget = lua_touserdata(L, 1);
-	if (!widget) {
-		luaL_error(L, "widget_%s: first argument must be a Widget", name);
-	}
-
-	return widget;
+	lua_pushvalue(L, 1);
+	return al_wrapper_unwrap(wrapper);
 }
 
 static int cmd_widget_free(lua_State *L)
@@ -348,7 +395,7 @@ static int cmd_widget_get_relation(lua_State *L, const char *name, size_t offset
 	AlWidget **relation = (void *)widget + offset;
 
 	if (*relation) {
-		lua_pushlightuserdata(L, *relation);
+		al_wrapper_wrap(wrapper, *relation);
 	} else {
 		lua_pushnil(L);
 	}
@@ -398,7 +445,8 @@ static int cmd_widget_set_model_shape(lua_State *L, AlWidget *widget)
 {
 	BEGIN()
 
-	AlModelShape *shape = lua_touserdata(L, 2);
+	lua_pushvalue(L, 2);
+	AlModelShape *shape = model_editing_unwrap(L);
 
 	if (!widget->model.model) {
 		TRY(al_model_use_shape(&widget->model.model, shape));
@@ -424,7 +472,7 @@ static int cmd_widget_set_model(lua_State *L)
 	} else if (lua_isstring(L, 2)) {
 		return cmd_widget_set_model_file(L, widget);
 
-	} else if (lua_islightuserdata(L, 2)) {
+	} else if (lua_istable(L, 2)) {
 		return cmd_widget_set_model_shape(L, widget);
 
 	} else {
@@ -435,7 +483,7 @@ static int cmd_widget_set_model(lua_State *L)
 static int cmd_widget_add_child(lua_State *L)
 {
 	AlWidget *widget = cmd_accessor(L, "add_child", 2);
-	AlWidget *child = lua_touserdata(L, -1);
+	AlWidget *child = al_wrapper_unwrap(wrapper);
 
 	widget_add_child(widget, child);
 
@@ -445,7 +493,7 @@ static int cmd_widget_add_child(lua_State *L)
 static int cmd_widget_add_sibling(lua_State *L)
 {
 	AlWidget *widget = cmd_accessor(L, "add_sibling", 2);
-	AlWidget *sibling = lua_touserdata(L, -1);
+	AlWidget *sibling = al_wrapper_unwrap(wrapper);
 
 	widget_add_sibling(widget, sibling);
 
@@ -473,8 +521,8 @@ static int cmd_widget_bind_plain(lua_State *L, const char *name, size_t bindingO
 		return luaL_error(L, "widget_bind_%s: requires at least two arguments", name);
 	}
 
-	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-	AlWidget *widget = lua_touserdata(L, 1);
+	lua_pushvalue(L, 1);
+	AlWidget *widget = al_wrapper_unwrap(wrapper);
 	AlLuaKey *binding = (void *)widget + bindingOffset;
 	*binding = true;
 
@@ -499,7 +547,8 @@ static int cmd_widget_bind_data(lua_State *L, const char *name, size_t bindingOf
 	if (lua_gettop(L) != 2)
 		return luaL_error(L, "widget_bind_%s: requires 2 arguments", name);
 
-	AlWidget *widget = lua_touserdata(L, -2);
+	lua_pushvalue(L, 1);
+	AlWidget *widget = al_wrapper_unwrap(wrapper);
 	AlLuaKey *binding = (void *)widget + bindingOffset;
 	*binding = true;
 
@@ -540,12 +589,19 @@ static int cmd_widget_bind_keyboard_lost(lua_State *L)
 	return cmd_widget_bind_plain(L, "keyboard_lost", offsetof(AlWidget, keyboardLostBinding));
 }
 
+AlError widget_init_lua(lua_State *L)
+{
+	return al_wrapper_init(&wrapper, L);
+}
+
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
 
 AlError widget_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
+	REG_CMD(register_ctor);
+	REG_CMD(register);
 	TRY(al_commands_register(commands, "widget_new", cmd_widget_new, commands, NULL));
 	REG_CMD(free);
 
@@ -572,7 +628,7 @@ AlError widget_register_commands(AlCommands *commands)
 	PASS()
 }
 
-#define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget_"#n, t, offsetof(AlWidget, x), NULL))
+#define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget_"#n, t, offsetof(AlWidget, x), wrapper))
 
 AlError widget_register_vars(AlVars *vars)
 {

@@ -94,6 +94,9 @@ AlError al_host_init(AlHost **result)
 	host->root->bounds = (Box){{0, 0}, host->screenSize};
 	host->keyboardWidget = host->root;
 
+	TRY(widget_init_lua(host->lua));
+	TRY(model_editing_init_lua(host->lua));
+
 	TRY(al_commands_register(host->commands, "exit", cmd_exit, host, NULL));
 	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host, NULL));
 	TRY(al_commands_register(host->commands, "grab_mouse", cmd_grab_mouse, host, NULL));
@@ -303,7 +306,7 @@ static int cmd_get_root_widget(lua_State *L)
 {
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
 
-	lua_pushlightuserdata(L, host->root);
+	widget_wrap(host->root);
 
 	return 1;
 }
@@ -314,7 +317,7 @@ static int cmd_grab_mouse(lua_State *L)
 		return luaL_error(L, "grab_mouse: requires 1 argument");
 
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
-	AlWidget *widget = lua_touserdata(L, -1);
+	AlWidget *widget = widget_unwrap();
 
 	Vec2 location = host_grab_mouse(host, widget);
 
@@ -345,7 +348,7 @@ static int cmd_grab_keyboard(lua_State *L)
 		return luaL_error(L, "grab_keyboard: required 1 argument");
 
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
-	AlWidget *widget = lua_touserdata(L, -1);
+	AlWidget *widget = widget_unwrap();
 
 	AlWidget *oldWidget = host->keyboardWidget;
 	host->keyboardWidget = widget;
