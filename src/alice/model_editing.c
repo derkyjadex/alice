@@ -46,20 +46,6 @@ static int cmd_model_new(lua_State *L)
 	)
 }
 
-static int cmd_model_free(lua_State *L)
-{
-	AlModelShape *model = cmd_model_accessor(L, "free", 1);
-
-	for (int i = 0; i < model->numPaths; i++) {
-		al_wrapper_unregister(pathWrapper, &model->paths[i]);
-	}
-
-	al_wrapper_unregister(modelWrapper, model);
-	al_model_shape_free(model);
-
-	return 0;
-}
-
 static int cmd_model_load(lua_State *L)
 {
 	BEGIN()
@@ -99,7 +85,8 @@ static int cmd_model_get_paths(lua_State *L)
 	AlModelShape *model = cmd_model_accessor(L, "get_paths", 1);
 
 	for (int i = 0; i < model->numPaths; i++) {
-		al_wrapper_wrap(pathWrapper, &model->paths[i], 0);
+		lua_pushvalue(L, 1);
+		al_wrapper_wrap(pathWrapper, &model->paths[i], 1);
 	}
 
 	return model->numPaths;
@@ -115,7 +102,6 @@ static int cmd_model_add_path(lua_State *L)
 	double startY = lua_tonumber(L, -3);
 	double endX = lua_tonumber(L, -2);
 	double endY = lua_tonumber(L, -1);
-	lua_pop(L, 6);
 
 	TRY(al_model_shape_add_path(model, index, (Vec2){startX, startY}, (Vec2){endX, endY}));
 
@@ -133,7 +119,6 @@ static int cmd_model_remove_path(lua_State *L)
 
 	AlModelShape *model = cmd_model_accessor(L, "remove_path", 2);
 	int index = (int)lua_tointeger(L, -1) - 1;
-	lua_pop(L, -1);
 
 	al_wrapper_unregister(pathWrapper, &model->paths[index]);
 	TRY(model_shape_remove_path(model, index));
@@ -192,7 +177,6 @@ static AlModelPath *cmd_path_accessor(lua_State *L, const char *name, int numArg
 static int cmd_model_path_get_colour(lua_State *L)
 {
 	AlModelPath *path = cmd_path_accessor(L, "get_colour", 1);
-	lua_pop(L, 1);
 
 	lua_pushnumber(L, path->colour.x);
 	lua_pushnumber(L, path->colour.y);
@@ -207,7 +191,6 @@ static int cmd_model_path_set_colour(lua_State *L)
 	double r = lua_tonumber(L, -3);
 	double g = lua_tonumber(L, -2);
 	double b = lua_tonumber(L, -1);
-	lua_pop(L, 4);
 
 	path->colour = (Vec3){r, g, b};
 
@@ -217,7 +200,6 @@ static int cmd_model_path_set_colour(lua_State *L)
 static int cmd_model_path_get_points(lua_State *L)
 {
 	AlModelPath *path = cmd_path_accessor(L, "get_points", 1);
-	lua_pop(L, 1);
 
 	for (int i = 0; i < path->numPoints; i++) {
 		lua_pushnumber(L, path->points[i].x);
@@ -233,7 +215,6 @@ static int cmd_model_path_set_point(lua_State *L)
 	int index = (int)lua_tointeger(L, -3) - 1;
 	double x = lua_tonumber(L, -2);
 	double y = lua_tonumber(L, -1);
-	lua_pop(L, 3);
 
 	path->points[index] = (Vec2){x, y};
 
@@ -248,7 +229,6 @@ static int cmd_model_path_add_point(lua_State *L)
 	int index = (int)lua_tointeger(L, -3) - 1;
 	double x = lua_tonumber(L, -2);
 	double y = lua_tonumber(L, -1);
-	lua_pop(L, 4);
 
 	TRY(al_model_path_add_point(path, index, (Vec2){x, y}));
 
@@ -266,7 +246,6 @@ static int cmd_model_path_remove_point(lua_State *L)
 
 	AlModelPath *path = cmd_path_accessor(L, "add_point", 2);
 	int index = (int)lua_tointeger(L, -1) - 1;
-	lua_pop(L, 2);
 
 	TRY(al_model_path_remove_point(path, index));
 
@@ -278,12 +257,24 @@ static int cmd_model_path_remove_point(lua_State *L)
 	)
 }
 
+static void wrapper_model_free(lua_State *L, void *ptr)
+{
+	AlModelShape *model = ptr;
+
+	for (int i = 0; i < model->numPaths; i++) {
+		al_wrapper_unregister(pathWrapper, &model->paths[i]);
+	}
+
+	al_wrapper_unregister(modelWrapper, model);
+	al_model_shape_free(model);
+}
+
 AlError model_editing_init_lua(lua_State *L)
 {
 	BEGIN()
 
-	TRY(al_wrapper_init(&modelWrapper, L, false, NULL));
-	TRY(al_wrapper_init(&pathWrapper, L, false, NULL));
+	TRY(al_wrapper_init(&modelWrapper, L, true, wrapper_model_free));
+	TRY(al_wrapper_init(&pathWrapper, L, true, NULL));
 
 	PASS()
 }
@@ -296,7 +287,6 @@ AlError model_editing_register_commands(AlCommands *commands)
 	BEGIN()
 
 	REG_MODEL_CMD(new);
-	REG_MODEL_CMD(free);
 	REG_MODEL_CMD(load);
 	REG_MODEL_CMD(save);
 

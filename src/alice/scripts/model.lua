@@ -3,8 +3,12 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ModelPath = class(function(self, ptr)
+ModelPath = class(function(self, ptr, model)
 	commands.model_path_register(self, ptr)
+
+	function self.model()
+		return model
+	end
 end)
 commands.model_path_register_ctor(ModelPath)
 
@@ -31,7 +35,6 @@ Model = class(function(self)
 	commands.model_new(self)
 end)
 
-Model.prototype.free = commands.model_free
 Model.prototype.load = commands.model_load
 Model.prototype.save = commands.model_save
 
