@@ -182,6 +182,16 @@ void al_wrapper_unregister(AlWrapper *wrapper, void *ptr)
 		return;
 	}
 
+	if (wrapper->free) {
+		lua_pushlightuserdata(L, &wrapper->gcListeners);
+		lua_gettable(L, LUA_REGISTRYINDEX);
+		lua_pushvalue(L, -2);
+		lua_gettable(L, -2);
+		lua_pushnil(L);
+		lua_setmetatable(L, -2);
+		lua_pop(L, 2);
+	}
+
 	lua_pushnil(L);
 	lua_settable(L, -3);
 	lua_pop(L, 1);
