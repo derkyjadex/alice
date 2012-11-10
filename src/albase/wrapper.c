@@ -14,14 +14,15 @@ struct AlWrapper {
 	AlLuaKey tablePtrs;
 	AlLuaKey ptrTables;
 	AlLuaKey ctor;
+	AlLuaKey gcListeners;
 	AlWrapperFree free;
 };
 
-static void make_weak(lua_State *L)
+static void make_weak(lua_State *L, const char *mode)
 {
 	lua_newtable(L);
 	lua_pushliteral(L, "__mode");
-	lua_pushliteral(L, "kv");
+	lua_pushstring(L, mode);
 	lua_settable(L, -3);
 	lua_setmetatable(L, -2);
 }
@@ -40,16 +41,23 @@ AlError al_wrapper_init(AlWrapper **result, lua_State *L, bool weak, AlWrapperFr
 	lua_pushlightuserdata(L, &wrapper->tablePtrs);
 	lua_newtable(L);
 	if (weak) {
-		make_weak(L);
+		make_weak(L, "k");
 	}
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &wrapper->ptrTables);
 	lua_newtable(L);
 	if (weak) {
-		make_weak(L);
+		make_weak(L, "v");
 	}
 	lua_settable(L, LUA_REGISTRYINDEX);
+
+	if (free) {
+		lua_pushlightuserdata(L, &wrapper->gcListeners);
+		lua_newtable(L);
+		make_weak(L, "k");
+		lua_settable(L, LUA_REGISTRYINDEX);
+	}
 
 	*result = wrapper;
 
@@ -69,6 +77,10 @@ void al_wrapper_free(AlWrapper *wrapper)
 		lua_settable(L, LUA_REGISTRYINDEX);
 
 		lua_pushlightuserdata(L, &wrapper->ptrTables);
+		lua_pushnil(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
+
+		lua_pushlightuserdata(L, &wrapper->gcListeners);
 		lua_pushnil(L);
 		lua_settable(L, LUA_REGISTRYINDEX);
 
@@ -115,8 +127,12 @@ static void auto_free(AlWrapper *wrapper, void *ptr)
 	lua_settable(L, -3);
 	lua_setmetatable(L, -2);
 
-	lua_pushvalue(L, -1);
+	lua_pushlightuserdata(L, &wrapper->gcListeners);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushvalue(L, -3);
+	lua_pushvalue(L, -3);
 	lua_settable(L, -3);
+	lua_pop(L, 2);
 }
 
 AlError al_wrapper_register(AlWrapper *wrapper, void *ptr, int tableN)
