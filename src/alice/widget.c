@@ -61,6 +61,25 @@ AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 	FINALLY()
 }
 
+#define set_relation(widget, member, value) _set_relation(widget, &(widget)->member, value)
+
+static void _set_relation(AlWidget *widget, AlWidget **member, AlWidget *value)
+{
+	if (*member) {
+		widget_wrap(widget);
+		widget_wrap(*member);
+		al_wrapper_unreference(wrapper);
+	}
+
+	if (value) {
+		widget_wrap(widget);
+		widget_wrap(value);
+		al_wrapper_reference(wrapper);
+	}
+
+	*member = value;
+}
+
 static void free_binding(AlWidget *widget, size_t bindingOffset)
 {
 	AlLuaKey *binding = (void *)widget + bindingOffset;
@@ -104,15 +123,15 @@ void widget_add_child(AlWidget *widget, AlWidget *child)
 	assert(!child->next && !child->prev && !child->parent);
 
 	if (widget->lastChild) {
-		widget->lastChild->next = child;
-		child->prev = widget->lastChild;
+		set_relation(widget->lastChild, next, child);
+		set_relation(child, prev, widget->lastChild);
 
 	} else {
-		widget->firstChild = child;
+		set_relation(widget, firstChild, child);
 	}
 
-	widget->lastChild = child;
-	child->parent = widget;
+	set_relation(widget, lastChild, child);
+	set_relation(child, parent, widget);
 
 	child->valid = true;
 	widget_invalidate(child);
@@ -123,16 +142,16 @@ void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 	assert(!sibling->next && !sibling->prev && !sibling->parent);
 
 	if (widget->next) {
-		widget->next->prev = sibling;
-		sibling->next = widget->next;
+		set_relation(widget->next, prev, sibling);
+		set_relation(sibling, next, widget->next);
 
 	} else if (widget->parent) {
-		widget->parent->lastChild = sibling;
+		set_relation(widget->parent, lastChild, sibling);
 	}
 
-	widget->next = sibling;
-	sibling->prev = widget;
-	sibling->parent = widget->parent;
+	set_relation(widget, next, sibling);
+	set_relation(sibling, prev, widget);
+	set_relation(sibling, parent, widget->parent);
 
 	sibling->valid = true;
 	widget_invalidate(sibling);
@@ -141,26 +160,26 @@ void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 void widget_remove(AlWidget *widget)
 {
 	if (widget->next) {
-		widget->next->prev = widget->prev;
+		set_relation(widget->next, prev, widget->prev);
 
 	} else if (widget->parent) {
-		widget->parent->lastChild = widget->prev;
+		set_relation(widget->parent, lastChild, widget->prev);
 	}
 
 	if (widget->prev) {
-		widget->prev->next = widget->next;
+		set_relation(widget->prev, next, widget->next);
 
 	} else if (widget->parent) {
-		widget->parent->firstChild = widget->next;
+		set_relation(widget->parent, firstChild, widget->next);
 	}
 
 	if (widget->parent) {
 		widget_invalidate(widget->parent);
 	}
 
-	widget->prev = NULL;
-	widget->next = NULL;
-	widget->parent = NULL;
+	set_relation(widget, prev, NULL);
+	set_relation(widget, next, NULL);
+	set_relation(widget, parent, NULL);
 }
 
 void widget_invalidate(AlWidget *widget)
@@ -589,9 +608,19 @@ static int cmd_widget_bind_keyboard_lost(lua_State *L)
 	return cmd_widget_bind_plain(L, "keyboard_lost", offsetof(AlWidget, keyboardLostBinding));
 }
 
+static void wrapper_widget_free(lua_State *L, void *ptr)
+{
+	AlWidget *widget = ptr;
+	while (widget->parent) {
+		widget = widget->parent;
+	}
+
+	widget_free(widget);
+}
+
 AlError widget_init_lua(lua_State *L)
 {
-	return al_wrapper_init(&wrapper, L, false, NULL);
+	return al_wrapper_init(&wrapper, L, true, wrapper_widget_free);
 }
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
