@@ -24,4 +24,7 @@ void al_wrapper_unregister(AlWrapper *wrapper, void *ptr);
 void *al_wrapper_unwrap(AlWrapper *wrapper);
 void al_wrapper_wrap(AlWrapper *wrapper, void *ptr, int nArgs);
 
+void al_wrapper_reference(AlWrapper *wrapper);
+void al_wrapper_unreference(AlWrapper *wrapper);
+
 #endif

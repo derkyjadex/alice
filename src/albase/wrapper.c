@@ -15,6 +15,8 @@ struct AlWrapper {
 	AlLuaKey ptrTables;
 	AlLuaKey ctor;
 	AlLuaKey gcListeners;
+	AlLuaKey references;
+	AlLuaKey unregistered;
 	AlWrapperFree free;
 };
 
@@ -57,6 +59,10 @@ AlError al_wrapper_init(AlWrapper **result, lua_State *L, bool weak, AlWrapperFr
 		lua_newtable(L);
 		make_weak(L, "k");
 		lua_settable(L, LUA_REGISTRYINDEX);
+
+		lua_pushlightuserdata(L, &wrapper->unregistered);
+		lua_newtable(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
 	}
 
 	*result = wrapper;
@@ -81,6 +87,10 @@ void al_wrapper_free(AlWrapper *wrapper)
 		lua_settable(L, LUA_REGISTRYINDEX);
 
 		lua_pushlightuserdata(L, &wrapper->gcListeners);
+		lua_pushnil(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
+
+		lua_pushlightuserdata(L, &wrapper->unregistered);
 		lua_pushnil(L);
 		lua_settable(L, LUA_REGISTRYINDEX);
 
@@ -109,7 +119,24 @@ static int free_ptr(lua_State *L)
 	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
 	void *ptr = lua_touserdata(L, lua_upvalueindex(2));
 
-	wrapper->free(L, ptr);
+	lua_pushlightuserdata(L, &wrapper->unregistered);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushlightuserdata(L, ptr);
+	lua_gettable(L, -2);
+
+	bool unregistered = lua_toboolean(L, -1);
+
+	if (unregistered) {
+		lua_pushlightuserdata(L, ptr);
+		lua_pushnil(L);
+		lua_settable(L, -4);
+	}
+
+	lua_pop(L, 2);
+
+	if (!unregistered) {
+		wrapper->free(L, ptr);
+	}
 
 	return 0;
 }
@@ -168,6 +195,15 @@ AlError al_wrapper_register(AlWrapper *wrapper, void *ptr, int tableN)
 void al_wrapper_unregister(AlWrapper *wrapper, void *ptr)
 {
 	lua_State *L = wrapper->lua;
+
+	if (wrapper->free) {
+		lua_pushlightuserdata(L, &wrapper->unregistered);
+		lua_gettable(L, LUA_REGISTRYINDEX);
+		lua_pushlightuserdata(L, ptr);
+		lua_pushboolean(L, true);
+		lua_settable(L, -3);
+		lua_pop(L, 1);
+	}
 
 	lua_pushlightuserdata(L, &wrapper->ptrTables);
 	lua_gettable(L, LUA_REGISTRYINDEX);
@@ -248,4 +284,68 @@ void al_wrapper_wrap(AlWrapper *wrapper, void *ptr, int nArgs)
 		}
 		lua_call(L, 1 + nArgs, 1);
 	}
+}
+
+void al_wrapper_reference(AlWrapper *wrapper)
+{
+	lua_State *L = wrapper->lua;
+
+	lua_pushlightuserdata(L, &wrapper->references);
+	lua_gettable(L, -3);
+
+	lua_Number numRefs;
+
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1);
+		lua_newtable(L);
+		lua_pushlightuserdata(L, &wrapper->references);
+		lua_pushvalue(L, -2);
+		lua_settable(L, -5);
+
+		numRefs = 0;
+
+	} else {
+		lua_pushvalue(L, -2);
+		lua_gettable(L, -2);
+
+		numRefs = lua_tointeger(L, -1);
+
+		lua_pop(L, 1);
+	}
+
+	lua_pushvalue(L, -2);
+	lua_pushinteger(L, numRefs + 1);
+	lua_settable(L, -3);
+
+	lua_pop(L, 3);
+}
+
+void al_wrapper_unreference(AlWrapper *wrapper)
+{
+	lua_State *L = wrapper->lua;
+
+	lua_pushlightuserdata(L, &wrapper->references);
+	lua_gettable(L, -3);
+
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 3);
+		return;
+	}
+
+	lua_pushvalue(L, -2);
+	lua_gettable(L, -2);
+	lua_Number numRefs = lua_tointeger(L, -1);
+	lua_pop(L, 1);
+
+	lua_pushvalue(L, -2);
+
+	if (numRefs > 1) {
+		lua_pushinteger(L, numRefs - 1);
+	} else {
+		lua_pushnil(L);
+	}
+
+	lua_settable(L, -3);
+
+	lua_pop(L, 3);
 }
