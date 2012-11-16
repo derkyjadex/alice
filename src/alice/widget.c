@@ -13,6 +13,7 @@
 #include "model_editing.h"
 
 static AlWrapper *wrapper = NULL;
+static AlLuaKey bindings;
 
 AlError widget_init(AlWidget **result, lua_State *lua, AlCommands *commands)
 {
@@ -193,15 +194,24 @@ void widget_invalidate(AlWidget *widget)
 	}
 }
 
-static AlError widget_send(AlWidget *widget, AlLuaKey *binding)
+static void push_bound_value(AlWidget *widget, AlLuaKey *binding)
+{
+	lua_State *L = widget->lua;
+
+	lua_pushlightuserdata(L, &bindings);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushlightuserdata(L, binding);
+	lua_gettable(L, -2);
+
+	lua_replace(L, -2);
+}
+
+static AlError widget_send_plain(AlWidget *widget, AlLuaKey *binding)
 {
 	BEGIN()
 
 	if (*binding) {
-		lua_State *L = widget->lua;
-
-		lua_pushlightuserdata(L, binding);
-		lua_gettable(L, LUA_REGISTRYINDEX);
+		push_bound_value(widget, binding);
 		TRY(al_commands_enqueue(widget->commands));
 	}
 
@@ -210,12 +220,12 @@ static AlError widget_send(AlWidget *widget, AlLuaKey *binding)
 
 AlError widget_send_down(AlWidget *widget)
 {
-	return widget_send(widget, &widget->downBinding);
+	return widget_send_plain(widget, &widget->downBinding);
 }
 
 AlError widget_send_up(AlWidget *widget)
 {
-	return widget_send(widget, &widget->upBinding);
+	return widget_send_plain(widget, &widget->upBinding);
 }
 
 AlError widget_send_motion(AlWidget *widget, Vec2 motion)
@@ -227,8 +237,7 @@ AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 
 		lua_newtable(L);
 		lua_pushinteger(L, 1);
-		lua_pushlightuserdata(L, &widget->motionBinding);
-		lua_gettable(L, LUA_REGISTRYINDEX);
+		push_bound_value(widget, &widget->motionBinding);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
@@ -258,8 +267,7 @@ AlError widget_send_key(AlWidget *widget, SDLKey key)
 
 		lua_newtable(L);
 		lua_pushinteger(L, 1);
-		lua_pushlightuserdata(L, &widget->keyBinding);
-		lua_gettable(L, LUA_REGISTRYINDEX);
+		push_bound_value(widget, &widget->keyBinding);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
@@ -285,8 +293,7 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 
 		lua_newtable(L);
 		lua_pushinteger(L, 1);
-		lua_pushlightuserdata(L, &widget->textBinding);
-		lua_gettable(L, LUA_REGISTRYINDEX);
+		push_bound_value(widget, &widget->textBinding);
 		lua_settable(L, -3);
 
 		lua_pushinteger(L, 2);
@@ -305,7 +312,7 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 
 AlError widget_send_keyboard_lost(AlWidget *widget)
 {
-	return widget_send(widget, &widget->keyboardLostBinding);
+	return widget_send_plain(widget, &widget->keyboardLostBinding);
 }
 
 AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
@@ -533,32 +540,55 @@ static int cmd_widget_invalidate(lua_State *L)
 	return 0;
 }
 
-static int cmd_widget_bind_plain(lua_State *L, const char *name, size_t bindingOffset)
+static int cmd_widget_bind(lua_State *L, size_t bindingOffset)
 {
-	int n = lua_gettop(L);
-	if (n < 2) {
-		return luaL_error(L, "widget_bind_%s: requires at least two arguments", name);
-	}
-
 	lua_pushvalue(L, 1);
 	AlWidget *widget = al_wrapper_unwrap(wrapper);
 	AlLuaKey *binding = (void *)widget + bindingOffset;
 	*binding = true;
 
+	lua_pushlightuserdata(L, &bindings);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushlightuserdata(L, binding);
+	lua_gettable(L, -2);
+
+	if (!lua_isnil(L, -1)) {
+		lua_pushvalue(L, 1);
+		lua_pushvalue(L, -2);
+		al_wrapper_unreference(wrapper);
+	}
+
+	lua_pop(L, 1);
+
+	lua_pushlightuserdata(L, binding);
+	lua_pushvalue(L, 2);
+	lua_settable(L, -3);
+
+	lua_pop(L, 1);
+
+	al_wrapper_reference(wrapper);
+
+	return 0;
+}
+
+static int cmd_widget_bind_plain(lua_State *L, const char *name, size_t bindingOffset)
+{
+	int n = lua_gettop(L);
+	if (n < 2)
+		return luaL_error(L, "widget_bind_%s: requires at least two arguments", name);
+
 	lua_newtable(L);
 
-	int i;
-	for (i = 1; i <= n - 1; i++) {
+	for (int i = 1; i <= n - 1; i++) {
 		lua_pushinteger(L, i);
-		lua_pushvalue(L, i - n - 2);
+		lua_pushvalue(L, i + 1);
 		lua_settable(L, -3);
 	}
 
-	lua_pushlightuserdata(L, binding);
-	lua_pushvalue(L, -2);
-	lua_settable(L, LUA_REGISTRYINDEX);
+	lua_replace(L, 2);
+	lua_settop(L, 2);
 
-	return 0;
+	return cmd_widget_bind(L, bindingOffset);
 }
 
 static int cmd_widget_bind_data(lua_State *L, const char *name, size_t bindingOffset)
@@ -566,16 +596,7 @@ static int cmd_widget_bind_data(lua_State *L, const char *name, size_t bindingOf
 	if (lua_gettop(L) != 2)
 		return luaL_error(L, "widget_bind_%s: requires 2 arguments", name);
 
-	lua_pushvalue(L, 1);
-	AlWidget *widget = al_wrapper_unwrap(wrapper);
-	AlLuaKey *binding = (void *)widget + bindingOffset;
-	*binding = true;
-
-	lua_pushlightuserdata(L, binding);
-	lua_pushvalue(L, -2);
-	lua_settable(L, LUA_REGISTRYINDEX);
-
-	return 0;
+	return cmd_widget_bind(L, bindingOffset);
 }
 
 static int cmd_widget_bind_up(lua_State *L)
@@ -620,7 +641,20 @@ static void wrapper_widget_free(lua_State *L, void *ptr)
 
 AlError widget_init_lua(lua_State *L)
 {
-	return al_wrapper_init(&wrapper, L, true, wrapper_widget_free);
+	BEGIN()
+
+	TRY(al_wrapper_init(&wrapper, L, true, wrapper_widget_free));
+
+	lua_pushlightuserdata(L, &bindings);
+	lua_newtable(L);
+	lua_newtable(L);
+	lua_pushliteral(L, "__mode");
+	lua_pushliteral(L, "v");
+	lua_settable(L, -3);
+	lua_setmetatable(L, -2);
+	lua_settable(L, LUA_REGISTRYINDEX);
+
+	PASS()
 }
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
