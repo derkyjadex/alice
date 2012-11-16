@@ -408,13 +408,6 @@ static AlWidget *cmd_accessor(lua_State *L, const char *name, int numArgs)
 	return al_wrapper_unwrap(wrapper);
 }
 
-static int cmd_widget_free(lua_State *L)
-{
-	widget_free(cmd_accessor(L, "free", 1));
-
-	return 0;
-}
-
 static int cmd_widget_get_relation(lua_State *L, const char *name, size_t offset)
 {
 	AlWidget *widget = cmd_accessor(L, name, 1);
@@ -666,7 +659,6 @@ AlError widget_register_commands(AlCommands *commands)
 	REG_CMD(register_ctor);
 	REG_CMD(register);
 	TRY(al_commands_register(commands, "widget_new", cmd_widget_new, commands, NULL));
-	REG_CMD(free);
 
 	REG_CMD(get_next);
 	REG_CMD(get_prev);

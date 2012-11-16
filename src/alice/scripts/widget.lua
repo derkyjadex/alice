@@ -25,7 +25,6 @@ for i,var in ipairs(vars) do
 	Widget.prototype[var] = make_var_accessor('widget_' .. var)
 end
 
-Widget.prototype.free = commands.widget_free
 Widget.prototype.next = commands.widget_get_next
 Widget.prototype.prev = commands.widget_get_prev
 Widget.prototype.parent = commands.widget_get_parent

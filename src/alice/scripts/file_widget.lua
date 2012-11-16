@@ -40,7 +40,6 @@ FileWidget = class(Widget, function(self, callback)
 	update_files = function()
 		for i, widget in ipairs(file_widgets) do
 			widget:remove()
-			widget:free()
 		end
 		file_widgets = {}
 
