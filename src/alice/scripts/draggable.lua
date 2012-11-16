@@ -28,7 +28,7 @@ end
 function make_draggable(widget, on_down, on_up, on_motion)
 	local parent
 
-	function drag(widget, motion_x, motion_y)
+	local function drag(widget, motion_x, motion_y)
 		local widget_x, widget_y = widget:location()
 		local x = widget_x + motion_x
 		local y = widget_y + motion_y

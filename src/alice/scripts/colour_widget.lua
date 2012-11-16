@@ -10,7 +10,7 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 	local red, green, blue
 	local hue_handle, val_handle
 
-	function set_rgb()
+	local function set_rgb()
 		local c = sat * val
 		local h_ = hue / (math.pi / 3)
 		local d = c * (1 - math.abs(math.fmod(h_, 2) - 1))
@@ -44,7 +44,18 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 		callback(red, green, blue)
 	end
 
-	function hue_handle_drag(x, y)
+	local function get_hue_handle_location()
+		local x = 90 * sat * math.cos(hue - math.pi)
+		local y = 90 * sat * math.sin(hue - math.pi)
+
+		return x, y
+	end
+
+	local function get_val_handle_location()
+		return 110, 180 * val - 90
+	end
+
+	local function hue_handle_drag(x, y)
 		x, y = x / 90, y / 90
 		hue = math.atan2(y, x) + math.pi
 		sat = clamp(math.sqrt(x * x + y * y), 0, 1)
@@ -53,29 +64,18 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 		return get_hue_handle_location()
 	end
 
-	function get_hue_handle_location()
-		local x = 90 * sat * math.cos(hue - math.pi)
-		local y = 90 * sat * math.sin(hue - math.pi)
-
-		return x, y
-	end
-
-	function set_hue_handle_location()
+	local function set_hue_handle_location()
 		hue_handle:location(get_hue_handle_location())
 	end
 
-	function val_handle_drag(x, y)
+	local function val_handle_drag(x, y)
 		val = clamp((y + 90) / 180, 0, 1)
 		set_rgb()
 
 		return get_val_handle_location()
 	end
 
-	function get_val_handle_location()
-		return 110, 180 * val - 90
-	end
-
-	function set_val_handle_location()
+	local function set_val_handle_location()
 		val_handle:location(get_val_handle_location())
 	end
 

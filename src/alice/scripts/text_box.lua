@@ -24,7 +24,7 @@ TextBox = class(Widget, function(self, callback)
 	local value_length = 0
 	local cursor_pos = 0
 
-	function update()
+	local function update()
 		self:text(value)
 		cursor:location(cursor_pos * char_width + padding, padding)
 		cursor:invalidate()
@@ -79,7 +79,7 @@ TextBox = class(Widget, function(self, callback)
 			self:back_delete()
 
 		elseif key == 127 then
-			self:forward_delete()				
+			self:forward_delete()
 		end
 	end)
 
