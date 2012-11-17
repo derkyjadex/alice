@@ -26,21 +26,21 @@ work for earlier versions.
 
 Alice builds and runs on the Raspbian distribution, but should probably work on
 others, as long as you have the VideoCore libraries in `/opt/vc`. Use your
-favourite package management interface to install the development libraries for
-the following (I can't remember the exact package names):
+favourite package management interface to install the following packages:
 
-- SDL 1.2
-- SDL_image 1.2 
-- Lua 5.1
+- scons
+- liblua5.1-0-dev
+- libsdl1.2-dev
+- libsdl-image1.2-dev
 
-You will also need to install scons. Simply run `scons` from the root of the
-project in order to build the library.
+Simply run `scons` from the root of the project in order to build the library.
 
 
 Usage
 -----
 
-For some sample code using Alice, see the Alice Demo project, <https://github.com/derkyjadex/alice-demo>.
+For some sample code using Alice, see the Alice Demo project, 
+<https://github.com/derkyjadex/alice-demo>.
 
 
 Licence
