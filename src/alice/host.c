@@ -218,7 +218,7 @@ void al_host_run(AlHost *host)
 
 				case SDL_MOUSEMOTION:
 #ifdef RASPI
-					widget_invalidate(host->widgets);
+					widget_invalidate(host->root);
 #endif
 					if (ignoreNextMotion) {
 						ignoreNextMotion = false;
@@ -248,7 +248,7 @@ void al_host_run(AlHost *host)
 		al_commands_process_queue(host->commands);
 
 #ifdef RASPI
-		widget_graphics_render(host->widgets, showMouse, get_mouse_pos(host));
+		widget_graphics_render(host->root, showMouse, get_mouse_pos(host));
 #else
 		widget_graphics_render(host->root, false, (Vec2){0, 0});
 #endif
