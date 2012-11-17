@@ -33,22 +33,9 @@ AlError al_script_init(lua_State **result)
 	if (!L)
 		THROW(AL_ERROR_MEMORY)
 
-		luaL_Reg luaLibs[] = {
-			{"", luaopen_base},
-			{LUA_MATHLIBNAME, luaopen_math},
-			{LUA_LOADLIBNAME, luaopen_package},
-			{LUA_TABLIBNAME, luaopen_table},
-			{LUA_DBLIBNAME, luaopen_debug},
-			{NULL, NULL}
-		};
+	luaL_openlibs(L);
 
-	for (luaL_Reg *lib = luaLibs; lib->func; lib++) {
-		lua_pushcfunction(L, lib->func);
-		lua_pushstring(L, lib->name);
-		lua_call(L, 1, 0);
-	}
-
-	lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+	lua_getglobal(L, "debug");
 	lua_getfield(L, -1, "traceback");
 	lua_pushcclosure(L, traceback, 1);
 	lua_pushlightuserdata(L, &tracebackKey);

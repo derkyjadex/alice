@@ -110,7 +110,7 @@ AlError al_commands_process_queue(AlCommands *commands)
 		lua_pushnumber(L, commands->first);
 		lua_gettable(L, -2);
 
-		int n = (int)lua_objlen(L, -1);
+		int n = (int)lua_rawlen(L, -1);
 		int i;
 		for (i = 1; i <= n; i++) {
 			lua_pushnumber(L, i);

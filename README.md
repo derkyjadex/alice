@@ -29,7 +29,7 @@ others, as long as you have the VideoCore libraries in `/opt/vc`. Use your
 favourite package management interface to install the following packages:
 
 - scons
-- liblua5.1-0-dev
+- liblua5.2-dev
 - libsdl1.2-dev
 - libsdl-image1.2-dev
 
