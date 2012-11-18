@@ -125,18 +125,15 @@ static int free_ptr(lua_State *L)
 	lua_gettable(L, -2);
 
 	bool unregistered = lua_toboolean(L, -1);
-
-	if (unregistered) {
-		lua_pushlightuserdata(L, ptr);
-		lua_pushnil(L);
-		lua_settable(L, -4);
-	}
-
-	lua_pop(L, 2);
+	lua_pop(L, 1);
 
 	if (!unregistered) {
 		wrapper->free(L, ptr);
 	}
+
+	lua_pushlightuserdata(L, ptr);
+	lua_pushnil(L);
+	lua_settable(L, -3);
 
 	return 0;
 }
