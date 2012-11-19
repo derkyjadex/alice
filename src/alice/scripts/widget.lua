@@ -58,11 +58,14 @@ function Widget.prototype.release_mouse(self, x, y)
 	commands.release_mouse(x, y)
 end
 
-function Widget.prototype.layout(self, left, width, right, bottom, height, top)
+function Widget.prototype.layout(self, left, width, right, bottom, height, top, offset_x, offset_y)
 	local parent = self:parent()
 	local parent_bounds = {parent:bounds()}
-	parent_width = parent_bounds[3] - parent_bounds[1]
-	parent_height = parent_bounds[4] - parent_bounds[2]
+
+	local parent_offset_x = -parent_bounds[1]
+	local parent_offset_y = -parent_bounds[2]
+	local parent_width = parent_bounds[3] - parent_bounds[1]
+	local parent_height = parent_bounds[4] - parent_bounds[2]
 
 	if left == nil then
 		left = parent_width - width - right
@@ -76,8 +79,11 @@ function Widget.prototype.layout(self, left, width, right, bottom, height, top)
 		height = parent_height - bottom - top
 	end
 
-	self:location(left, bottom)
-	self:bounds(0, 0, width, height)
+	offset_x = offset_x or 0
+	offset_y = offset_y or 0
+
+	self:location(left + offset_x - parent_offset_x, bottom + offset_y - parent_offset_y)
+	self:bounds(-offset_x, -offset_y, width - offset_x, height - offset_y)
 	self:invalidate()
 end
 
