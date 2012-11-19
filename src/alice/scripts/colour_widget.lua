@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ColourWidget = class(Widget, function(self, x, y, callback)
+ColourWidget = class(Widget, function(self, callback)
 	Widget.init(self)
 
 	local hue, sat, val = 0, 0, 1
@@ -79,8 +79,6 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 		val_handle:location(get_val_handle_location())
 	end
 
-	self:location(x + 100, y + 100)
-	self:bounds(-100, -100, 120, 100)
 	self:border_width(2)
 
 	hue_handle = Widget()
@@ -99,3 +97,7 @@ ColourWidget = class(Widget, function(self, x, y, callback)
 	hue_handle:location(get_hue_handle_location())
 	val_handle:location(get_val_handle_location())
 end)
+
+function ColourWidget.prototype.layout(self, left, width, right, bottom, height, top)
+	Widget.prototype.layout(self, left, 220, right, bottom, 200, top, 100, 100)
+end
