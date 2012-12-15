@@ -3,35 +3,68 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-function class(base, init)
+local factories = setmetatable({}, {__mode = 'k'})
+local mts = setmetatable({}, {__mode = 'k'})
+
+local function _class(base, factory, init)
 	local class = {}
-	class.prototype = {}
+	local prototype = {}
+	local mt = {}
 
-	if not init and type(base) == 'function' then
-		init = base
-		base = nil
+	if not base then
+		factory = factory or function() return {} end
+		init = init or function() end
 
-	elseif type(base) == 'table' then
-		for i, v in pairs(base.prototype) do
-			class.prototype[i] = v
+		mt.__index = function(self, k)
+			return prototype[k]
 		end
-		class._base = base
+
+	else
+		factory = factories[base]
+		init = init or base.init
+
+		local base_mt_index = mts[base].__index
+
+		mt.__index = function(self, k)
+			local v = prototype[k]
+			if v ~= nil then
+				return v
+			else
+				return base_mt_index(self, k)
+			end
+		end
 	end
 
+	class.base = base
 	class.init = init
-	class.prototype.__index = class.prototype
+	class.prototype = prototype
+	factories[class] = factory
+	mts[class] = mt
 
 	return setmetatable(class, {
 		__call = function(self, ...)
-			local obj = setmetatable({}, class.prototype)
+			local obj = setmetatable(factory(), mt)
 
-			if init then
-				init(obj, ...)
-			elseif base and base.init then
-				base.init(obj, ...)
-			end
+			init(obj, ...)
 
 			return obj
 		end
 	})
+end
+
+function class(base_or_factory_or_init, init)
+	local base, factory
+
+	if type(base_or_factory_or_init) == 'function' then
+		if init then
+			factory = base_or_factory_or_init
+		else
+			init = base_or_factory_or_init
+		end
+
+	elseif type(base_or_factory_or_init) == 'table' then
+		base = base_or_factory_or_init
+	end
+
+	return _class(base, factory, init)
 end
