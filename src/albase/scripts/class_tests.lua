@@ -113,6 +113,15 @@ function test_inherited_overridden_init()
 	assert(inited_param == x)
 end
 
+function test_set_class_property()
+	local x = {}
+
+	local A = class()
+	A.property = x
+
+	assert(A.property == x)
+end
+
 
 test_basic_prototype()
 test_inherited_prototype()
@@ -121,5 +130,6 @@ test_inherited_factory()
 test_basic_init()
 test_inherited_default_init()
 test_inherited_overridden_init()
+test_set_class_property()
 
 print('All passed!')
