@@ -145,7 +145,7 @@ static int cmd_text_remove(lua_State *L)
 	return 1;
 }
 
-AlError text_register_commands(AlCommands *commands)
+AlError text_system_init(AlCommands *commands)
 {
 	BEGIN()
 

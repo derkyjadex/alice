@@ -269,7 +269,7 @@ static void wrapper_model_free(lua_State *L, void *ptr)
 	al_model_shape_free(model);
 }
 
-AlError model_editing_init_lua(lua_State *L)
+static AlError model_system_init_lua(lua_State *L)
 {
 	BEGIN()
 
@@ -282,7 +282,7 @@ AlError model_editing_init_lua(lua_State *L)
 #define REG_MODEL_CMD(x) TRY(al_commands_register(commands, "model_"#x, cmd_model_ ## x, NULL))
 #define REG_PATH_CMD(x) TRY(al_commands_register(commands, "model_path_"#x, cmd_model_path_ ## x, NULL))
 
-AlError model_editing_register_commands(AlCommands *commands)
+static AlError model_system_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
@@ -302,6 +302,16 @@ AlError model_editing_register_commands(AlCommands *commands)
 	REG_PATH_CMD(set_point);
 	REG_PATH_CMD(add_point);
 	REG_PATH_CMD(remove_point);
+
+	PASS()
+}
+
+AlError model_system_init(lua_State *L, AlCommands *commands)
+{
+	BEGIN()
+
+	TRY(model_system_init_lua(L));
+	TRY(model_system_register_commands(commands));
 
 	PASS()
 }

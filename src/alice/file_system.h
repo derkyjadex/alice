@@ -10,6 +10,6 @@
 #include "albase/common.h"
 #include "albase/commands.h"
 
-AlError file_system_register_commands(AlCommands *commands);
+AlError file_system_init(AlCommands *commands);
 
 #endif

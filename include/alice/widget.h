@@ -63,9 +63,7 @@ typedef struct AlWidget {
 	AlLuaKey keyboardLostBinding;
 } AlWidget;
 
-AlError widget_init_lua(lua_State *L);
-AlError widget_register_commands(AlCommands *commands);
-AlError widget_register_vars(AlVars *vars);
+AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars);
 
 AlError widget_init(AlWidget **widget);
 void widget_free(AlWidget *widget);

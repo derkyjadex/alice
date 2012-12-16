@@ -11,9 +11,8 @@
 #include "albase/commands.h"
 #include "albase/model_shape.h"
 
-AlError model_editing_init_lua(lua_State *L);
-AlError model_editing_register_commands(AlCommands *commands);
 
 AlModelShape *model_editing_unwrap(lua_State *L);
+AlError model_system_init(lua_State *L, AlCommands *commands);
 
 #endif

@@ -596,7 +596,7 @@ static void wrapper_widget_free(lua_State *L, void *ptr)
 	_widget_free(ptr);
 }
 
-AlError widget_init_lua(lua_State *L)
+static AlError widget_system_init_lua(lua_State *L)
 {
 	BEGIN()
 
@@ -616,7 +616,7 @@ AlError widget_init_lua(lua_State *L)
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
 
-AlError widget_register_commands(AlCommands *commands)
+static AlError widget_system_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
@@ -648,7 +648,7 @@ AlError widget_register_commands(AlCommands *commands)
 
 #define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget_"#n, t, offsetof(AlWidget, x)))
 
-AlError widget_register_vars(AlVars *vars)
+static AlError widget_system_register_vars(AlVars *vars)
 {
 	BEGIN()
 
@@ -667,6 +667,17 @@ AlError widget_register_vars(AlVars *vars)
 	REG_VAR(VAR_VEC3, text_colour, text.colour);
 	REG_VAR(VAR_DOUBLE, text_size, text.size);
 	REG_VAR(VAR_VEC2, text_location, text.location);
+
+	PASS()
+}
+
+AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars)
+{
+	BEGIN()
+
+	TRY(widget_system_init_lua(L));
+	TRY(widget_system_register_commands(commands));
+	TRY(widget_system_register_vars(vars));
 
 	PASS()
 }

@@ -91,25 +91,17 @@ AlError al_host_init(AlHost **result)
 	TRY(al_commands_init(&host->commands, host->lua));
 	TRY(al_vars_init(&host->vars, host->lua, host->commands));
 
-	TRY(widget_init_lua(host->lua));
-	TRY(widget_init(&host->root, host->lua, host->commands));
-	host->root->bounds = (Box){{0, 0}, host->screenSize};
-	host->keyboardWidget = host->root;
-
-	TRY(model_editing_init_lua(host->lua));
-
 	TRY(al_commands_register(host->commands, "exit", cmd_exit, host, NULL));
 	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host, NULL));
 	TRY(al_commands_register(host->commands, "grab_mouse", cmd_grab_mouse, host, NULL));
 	TRY(al_commands_register(host->commands, "release_mouse", cmd_release_mouse, host, NULL));
 	TRY(al_commands_register(host->commands, "grab_keyboard", cmd_grab_keyboard, host, NULL));
 	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
-	TRY(widget_register_commands(host->commands));
-	TRY(model_editing_register_commands(host->commands));
-	TRY(file_system_register_commands(host->commands));
-	TRY(text_register_commands(host->commands));
 
-	TRY(widget_register_vars(host->vars));
+	TRY(widget_system_init(host->lua, host->commands, host->vars));
+	TRY(model_system_init(host->lua, host->commands));
+	TRY(file_system_init(host->commands));
+	TRY(text_system_init(host->commands));
 
 	AlScript scripts[] = {
 		AL_SCRIPT(widget),
@@ -126,6 +118,10 @@ AlError al_host_init(AlHost **result)
 
 	TRY(al_script_run_base_scripts(host->lua));
 	TRY(al_script_run_scripts(host->lua, scripts));
+
+	TRY(widget_init(&host->root));
+	host->root->bounds = (Box){{0, 0}, host->screenSize};
+	host->keyboardWidget = host->root;
 
 	*result = host;
 

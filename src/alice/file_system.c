@@ -90,7 +90,7 @@ static int cmd_list_dir(lua_State *L)
 	return numEntries;
 }
 
-AlError file_system_register_commands(AlCommands *commands)
+AlError file_system_init(AlCommands *commands)
 {
 	BEGIN()
 
