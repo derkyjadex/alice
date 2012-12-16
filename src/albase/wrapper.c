@@ -99,6 +99,28 @@ AlError al_wrapper_register_ctor(AlWrapper *wrapper)
 	PASS()
 }
 
+static int cmd_register_ctor(lua_State *L)
+{
+	BEGIN()
+
+	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
+
+	luaL_checkany(L, 1);
+	TRY(al_wrapper_register_ctor(wrapper));
+
+	CATCH(
+		return luaL_error(L, "Error registering constructor");
+	)
+	FINALLY(
+		return 0;
+	)
+}
+
+AlError al_wrapper_register_register_ctor_command(AlWrapper *wrapper, const char *name, AlCommands *commands)
+{
+	return al_commands_register(commands, name, cmd_register_ctor, wrapper, NULL);
+}
+
 AlError al_wrapper_invoke_ctor(AlWrapper *wrapper, void *result)
 {
 	BEGIN()

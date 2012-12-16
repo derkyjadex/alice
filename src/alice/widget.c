@@ -334,21 +334,6 @@ void widget_push_userdata(AlWidget *widget)
 	al_wrapper_push_userdata(wrapper, widget);
 }
 
-static int cmd_widget_register_ctor(lua_State *L)
-{
-	BEGIN()
-
-	luaL_checkany(L, 1);
-	TRY(al_wrapper_register_ctor(wrapper));
-
-	CATCH(
-		return luaL_error(L, "Error registering widget constructor");
-	)
-	FINALLY(
-		return 0;
-	)
-}
-
 static int cmd_widget_new(lua_State *L)
 {
 	BEGIN()
@@ -620,7 +605,7 @@ static AlError widget_system_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
-	REG_CMD(register_ctor);
+	TRY(al_wrapper_register_register_ctor_command(wrapper, "widget_register_ctor", commands));
 	TRY(al_commands_register(commands, "widget_new", cmd_widget_new, commands, NULL));
 
 	REG_CMD(get_next);

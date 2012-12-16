@@ -10,6 +10,7 @@
 
 #include "albase/common.h"
 #include "albase/lua.h"
+#include "albase/commands.h"
 
 typedef struct AlWrapper AlWrapper;
 typedef void (*AlWrapperFree)(lua_State *L, void *ptr);
@@ -18,6 +19,7 @@ AlError al_wrapper_init(AlWrapper **wrapper, lua_State *L, size_t objSize, AlWra
 void al_wrapper_free(AlWrapper *wrapper);
 
 AlError al_wrapper_register_ctor(AlWrapper *wrapper);
+AlError al_wrapper_register_register_ctor_command(AlWrapper *wrapper, const char *name, AlCommands *commands);
 AlError al_wrapper_invoke_ctor(AlWrapper *wrapper, void *result);
 AlError al_wrapper_create(AlWrapper *wrapper, void *result);
 void al_wrapper_retain(AlWrapper *wrapper, void *obj);
