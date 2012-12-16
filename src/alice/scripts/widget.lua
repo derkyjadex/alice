@@ -3,13 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-Widget = class(function(self, ptr)
-	if ptr then
-		commands.widget_register(self, ptr)
-	else
-		commands.widget_new(self)
-	end
-
+Widget = class(commands.widget_new, function(self)
 	self._grabbing = false
 end)
 commands.widget_register_ctor(Widget)
