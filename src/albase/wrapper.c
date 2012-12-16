@@ -137,6 +137,16 @@ AlError al_wrapper_invoke_ctor(AlWrapper *wrapper, void *result)
 	PASS()
 }
 
+static int gc(lua_State *L)
+{
+	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
+	void *ptr = lua_touserdata(L, 1);
+
+	wrapper->free(L, ptr);
+
+	return 0;
+}
+
 AlError al_wrapper_create(AlWrapper *wrapper, void *result)
 {
 	BEGIN()
@@ -147,7 +157,8 @@ AlError al_wrapper_create(AlWrapper *wrapper, void *result)
 
 	lua_newtable(L);
 	lua_pushliteral(L, "__gc");
-	lua_pushnil(L);
+	lua_pushlightuserdata(L, wrapper);
+	lua_pushcclosure(L, gc, 1);
 	lua_settable(L, -3);
 	lua_setmetatable(L, -2);
 
@@ -156,7 +167,7 @@ AlError al_wrapper_create(AlWrapper *wrapper, void *result)
 	lua_pushlightuserdata(L, obj);
 	lua_pushvalue(L, -3);
 	lua_settable(L, -3);
-	lua_pop(L, 1);
+	lua_pop(L, 2);
 
 	*(void **)result = obj;
 
@@ -233,21 +244,23 @@ void al_wrapper_reference(AlWrapper *wrapper)
 	lua_State *L = wrapper->lua;
 
 	lua_pushlightuserdata(L, &wrapper->references);
-	lua_gettable(L, -3);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushvalue(L, -3);
+	lua_gettable(L, -2);
 
 	lua_Number numRefs;
 
 	if (lua_isnil(L, -1)) {
 		lua_pop(L, 1);
 		lua_newtable(L);
-		lua_pushlightuserdata(L, &wrapper->references);
+		lua_pushvalue(L, -4);
 		lua_pushvalue(L, -2);
-		lua_settable(L, -5);
+		lua_settable(L, -4);
 
 		numRefs = 0;
 
 	} else {
-		lua_pushvalue(L, -2);
+		lua_pushvalue(L, -3);
 		lua_gettable(L, -2);
 
 		numRefs = lua_tointeger(L, -1);
@@ -255,11 +268,11 @@ void al_wrapper_reference(AlWrapper *wrapper)
 		lua_pop(L, 1);
 	}
 
-	lua_pushvalue(L, -2);
+	lua_pushvalue(L, -3);
 	lua_pushinteger(L, numRefs + 1);
 	lua_settable(L, -3);
 
-	lua_pop(L, 3);
+	lua_pop(L, 4);
 }
 
 void al_wrapper_unreference(AlWrapper *wrapper)
@@ -267,19 +280,21 @@ void al_wrapper_unreference(AlWrapper *wrapper)
 	lua_State *L = wrapper->lua;
 
 	lua_pushlightuserdata(L, &wrapper->references);
-	lua_gettable(L, -3);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushvalue(L, -3);
+	lua_gettable(L, -2);
 
 	if (lua_isnil(L, -1)) {
-		lua_pop(L, 3);
+		lua_pop(L, 4);
 		return;
 	}
 
-	lua_pushvalue(L, -2);
+	lua_pushvalue(L, -3);
 	lua_gettable(L, -2);
 	lua_Number numRefs = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	lua_pushvalue(L, -2);
+	lua_pushvalue(L, -3);
 
 	if (numRefs > 1) {
 		lua_pushinteger(L, numRefs - 1);
@@ -289,5 +304,5 @@ void al_wrapper_unreference(AlWrapper *wrapper)
 
 	lua_settable(L, -3);
 
-	lua_pop(L, 3);
+	lua_pop(L, 4);
 }
