@@ -22,7 +22,6 @@ typedef struct AlVarEntry {
 		} global;
 		struct {
 			size_t offset;
-			AlWrapper *wrapper;
 		} instance;
 	} data;
 } AlVarEntry;
@@ -87,7 +86,7 @@ void al_vars_free(AlVars *vars)
 	}
 }
 
-static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *ptr, size_t offset, AlWrapper *wrapper)
+static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *ptr, size_t offset)
 {
 	BEGIN()
 
@@ -104,7 +103,6 @@ static AlError vars_register(AlVars *vars, const char *name, AlVarType type, boo
 		entry->data.global.ptr = ptr;
 	} else {
 		entry->data.instance.offset = offset;
-		entry->data.instance.wrapper = wrapper;
 	}
 
 	lua_State *L = vars->lua;
@@ -123,12 +121,12 @@ static AlError vars_register(AlVars *vars, const char *name, AlVarType type, boo
 
 AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr)
 {
-	return vars_register(vars, name, type, true, ptr, 0, NULL);
+	return vars_register(vars, name, type, true, ptr, 0);
 }
 
-AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset, AlWrapper *wrapper)
+AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset)
 {
-	return vars_register(vars, name, type, false, NULL, offset, wrapper);
+	return vars_register(vars, name, type, false, NULL, offset);
 }
 
 static bool tobool(lua_State *L, int n)
@@ -221,25 +219,11 @@ static void *get_instance_ptr(lua_State *L, AlVarEntry *entry, int n)
 	luaL_checkany(L, n);
 	switch (lua_type(L, n)) {
 		case LUA_TLIGHTUSERDATA:
+		case LUA_TUSERDATA:
 			return lua_touserdata(L, n) + entry->data.instance.offset;
 
-		case LUA_TTABLE:
-			if (!entry->data.instance.wrapper) {
-				luaL_error(L, "this var, %s, cannot be used on a table", entry->name);
-			}
-
-			lua_pushvalue(L, n);
-			void *ptr = al_wrapper_unwrap(entry->data.instance.wrapper);
-			if (!ptr) {
-				luaL_error(L, "the supplied table cannot be used on this var, %s", entry->name);
-			}
-
-			ptr += entry->data.instance.offset;
-
-			return ptr;
-
 		default:
-			luaL_error(L, "must supply a pointer or table for this var, %s", entry->name);
+			luaL_error(L, "must supply userdata for this var, %s", entry->name);
 			return NULL;
 	}
 }
