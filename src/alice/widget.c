@@ -419,8 +419,7 @@ static int cmd_widget_set_model_shape(lua_State *L, AlWidget *widget)
 {
 	BEGIN()
 
-	lua_pushvalue(L, 2);
-	AlModelShape *shape = model_editing_unwrap(L);
+	AlModelShape *shape = lua_touserdata(L, 2);
 
 	if (!widget->model.model) {
 		TRY(al_model_use_shape(&widget->model.model, shape));

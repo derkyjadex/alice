@@ -3,13 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ModelPath = class(function(self, ptr, model)
-	commands.model_path_register(self, ptr)
-
-	function self.model()
-		return model
-	end
-end)
+ModelPath = class(commands.model_path_new, function(self) end)
 commands.model_path_register_ctor(ModelPath)
 
 ModelPath.prototype.colour = make_accessor(
@@ -31,15 +25,14 @@ ModelPath.prototype.set_point = commands.model_path_set_point
 ModelPath.prototype.add_point = commands.model_path_add_point
 ModelPath.prototype.remove_point = commands.model_path_remove_point
 
-Model = class(function(self)
-	commands.model_new(self)
-end)
+Model = class(commands.model_shape_new, function(self) end)
+commands.model_shape_register_ctor(Model)
 
-Model.prototype.load = commands.model_load
-Model.prototype.save = commands.model_save
+Model.prototype.load = commands.model_shape_load
+Model.prototype.save = commands.model_shape_save
 
 function Model.prototype.paths(self)
-	return {commands.model_get_paths(self)}
+	return {commands.model_shape_get_paths(self)}
 end
-Model.prototype.add_path = commands.model_add_path
-Model.prototype.remove_path = commands.model_remove_path
+Model.prototype.add_path = commands.model_shape_add_path
+Model.prototype.remove_path = commands.model_shape_remove_path

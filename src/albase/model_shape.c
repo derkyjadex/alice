@@ -9,22 +9,78 @@
 
 #include "albase/model_shape.h"
 #include "albase/file.h"
+#include "albase/wrapper.h"
+#include "albase/commands.h"
 
-AlError al_model_shape_init(AlModelShape **result)
+static AlWrapper *shapeWrapper = NULL;
+static AlWrapper *pathWrapper = NULL;
+
+static AlError _al_model_path_init(AlModelPath *path)
 {
 	BEGIN()
 
-	AlModelShape *shape = NULL;
-	TRY(al_malloc(&shape, sizeof(AlModelShape), 1));
+	path->colour = (Vec3){1, 1, 1};
+	path->numPoints = 0;
+	path->pointsLength = 0;
+	path->points = NULL;
+
+	TRY(al_malloc(&path->points, sizeof(Vec2), 4));
+	path->pointsLength = 4;
+
+	PASS()
+}
+
+static void _al_model_path_free(AlModelPath *path)
+{
+	if (path) {
+		free(path->points);
+	}
+}
+
+static AlError al_model_path_load(AlModelPath *path, FILE *file)
+{
+	BEGIN()
+
+	Vec3 colour;
+	Vec2 *points = NULL;
+	int numPoints = 0;
+
+	TRY(al_file_read(file, &colour, sizeof(Vec3), 1));
+	TRY(al_file_read_array(file, &points, &numPoints, sizeof(Vec2)));
+
+	free(path->points);
+
+	path->colour = colour;
+	path->pointsLength= numPoints;
+	path->numPoints = numPoints;
+	path->points = points;
+
+	CATCH(
+		free(points);
+	)
+	FINALLY()
+}
+
+static AlError al_model_path_save(AlModelPath *path, FILE *file)
+{
+	BEGIN()
+
+	TRY(al_file_write(file, &path->colour, sizeof(Vec3), 1));
+	TRY(al_file_write_array(file, &path->points, path->numPoints, sizeof(Vec2)));
+
+	PASS()
+}
+
+static AlError _al_model_shape_init(AlModelShape *shape)
+{
+	BEGIN()
 
 	shape->numPaths = 0;
 	shape->pathsLength = 0;
 	shape->paths = NULL;
 
-	TRY(al_malloc(&shape->paths, sizeof(AlModelPath), 4));
+	TRY(al_malloc(&shape->paths, sizeof(AlModelPath *), 4));
 	shape->pathsLength = 4;
-
-	*result = shape;
 
 	CATCH(
 		al_model_shape_free(shape);
@@ -32,15 +88,51 @@ AlError al_model_shape_init(AlModelShape **result)
 	FINALLY()
 }
 
-void al_model_shape_free(AlModelShape *shape)
+AlError al_model_shape_init(AlModelShape **result)
+{
+	BEGIN()
+
+	AlModelShape *shape= NULL;
+	TRY(al_wrapper_invoke_ctor(shapeWrapper, &shape));
+	al_wrapper_retain(shapeWrapper, shape);
+
+	*result = shape;
+
+	PASS()
+}
+
+static void _al_model_shape_free(AlModelShape *shape)
 {
 	if (shape) {
-		for (int i = 0; i < shape->numPaths; i++) {
-			free(shape->paths[i].points);
-		}
 		free(shape->paths);
-		free(shape);
 	}
+}
+
+void al_model_shape_free(AlModelShape *shape)
+{
+	al_wrapper_release(shapeWrapper, shape);
+}
+
+static void reference(AlModelShape *shape, AlModelPath *path)
+{
+	al_wrapper_push_userdata(shapeWrapper, shape);
+	al_wrapper_push_userdata(pathWrapper, path);
+	al_wrapper_reference(shapeWrapper);
+
+	al_wrapper_push_userdata(pathWrapper, path);
+	al_wrapper_push_userdata(shapeWrapper, shape);
+	al_wrapper_reference(pathWrapper);
+}
+
+static void unreference(AlModelShape *shape, AlModelPath *path)
+{
+	al_wrapper_push_userdata(shapeWrapper, shape);
+	al_wrapper_push_userdata(pathWrapper, path);
+	al_wrapper_unreference(shapeWrapper);
+
+	al_wrapper_push_userdata(pathWrapper, path);
+	al_wrapper_push_userdata(shapeWrapper, shape);
+	al_wrapper_unreference(pathWrapper);
 }
 
 AlError al_model_shape_load(AlModelShape *shape, const char *filename)
@@ -49,20 +141,20 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 
 	FILE *file = NULL;
 	int numPaths = 0;
-	AlModelPath *paths = NULL;
+	AlModelPath **paths = NULL;
 
 	TRY(al_file_open(&file, filename, OPEN_READ));
 	TRY(al_file_read(file, &numPaths, sizeof(int), 1));
-	TRY(al_malloc(&paths, sizeof(AlModelPath), numPaths));
+	TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
 
 	for (int i = 0; i < numPaths; i++) {
-		paths[i].numPoints = 0;
-		paths[i].pointsLength = 0;
-		paths[i].points = NULL;
-
-		TRY(al_file_read(file, &paths[i].colour, sizeof(Vec3), 1));
-		TRY(al_file_read_array(file, &paths[i].points, &paths[i].numPoints, sizeof(Vec2)));
+		paths[i] = NULL;
+		TRY(al_wrapper_invoke_ctor(pathWrapper, &paths[i]));
+		reference(shape, paths[i]);
+		TRY(al_model_path_load(paths[i], file));
 	}
+
+	free(shape->paths);
 
 	shape->numPaths = numPaths;
 	shape->pathsLength = numPaths;
@@ -72,8 +164,10 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 		al_log_error("Error reading model file");
 		if (paths) {
 		  for (int i = 0; i < numPaths; i++) {
-			  if (paths[i].points == NULL) break;
-			  free(paths[i].points);
+			  if (!paths[i])
+				  break;
+
+			  reference(shape, paths[i]);
 		  }
 		  free(paths);
 		}
@@ -93,8 +187,7 @@ AlError al_model_shape_save(AlModelShape *shape, const char *filename)
 	TRY(al_file_write(file, &shape->numPaths, sizeof(int), 1));
 
 	for (int i = 0; i < shape->numPaths; i++) {
-		TRY(al_file_write(file, &shape->paths[i].colour, sizeof(Vec3), 1));
-		TRY(al_file_write_array(file, shape->paths[i].points, shape->paths[i].numPoints, sizeof(Vec2)));
+		TRY(al_model_path_save(shape->paths[i], file));
 	}
 
 	PASS(
@@ -108,38 +201,39 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, Vec2 start, Vec2
 
 	BEGIN()
 
-	Vec2 *points = NULL;
+	AlModelPath *path = NULL;
 
-	if (index == -1)
+	if (index == -1) {
 		index = shape->numPaths;
+	}
 
 	if (shape->numPaths == shape->pathsLength) {
 		TRY(al_realloc(&shape->paths, sizeof(AlModelPath), shape->pathsLength * 2));
 		shape->pathsLength *= 2;
 	}
 
-	TRY(al_malloc(&points, sizeof(Vec2), 2));
+	TRY(al_wrapper_invoke_ctor(pathWrapper, &path));
 
 	for (int i = shape->numPaths; i > index; i--) {
 		shape->paths[i] = shape->paths[i - 1];
 	}
 
-	points[0] = start;
-	points[1] = end;
+	shape->paths[index] = path;
 
-	shape->paths[index].colour = (Vec3){1.0, 1.0, 1.0};
-	shape->paths[index].numPoints = 2;
-	shape->paths[index].pointsLength = 2;
-	shape->paths[index].points = points;
+	reference(shape, path);
 
 	shape->numPaths++;
 
 	PASS()
 }
 
-AlError model_shape_remove_path(AlModelShape *shape, int index)
+AlError al_model_shape_remove_path(AlModelShape *shape, int index)
 {
 	assert(index >= 0 && index < shape->numPaths);
+
+	AlModelPath *path = shape->paths[index];
+
+	unreference(shape, path);
 
 	for (int i = index; i < shape->numPaths; i++) {
 		shape->paths[i] = shape->paths[i + 1];
@@ -187,4 +281,90 @@ AlError al_model_path_remove_point(AlModelPath *path, int index)
 	path->numPoints--;
 
 	return AL_NO_ERROR;
+}
+
+void al_model_shape_push_userdata(AlModelShape *shape)
+{
+	al_wrapper_push_userdata(shapeWrapper, shape);
+}
+
+void al_model_path_push_userdata(AlModelPath *path)
+{
+	al_wrapper_push_userdata(pathWrapper, path);
+}
+
+static int cmd_model_shape_new(lua_State *L)
+{
+	BEGIN()
+
+	AlModelShape *shape = NULL;
+	TRY(al_wrapper_create(shapeWrapper, &shape));
+	TRY(_al_model_shape_init(shape));
+
+	al_wrapper_push_userdata(shapeWrapper, shape);
+
+	CATCH(
+		_al_model_shape_free(shape);
+		return luaL_error(L, "Error creating model shape");
+	)
+	FINALLY(
+		return 1;
+	)
+}
+
+static int cmd_model_path_new(lua_State *L)
+{
+	BEGIN()
+
+	AlModelPath *path = NULL;
+	TRY(al_wrapper_create(pathWrapper, &path));
+	TRY(_al_model_path_init(path));
+
+	al_wrapper_push_userdata(pathWrapper, path);
+
+	CATCH(
+		_al_model_path_free(path);
+		return luaL_error(L, "Error creating model path");
+	)
+	FINALLY(
+		return 1;
+	)
+}
+
+static void wrapper_model_shape_free(lua_State *L, void *ptr)
+{
+	_al_model_shape_free(ptr);
+}
+
+static void wrapper_model_path_free(lua_State *L, void *ptr)
+{
+	_al_model_path_free(ptr);
+}
+
+AlError al_model_systems_init(lua_State *L, AlCommands *commands)
+{
+	BEGIN()
+
+	TRY(al_wrapper_init(&shapeWrapper, L, sizeof(AlModelShape), wrapper_model_shape_free));
+	TRY(al_wrapper_init(&pathWrapper, L, sizeof(AlModelPath), wrapper_model_path_free));
+
+	lua_pushcfunction(L, cmd_model_shape_new);
+	TRY(al_wrapper_register_ctor(shapeWrapper));
+
+	lua_pushcfunction(L, cmd_model_path_new);
+	TRY(al_wrapper_register_ctor(pathWrapper));
+
+	TRY(al_commands_register(commands, "model_shape_new", cmd_model_shape_new, NULL));
+	TRY(al_commands_register(commands, "model_path_new", cmd_model_path_new, NULL));
+
+	TRY(al_wrapper_register_register_ctor_command(shapeWrapper, "model_shape_register_ctor", commands));
+	TRY(al_wrapper_register_register_ctor_command(pathWrapper, "model_path_register_ctor", commands));
+
+	PASS()
+}
+
+void al_model_systems_free()
+{
+	al_wrapper_free(shapeWrapper);
+	al_wrapper_free(pathWrapper);
 }

@@ -9,10 +9,7 @@
 
 #include "albase/common.h"
 #include "albase/commands.h"
-#include "albase/model_shape.h"
 
-
-AlModelShape *model_editing_unwrap(lua_State *L);
-AlError model_system_init(lua_State *L, AlCommands *commands);
+AlError model_editing_system_init(AlCommands *commands);
 
 #endif

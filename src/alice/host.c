@@ -99,7 +99,8 @@ AlError al_host_init(AlHost **result)
 	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
 
 	TRY(widget_system_init(host->lua, host->commands, host->vars));
-	TRY(model_system_init(host->lua, host->commands));
+	TRY(al_model_systems_init(host->lua, host->commands));
+	TRY(model_editing_system_init(host->commands));
 	TRY(file_system_init(host->commands));
 	TRY(text_system_init(host->commands));
 

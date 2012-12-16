@@ -192,9 +192,13 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 
 	Vec3 *colour = colours;
 	int *vertexCount = vertexCounts;
-	AlModelPath *path = shape->paths;
+	AlModelPath **pathPtr = shape->paths;
+	AlModelPath *path;
 	int totalVertices = 0;
-	for (int i = 0; i < shape->numPaths; i++, colour++, vertexCount++, path++) {
+
+	for (int i = 0; i < shape->numPaths; i++, colour++, vertexCount++, pathPtr++) {
+		AlModelPath *path = *pathPtr;
+
 		*colour = path->colour;
 		*vertexCount = (path->numPoints * 4) - 2;
 		totalVertices += *vertexCount;
@@ -212,9 +216,11 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 	TRY(al_malloc(&vertices, sizeof(AlGlModelVertex), totalVertices));
 
 	vertexCount = vertexCounts;
-	path = shape->paths;
+	pathPtr = shape->paths;
 	AlGlModelVertex *pathVertices = vertices;
-	for (int i = 0; i < shape->numPaths; i++, vertexCount++, path++) {
+	for (int i = 0; i < shape->numPaths; i++, vertexCount++, pathPtr++) {
+		path = *pathPtr;
+
 		TRY(model_build_path_vertices(pathVertices, path));
 		pathVertices += *vertexCount;
 	}
