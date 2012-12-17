@@ -66,7 +66,7 @@ static AlError al_model_path_save(AlModelPath *path, FILE *file)
 	BEGIN()
 
 	TRY(al_file_write(file, &path->colour, sizeof(Vec3), 1));
-	TRY(al_file_write_array(file, &path->points, path->numPoints, sizeof(Vec2)));
+	TRY(al_file_write_array(file, path->points, path->numPoints, sizeof(Vec2)));
 
 	PASS()
 }
@@ -154,6 +154,10 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 		TRY(al_model_path_load(paths[i], file));
 	}
 
+	for (int i = 0; i < shape->numPaths; i++) {
+		unreference(shape, shape->paths[i]);
+	}
+
 	free(shape->paths);
 
 	shape->numPaths = numPaths;
@@ -213,6 +217,9 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, Vec2 start, Vec2
 	}
 
 	TRY(al_wrapper_invoke_ctor(pathWrapper, &path));
+	path->points[0] = start;
+	path->points[1] = end;
+	path->numPoints = 2;
 
 	for (int i = shape->numPaths; i > index; i--) {
 		shape->paths[i] = shape->paths[i - 1];
