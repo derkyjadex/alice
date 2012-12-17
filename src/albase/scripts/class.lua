@@ -4,18 +4,18 @@
 -- See COPYING for details.
 
 local factories = setmetatable({}, {__mode = 'k'})
-local mts = setmetatable({}, {__mode = 'k'})
+local indexes = setmetatable({}, {__mode = 'k'})
 
 local function _class(base, factory, init)
 	local class = {}
 	local prototype = {}
-	local mt = {}
+	local index = {}
 
 	if not base then
 		factory = factory or function() return {} end
 		init = init or function() end
 
-		mt.__index = function(self, k)
+		index = function(self, k)
 			return prototype[k]
 		end
 
@@ -23,14 +23,14 @@ local function _class(base, factory, init)
 		factory = factories[base]
 		init = init or base.init
 
-		local base_mt_index = mts[base].__index
+		local base_index = indexes[base]
 
-		mt.__index = function(self, k)
+		index = function(self, k)
 			local v = prototype[k]
 			if v ~= nil then
 				return v
 			else
-				return base_mt_index(self, k)
+				return base_index(self, k)
 			end
 		end
 	end
@@ -39,11 +39,18 @@ local function _class(base, factory, init)
 	class.init = init
 	class.prototype = prototype
 	factories[class] = factory
-	mts[class] = mt
+	indexes[class] = index
 
 	return setmetatable(class, {
 		__call = function(self, ...)
-			local obj = setmetatable(factory(), mt)
+			local obj = factory()
+			local mt = getmetatable(obj)
+
+			if mt then
+				mt.__index = index
+			else
+				setmetatable(obj, {__index = index})
+			end
 
 			init(obj, ...)
 

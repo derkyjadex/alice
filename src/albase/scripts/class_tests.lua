@@ -122,6 +122,20 @@ function test_set_class_property()
 	assert(A.property == x)
 end
 
+function test_existing_metatable()
+	local mt = {}
+
+	local A = class(
+		function() return setmetatable({}, mt) end,
+		function(self) end)
+	A.prototype.f = function() return 5 end
+
+	local a = A()
+
+	assert(getmetatable(a) == mt)
+	assert(a.f() == 5)
+end
+
 
 test_basic_prototype()
 test_inherited_prototype()
@@ -131,5 +145,6 @@ test_basic_init()
 test_inherited_default_init()
 test_inherited_overridden_init()
 test_set_class_property()
+test_existing_metatable()
 
 print('All passed!')
