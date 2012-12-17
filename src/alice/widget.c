@@ -10,7 +10,6 @@
 #include "alice/widget.h"
 #include "albase/lua.h"
 #include "albase/wrapper.h"
-#include "model_editing.h"
 
 static AlWrapper *wrapper = NULL;
 static AlLuaKey bindings;

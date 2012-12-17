@@ -13,7 +13,6 @@
 #include "alice/host.h"
 #include "albase/geometry.h"
 #include "widget_graphics.h"
-#include "model_editing.h"
 #include "albase/script.h"
 #include "scripts.h"
 #include "albase/lua.h"
@@ -98,15 +97,13 @@ AlError al_host_init(AlHost **result)
 	TRY(al_commands_register(host->commands, "grab_keyboard", cmd_grab_keyboard, host, NULL));
 	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
 
+	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
 	TRY(widget_system_init(host->lua, host->commands, host->vars));
-	TRY(al_model_systems_init(host->lua, host->commands));
-	TRY(model_editing_system_init(host->commands));
 	TRY(file_system_init(host->commands));
 	TRY(text_system_init(host->commands));
 
 	AlScript scripts[] = {
 		AL_SCRIPT(widget),
-		AL_SCRIPT(model),
 		AL_SCRIPT(draggable),
 		AL_SCRIPT(toolbar),
 		AL_SCRIPT(slider_widget),
