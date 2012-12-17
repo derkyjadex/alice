@@ -583,7 +583,7 @@ static AlError widget_system_init_lua(lua_State *L)
 {
 	BEGIN()
 
-	TRY(al_wrapper_init(&wrapper, L, true, wrapper_widget_free));
+	TRY(al_wrapper_init(&wrapper, L, sizeof(AlWidget), wrapper_widget_free));
 
 	lua_pushlightuserdata(L, &bindings);
 	lua_newtable(L);
@@ -661,6 +661,10 @@ AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(widget_system_init_lua(L));
 	TRY(widget_system_register_commands(commands));
 	TRY(widget_system_register_vars(vars));
+
+	lua_pushlightuserdata(L, commands);
+	lua_pushcclosure(L, cmd_widget_new, 1);
+	TRY(al_wrapper_register_ctor(wrapper));
 
 	PASS()
 }
