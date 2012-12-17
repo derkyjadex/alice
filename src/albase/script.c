@@ -82,6 +82,7 @@ AlError al_script_run_base_scripts(lua_State *L)
 		AL_SCRIPT(common),
 		AL_SCRIPT(class),
 		AL_SCRIPT(wrapper),
+		AL_SCRIPT(model),
 		AL_SCRIPT_END
 	};
 

@@ -10,7 +10,6 @@
 #include "albase/script.h"
 
 AL_SCRIPT_DECLARE(widget)
-AL_SCRIPT_DECLARE(model)
 
 AL_SCRIPT_DECLARE(draggable)
 AL_SCRIPT_DECLARE(toolbar)

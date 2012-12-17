@@ -11,6 +11,7 @@
 #include "albase/geometry.h"
 #include "albase/lua.h"
 #include "albase/commands.h"
+#include "albase/vars.h"
 
 typedef struct {
 	Vec3 colour;
@@ -25,7 +26,7 @@ typedef struct {
 	AlModelPath **paths;
 } AlModelShape;
 
-AlError al_model_systems_init(lua_State *L, AlCommands *commands);
+AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars);
 void al_model_systems_free(void);
 
 AlError al_model_shape_register_ctor(void);

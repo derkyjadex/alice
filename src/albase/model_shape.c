@@ -11,6 +11,7 @@
 #include "albase/file.h"
 #include "albase/wrapper.h"
 #include "albase/commands.h"
+#include "model_commands.h"
 
 static AlWrapper *shapeWrapper = NULL;
 static AlWrapper *pathWrapper = NULL;
@@ -348,7 +349,7 @@ static void wrapper_model_path_free(lua_State *L, void *ptr)
 	_al_model_path_free(ptr);
 }
 
-AlError al_model_systems_init(lua_State *L, AlCommands *commands)
+AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 {
 	BEGIN()
 
@@ -366,6 +367,9 @@ AlError al_model_systems_init(lua_State *L, AlCommands *commands)
 
 	TRY(al_wrapper_register_register_ctor_command(shapeWrapper, "model_shape_register_ctor", commands));
 	TRY(al_wrapper_register_register_ctor_command(pathWrapper, "model_path_register_ctor", commands));
+
+	TRY(al_model_commands_init(commands));
+	TRY(al_model_vars_init(vars));
 
 	PASS()
 }

@@ -4,7 +4,7 @@
  * See COPYING for details.
  */
 
-#include "model_editing.h"
+#include "model_commands.h"
 #include "albase/model_shape.h"
 #include "albase/lua.h"
 
@@ -109,29 +109,6 @@ static AlModelPath *cmd_path_accessor(lua_State *L, const char *name, int numArg
 	return lua_touserdata(L, 1);
 }
 
-static int cmd_model_path_get_colour(lua_State *L)
-{
-	AlModelPath *path = cmd_path_accessor(L, "get_colour", 1);
-
-	lua_pushnumber(L, path->colour.x);
-	lua_pushnumber(L, path->colour.y);
-	lua_pushnumber(L, path->colour.z);
-
-	return 3;
-}
-
-static int cmd_model_path_set_colour(lua_State *L)
-{
-	AlModelPath *path = cmd_path_accessor(L, "set_colour", 4);
-	double r = lua_tonumber(L, -3);
-	double g = lua_tonumber(L, -2);
-	double b = lua_tonumber(L, -1);
-
-	path->colour = (Vec3){r, g, b};
-
-	return 0;
-}
-
 static int cmd_model_path_get_points(lua_State *L)
 {
 	AlModelPath *path = cmd_path_accessor(L, "get_points", 1);
@@ -195,7 +172,7 @@ static int cmd_model_path_remove_point(lua_State *L)
 #define REG_SHAPE_CMD(x) TRY(al_commands_register(commands, "model_shape_"#x, cmd_model_shape_ ## x, NULL))
 #define REG_PATH_CMD(x) TRY(al_commands_register(commands, "model_path_"#x, cmd_model_path_ ## x, NULL))
 
-AlError model_editing_system_init(AlCommands *commands)
+AlError al_model_commands_init(AlCommands *commands)
 {
 	BEGIN()
 
@@ -206,12 +183,19 @@ AlError model_editing_system_init(AlCommands *commands)
 	REG_SHAPE_CMD(add_path);
 	REG_SHAPE_CMD(remove_path);
 
-	REG_PATH_CMD(get_colour);
-	REG_PATH_CMD(set_colour);
 	REG_PATH_CMD(get_points);
 	REG_PATH_CMD(set_point);
 	REG_PATH_CMD(add_point);
 	REG_PATH_CMD(remove_point);
+
+	PASS()
+}
+
+AlError al_model_vars_init(AlVars *vars)
+{
+	BEGIN()
+
+	TRY(al_vars_register_instance(vars, "model_path_colour", VAR_VEC3, offsetof(AlModelPath, colour)));
 
 	PASS()
 }

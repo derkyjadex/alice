@@ -13,4 +13,6 @@ AL_SCRIPT_DECLARE(common)
 AL_SCRIPT_DECLARE(class)
 AL_SCRIPT_DECLARE(wrapper)
 
+AL_SCRIPT_DECLARE(model)
+
 #endif

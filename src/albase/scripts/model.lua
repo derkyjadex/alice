@@ -6,9 +6,7 @@
 ModelPath = class(commands.model_path_new, function(self) end)
 commands.model_path_register_ctor(ModelPath)
 
-ModelPath.prototype.colour = make_accessor(
-	commands.model_path_get_colour,
-	commands.model_path_set_colour)
+ModelPath.prototype.colour = make_var_accessor('model_path_colour')
 
 function ModelPath.prototype.points(self)
 	local values = {commands.model_path_get_points(self)}

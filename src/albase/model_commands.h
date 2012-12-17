@@ -4,12 +4,14 @@
  * See COPYING for details.
  */
 
-#ifndef MODEL_EDITING_H
-#define MODEL_EDITING_H
+#ifndef MODEL_COMMANDS_H
+#define MODEL_COMMANDS_H
 
 #include "albase/common.h"
 #include "albase/commands.h"
+#include "albase/vars.h"
 
-AlError model_editing_system_init(AlCommands *commands);
+AlError al_model_commands_init(AlCommands *commands);
+AlError al_model_vars_init(AlVars *vars);
 
 #endif

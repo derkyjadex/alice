@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		1A42FD8B160DF10D00807A51 /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD63160DED0800807A51 /* host.c */; };
-		1A42FD8C160DF11000807A51 /* model_editing.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD7F160DEF5000807A51 /* model_editing.c */; };
 		1A42FD8D160DF11300807A51 /* widget.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD64160DED0800807A51 /* widget.c */; };
 		1A42FD8E160DF11600807A51 /* widget_graphics.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD69160DED7300807A51 /* widget_graphics.c */; };
 		1A42FD91160DF2F500807A51 /* shaders.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD90160DF2F500807A51 /* shaders.derived.c */; };
@@ -23,6 +22,8 @@
 		1AA0058E160A79DB005195DF /* scripts.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AA0058D160A79DB005195DF /* scripts.derived.c */; };
 		1AC9C70A14FA98AE005D7671 /* commands.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D16EE14E6B6B100A79CBA /* commands.c */; };
 		1AC9C70B14FA9D35005D7671 /* vars.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D16F514E6B6B100A79CBA /* vars.c */; };
+		1ACE8B6A167E9B9E006DECA1 /* model_commands.c in Sources */ = {isa = PBXBuildFile; fileRef = 1ACE8B68167E9B9D006DECA1 /* model_commands.c */; };
+		1ACE8B6B167E9B9E006DECA1 /* model_commands.h in Headers */ = {isa = PBXBuildFile; fileRef = 1ACE8B69167E9B9E006DECA1 /* model_commands.h */; };
 		1AE04D7B1641AC4400AE072E /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AE04D7A1641AC4400AE072E /* text.c */; };
 		1AE04D7E1642E4F000AE072E /* wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AE04D7D1642E4F000AE072E /* wrapper.c */; };
 		1AE55F8516298ACE00FA402E /* file_system.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AE55F8416298ACE00FA402E /* file_system.c */; };
@@ -54,13 +55,10 @@
 		1A42FD76160DEDD000807A51 /* widget.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = widget.vert; sourceTree = "<group>"; };
 		1A42FD78160DEE2900807A51 /* colour_widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = colour_widget.lua; sourceTree = "<group>"; };
 		1A42FD79160DEE2900807A51 /* draggable.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = draggable.lua; sourceTree = "<group>"; };
-		1A42FD7A160DEE2900807A51 /* model.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = model.lua; sourceTree = "<group>"; };
 		1A42FD7B160DEE2900807A51 /* slider_widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = slider_widget.lua; sourceTree = "<group>"; };
 		1A42FD7C160DEE2900807A51 /* toolbar.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = toolbar.lua; sourceTree = "<group>"; };
 		1A42FD7D160DEE2900807A51 /* widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = widget.lua; sourceTree = "<group>"; };
 		1A42FD7E160DEF2900807A51 /* model_widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = model_widget.lua; sourceTree = "<group>"; };
-		1A42FD7F160DEF5000807A51 /* model_editing.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = model_editing.c; sourceTree = "<group>"; };
-		1A42FD80160DEF5000807A51 /* model_editing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = model_editing.h; sourceTree = "<group>"; };
 		1A42FD81160DEF8300807A51 /* widget_graphics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = widget_graphics.h; sourceTree = "<group>"; };
 		1A42FD82160DEFB500807A51 /* scripts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scripts.h; sourceTree = "<group>"; };
 		1A42FD87160DF06700807A51 /* libalice.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libalice.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,6 +91,9 @@
 		1AA0058A160A71BC005195DF /* common.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = common.lua; sourceTree = "<group>"; };
 		1AA0058B160A71BC005195DF /* wrapper.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = wrapper.lua; sourceTree = "<group>"; };
 		1AA0058D160A79DB005195DF /* scripts.derived.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = scripts.derived.c; sourceTree = "<group>"; };
+		1ACE8B68167E9B9D006DECA1 /* model_commands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = model_commands.c; sourceTree = "<group>"; };
+		1ACE8B69167E9B9E006DECA1 /* model_commands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = model_commands.h; sourceTree = "<group>"; };
+		1ACE8B6C167E9DD2006DECA1 /* model.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = model.lua; sourceTree = "<group>"; };
 		1AE04D77164173D900AE072E /* text_box.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = text_box.lua; sourceTree = "<group>"; };
 		1AE04D791641ABEA00AE072E /* text.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = text.h; sourceTree = "<group>"; };
 		1AE04D7A1641AC4400AE072E /* text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = text.c; sourceTree = "<group>"; };
@@ -155,8 +156,6 @@
 				1A42FD6B160DEDB400807A51 /* images */,
 				1A42FD96160DF44100807A51 /* images.derived.c */,
 				1A42FD67160DED7300807A51 /* images.h */,
-				1A42FD7F160DEF5000807A51 /* model_editing.c */,
-				1A42FD80160DEF5000807A51 /* model_editing.h */,
 				1A42FD77160DEE2900807A51 /* scripts */,
 				1A42FD93160DF3BF00807A51 /* scripts.derived.c */,
 				1A42FD82160DEFB500807A51 /* scripts.h */,
@@ -211,7 +210,6 @@
 				1A42FD78160DEE2900807A51 /* colour_widget.lua */,
 				1A42FD79160DEE2900807A51 /* draggable.lua */,
 				1AE55F8816298C7D00FA402E /* file_widget.lua */,
-				1A42FD7A160DEE2900807A51 /* model.lua */,
 				1A42FD7E160DEF2900807A51 /* model_widget.lua */,
 				1A42FD7B160DEE2900807A51 /* slider_widget.lua */,
 				1AE04D77164173D900AE072E /* text_box.lua */,
@@ -230,6 +228,8 @@
 				1A5D165F14E6B23800A79CBA /* file.c */,
 				1A5D166014E6B23800A79CBA /* geometry.c */,
 				1AF523AD1608FCFB00B3DDE1 /* gl */,
+				1ACE8B68167E9B9D006DECA1 /* model_commands.c */,
+				1ACE8B69167E9B9E006DECA1 /* model_commands.h */,
 				1A9B8263158FB71600F77B33 /* model_shape.c */,
 				1AA00584160A66B1005195DF /* script.c */,
 				1AA00588160A71BC005195DF /* scripts */,
@@ -285,6 +285,7 @@
 			children = (
 				1AA00589160A71BC005195DF /* class.lua */,
 				1AA0058A160A71BC005195DF /* common.lua */,
+				1ACE8B6C167E9DD2006DECA1 /* model.lua */,
 				1AA0058B160A71BC005195DF /* wrapper.lua */,
 			);
 			path = scripts;
@@ -350,6 +351,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1ACE8B6B167E9B9E006DECA1 /* model_commands.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -456,7 +458,6 @@
 				"$(SRCROOT)/src/alice/scripts/model_widget.lua",
 				"$(SRCROOT)/src/alice/scripts/colour_widget.lua",
 				"$(SRCROOT)/src/alice/scripts/draggable.lua",
-				"$(SRCROOT)/src/alice/scripts/model.lua",
 				"$(SRCROOT)/src/alice/scripts/slider_widget.lua",
 				"$(SRCROOT)/src/alice/scripts/toolbar.lua",
 				"$(SRCROOT)/src/alice/scripts/widget.lua",
@@ -497,6 +498,7 @@
 				"$(SRCROOT)/src/albase/scripts/common.lua",
 				"$(SRCROOT)/src/albase/scripts/class.lua",
 				"$(SRCROOT)/src/albase/scripts/wrapper.lua",
+				"$(SRCROOT)/src/albase/scripts/model.lua",
 			);
 			name = "Compile Scripts";
 			outputPaths = (
@@ -514,7 +516,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A42FD8B160DF10D00807A51 /* host.c in Sources */,
-				1A42FD8C160DF11000807A51 /* model_editing.c in Sources */,
 				1A42FD8D160DF11300807A51 /* widget.c in Sources */,
 				1A42FD8E160DF11600807A51 /* widget_graphics.c in Sources */,
 				1A42FD91160DF2F500807A51 /* shaders.derived.c in Sources */,
@@ -545,6 +546,7 @@
 				1AA0058E160A79DB005195DF /* scripts.derived.c in Sources */,
 				1A801F3A1616E7C9008F3A05 /* error.c in Sources */,
 				1AE04D7E1642E4F000AE072E /* wrapper.c in Sources */,
+				1ACE8B6A167E9B9E006DECA1 /* model_commands.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
