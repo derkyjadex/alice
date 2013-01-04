@@ -3,10 +3,9 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-Widget = class(commands.widget_new, function(self)
-	self._grabbing = false
+Widget = wrap_ctor('widget', function(self)
+	--self._grabbing = false
 end)
-commands.widget_register_ctor(Widget)
 
 local vars = {
 	'location', 'bounds', 'fill_colour',

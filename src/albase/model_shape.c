@@ -31,6 +31,17 @@ static AlError _al_model_path_init(AlModelPath *path)
 	PASS()
 }
 
+static int al_model_path_ctor(lua_State *L)
+{
+	lua_pushvalue(L, lua_upvalueindex(1));
+	lua_call(L, 0, 1);
+	AlModelPath *path = lua_touserdata(L, -1);
+
+	_al_model_path_init(path);
+
+	return 1;
+}
+
 static void _al_model_path_free(AlModelPath *path)
 {
 	if (path) {
@@ -87,6 +98,17 @@ static AlError _al_model_shape_init(AlModelShape *shape)
 		al_model_shape_free(shape);
 	)
 	FINALLY()
+}
+
+static int al_model_shape_ctor(lua_State *L)
+{
+	lua_pushvalue(L, lua_upvalueindex(1));
+	lua_call(L, 0, 1);
+	AlModelShape *shape = lua_touserdata(L, -1);
+
+	_al_model_shape_init(shape);
+
+	return 1;
 }
 
 AlError al_model_shape_init(AlModelShape **result)
@@ -301,44 +323,6 @@ void al_model_path_push_userdata(AlModelPath *path)
 	al_wrapper_push_userdata(pathWrapper, path);
 }
 
-static int cmd_model_shape_new(lua_State *L)
-{
-	BEGIN()
-
-	AlModelShape *shape = NULL;
-	TRY(al_wrapper_create(shapeWrapper, &shape));
-	TRY(_al_model_shape_init(shape));
-
-	al_wrapper_push_userdata(shapeWrapper, shape);
-
-	CATCH(
-		_al_model_shape_free(shape);
-		return luaL_error(L, "Error creating model shape");
-	)
-	FINALLY(
-		return 1;
-	)
-}
-
-static int cmd_model_path_new(lua_State *L)
-{
-	BEGIN()
-
-	AlModelPath *path = NULL;
-	TRY(al_wrapper_create(pathWrapper, &path));
-	TRY(_al_model_path_init(path));
-
-	al_wrapper_push_userdata(pathWrapper, path);
-
-	CATCH(
-		_al_model_path_free(path);
-		return luaL_error(L, "Error creating model path");
-	)
-	FINALLY(
-		return 1;
-	)
-}
-
 static void wrapper_model_shape_free(lua_State *L, void *ptr)
 {
 	_al_model_shape_free(ptr);
@@ -356,17 +340,11 @@ AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(al_wrapper_init(&shapeWrapper, L, sizeof(AlModelShape), wrapper_model_shape_free));
 	TRY(al_wrapper_init(&pathWrapper, L, sizeof(AlModelPath), wrapper_model_path_free));
 
-	lua_pushcfunction(L, cmd_model_shape_new);
-	TRY(al_wrapper_register_ctor(shapeWrapper));
+	TRY(al_wrapper_wrap_ctor(shapeWrapper, al_model_shape_ctor));
+	TRY(al_wrapper_wrap_ctor(pathWrapper, al_model_path_ctor));
 
-	lua_pushcfunction(L, cmd_model_path_new);
-	TRY(al_wrapper_register_ctor(pathWrapper));
-
-	TRY(al_commands_register(commands, "model_shape_new", cmd_model_shape_new, NULL));
-	TRY(al_commands_register(commands, "model_path_new", cmd_model_path_new, NULL));
-
-	TRY(al_wrapper_register_register_ctor_command(shapeWrapper, "model_shape_register_ctor", commands));
-	TRY(al_wrapper_register_register_ctor_command(pathWrapper, "model_path_register_ctor", commands));
+	TRY(al_wrapper_register_ctor_wrapper(shapeWrapper, commands, "model_shape_wrap_ctor"));
+	TRY(al_wrapper_register_ctor_wrapper(pathWrapper, commands, "model_path_wrap_ctor"));
 
 	TRY(al_model_commands_init(commands));
 	TRY(al_model_vars_init(vars));

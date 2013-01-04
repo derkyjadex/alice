@@ -16,3 +16,12 @@ end
 function make_var_accessor(var)
 	return make_accessor(commands.getter(var), commands.setter(var))
 end
+
+function wrap_ctor(type, init)
+	local wrapper = commands[type .. '_wrap_ctor']
+	init = init or function() end
+
+	return wrapper(function(ctor)
+		return class(ctor, init)
+	end)
+end

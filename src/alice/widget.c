@@ -49,6 +49,18 @@ static void _widget_init(AlWidget *widget, lua_State *lua, AlCommands *commands)
 	widget->keyboardLostBinding = false;
 }
 
+static int widget_ctor(lua_State *L)
+{
+	lua_pushvalue(L, lua_upvalueindex(1));
+	lua_call(L, 0, 1);
+	AlWidget *widget = lua_touserdata(L, -1);
+
+	AlCommands *commands = lua_touserdata(L, lua_upvalueindex(2));
+	_widget_init(widget, L, commands);
+
+	return 1;
+}
+
 AlError widget_init(AlWidget **result)
 {
 	BEGIN()
@@ -333,26 +345,6 @@ void widget_push_userdata(AlWidget *widget)
 	al_wrapper_push_userdata(wrapper, widget);
 }
 
-static int cmd_widget_new(lua_State *L)
-{
-	BEGIN()
-
-	AlCommands *commands = lua_touserdata(L, lua_upvalueindex(1));
-
-	AlWidget *widget = NULL;
-	TRY(al_wrapper_create(wrapper, &widget));
-	_widget_init(widget, L, commands);
-
-	widget_push_userdata(widget);
-
-	CATCH(
-		return luaL_error(L, "Error creating widget");
-	)
-	FINALLY(
-		return 1;
-	)
-}
-
 static AlWidget *cmd_accessor(lua_State *L, const char *name, int numArgs)
 {
 	if (lua_gettop(L) != numArgs) {
@@ -603,9 +595,6 @@ static AlError widget_system_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
-	TRY(al_wrapper_register_register_ctor_command(wrapper, "widget_register_ctor", commands));
-	TRY(al_commands_register(commands, "widget_new", cmd_widget_new, commands, NULL));
-
 	REG_CMD(get_next);
 	REG_CMD(get_prev);
 	REG_CMD(get_parent);
@@ -662,9 +651,8 @@ AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(widget_system_register_commands(commands));
 	TRY(widget_system_register_vars(vars));
 
-	lua_pushlightuserdata(L, commands);
-	lua_pushcclosure(L, cmd_widget_new, 1);
-	TRY(al_wrapper_register_ctor(wrapper));
+	TRY(al_wrapper_wrap_ctor(wrapper, widget_ctor, commands, NULL));
+	TRY(al_wrapper_register_ctor_wrapper(wrapper, commands, "widget_wrap_ctor"));
 
 	PASS()
 }
