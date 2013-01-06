@@ -35,23 +35,23 @@ Widget.prototype.bind_keyboard_lost = commands.widget_bind_keyboard_lost
 Widget.prototype.grab_keyboard = commands.grab_keyboard
 Widget.prototype.release_keyboard = commands.release_keyboard
 
-function Widget.prototype.bind_motion(self, command)
+function Widget.prototype:bind_motion(command)
 	return commands.widget_bind_motion(self, function(_, x, y)
 		if self._grabbing then
 			command(self, x, y)
 		end
 	end)
 end
-function Widget.prototype.grab_mouse(self)
+function Widget.prototype:grab_mouse()
 	self._grabbing = true
 	return commands.grab_mouse(self)
 end
-function Widget.prototype.release_mouse(self, x, y)
+function Widget.prototype:release_mouse(x, y)
 	self._grabbing = false
 	commands.release_mouse(x, y)
 end
 
-function Widget.prototype.layout(self, left, width, right, bottom, height, top, offset_x, offset_y)
+function Widget.prototype:layout(left, width, right, bottom, height, top, offset_x, offset_y)
 	local parent = self:parent()
 	local parent_bounds = {parent:bounds()}
 

@@ -19,7 +19,7 @@ SliderWidget = Widget:derive(function(self, callback)
 	end)
 	self:add_child(handle)
 
-	function self.layout(self, left, width, right, bottom, height, top)
+	function self:layout(left, width, right, bottom, height, top)
 		Widget.prototype.layout(self, left, 20, right, bottom, height, top)
 
 		local bounds = {self:bounds()}

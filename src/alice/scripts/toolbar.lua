@@ -22,10 +22,10 @@ function Toolbar.prototype.add_button(self, r, g, b)
 	return button
 end
 
-function Toolbar.prototype.add_spacer(self)
+function Toolbar.prototype:add_spacer()
 	self._nextX = self._nextX + 10
 end
 
-function Toolbar.prototype.layout(self, left, width, right, bottom, height, top)
+function Toolbar.prototype:layout(left, width, right, bottom, height, top)
 	return Widget.prototype.layout(self, left, self._nextX, right, bottom, 40, top)
 end

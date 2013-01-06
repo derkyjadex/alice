@@ -85,13 +85,13 @@ TextBox = Widget:derive(function(self, callback)
 
 	self:bind_text(self.insert_text)
 
-	function self.grab_keyboard(self)
+	function self:grab_keyboard()
 		Widget.prototype.grab_keyboard(self)
 		cursor:bounds(0, 0, 2, char_height)
 		cursor:invalidate()
 	end
 
-	function self.layout(self, left, width, right, bottom, height, top)
+	function self:layout(left, width, right, bottom, height, top)
 		return Widget.prototype.layout(self, left, width, right, bottom, text_size + padding * 2, top)
 	end
 end)

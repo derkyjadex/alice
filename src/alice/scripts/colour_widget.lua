@@ -98,6 +98,6 @@ ColourWidget = Widget:derive(function(self, callback)
 	val_handle:location(get_val_handle_location())
 end)
 
-function ColourWidget.prototype.layout(self, left, width, right, bottom, height, top)
+function ColourWidget.prototype:layout(left, width, right, bottom, height, top)
 	return Widget.prototype.layout(self, left, 220, right, bottom, 200, top, 100, 100)
 end
