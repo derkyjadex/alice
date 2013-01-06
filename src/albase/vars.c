@@ -255,7 +255,8 @@ static void *get_instance_ptr(lua_State *L, AlVarEntry *entry, int n)
 		type *ptr = get_instance_ptr(L, entry, 1); \
 		const int arg = 2; \
 		*ptr = set; \
-		return 0; \
+		lua_pushvalue(L, 1); \
+		return 1; \
 	}
 
 ACCESSOR(bool, lua_pushboolean, 1, tobool(L, arg))
