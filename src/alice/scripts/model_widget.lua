@@ -9,7 +9,7 @@ ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
 
 	self:border_width(2)
-	self:fill_colour(0.2, 0.2, 0.2, 0.2)
+	self:fill_colour(0.2, 0.2, 0.2, 1)
 	self:model_scale(100)
 	self:grid_size(20, 20)
 	self:grid_colour(0.4, 0.4, 0.4)
