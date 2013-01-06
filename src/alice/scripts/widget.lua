@@ -80,4 +80,8 @@ function Widget.prototype:layout(left, width, right, bottom, height, top, offset
 		:invalidate()
 end
 
+function Widget.prototype:add_to_root()
+	return Widget.root():add_child(self)
+end
+
 Widget.root = commands.get_root_widget
