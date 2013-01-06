@@ -343,7 +343,7 @@ static int cmd_release_mouse(lua_State *L)
 static int cmd_grab_keyboard(lua_State *L)
 {
 	if (lua_gettop(L) != 1)
-		return luaL_error(L, "grab_keyboard: required 1 argument");
+		return luaL_error(L, "grab_keyboard: requires 1 argument");
 
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
 	AlWidget *widget = lua_touserdata(L, 1);
