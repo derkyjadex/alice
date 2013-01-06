@@ -652,7 +652,7 @@ AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(widget_system_register_vars(vars));
 
 	TRY(al_wrapper_wrap_ctor(wrapper, widget_ctor, commands, NULL));
-	TRY(al_wrapper_register_ctor_wrapper(wrapper, commands, "widget_wrap_ctor"));
+	TRY(al_wrapper_resgister_commands(wrapper, commands, "widget"));
 
 	PASS()
 }

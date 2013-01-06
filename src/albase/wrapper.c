@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "albase/wrapper.h"
 
@@ -14,13 +15,15 @@ struct AlWrapper {
 	size_t objSize;
 	AlWrapperFree free;
 
+	AlLuaKey states;
+	AlLuaKey mt;
 	AlLuaKey ctor;
 	AlLuaKey ptrs;
 	AlLuaKey retained;
 	AlLuaKey references;
 };
 
-static int gc(lua_State *L)
+static int mt_gc(lua_State *L)
 {
 	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
 	void *ptr = lua_touserdata(L, 1);
@@ -30,17 +33,68 @@ static int gc(lua_State *L)
 	return 0;
 }
 
+static int mt_index(lua_State *L)
+{
+	lua_pushvalue(L, 1);
+	lua_gettable(L, lua_upvalueindex(1));
+
+	lua_pushvalue(L, 2);
+	lua_gettable(L, -2);
+
+	return 1;
+}
+
+static int mt_newindex(lua_State *L)
+{
+	lua_pushvalue(L, 1);
+	lua_gettable(L, lua_upvalueindex(1));
+
+	lua_pushvalue(L, 2);
+	lua_pushvalue(L, 3);
+	lua_settable(L, -3);
+
+	return 0;
+}
+
+static void build_mt(AlWrapper *wrapper)
+{
+	lua_State *L = wrapper->lua;
+
+	lua_newtable(L);
+
+	lua_pushliteral(L, "__gc");
+	lua_pushlightuserdata(L, wrapper);
+	lua_pushcclosure(L, mt_gc, 1);
+	lua_settable(L, -3);
+
+	lua_pushliteral(L, "__index");
+	lua_pushlightuserdata(L, &wrapper->states);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushcclosure(L, mt_index, 1);
+	lua_settable(L, -3);
+
+	lua_pushliteral(L, "__newindex");
+	lua_pushlightuserdata(L, &wrapper->states);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushcclosure(L, mt_newindex, 1);
+	lua_settable(L, -3);
+}
+
 static int base_ctor(lua_State *L)
 {
 	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
 
 	void *obj = lua_newuserdata(L, wrapper->objSize);
 
+	lua_pushlightuserdata(L, &wrapper->states);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushvalue(L, -2);
 	lua_newtable(L);
-	lua_pushliteral(L, "__gc");
-	lua_pushlightuserdata(L, wrapper);
-	lua_pushcclosure(L, gc, 1);
 	lua_settable(L, -3);
+	lua_pop(L, 1);
+
+	lua_pushlightuserdata(L, &wrapper->mt);
+	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_setmetatable(L, -2);
 
 	lua_pushlightuserdata(L, &wrapper->ptrs);
@@ -51,6 +105,16 @@ static int base_ctor(lua_State *L)
 	lua_pop(L, 1);
 
 	return 1;
+}
+
+static void build_weak_table(lua_State *L, const char *mode)
+{
+	lua_newtable(L);
+	lua_newtable(L);
+	lua_pushliteral(L, "__mode");
+	lua_pushstring(L, mode);
+	lua_settable(L, -3);
+	lua_setmetatable(L, -2);
 }
 
 AlError al_wrapper_init(AlWrapper **result, lua_State *L, size_t objSize, AlWrapperFree free)
@@ -64,18 +128,21 @@ AlError al_wrapper_init(AlWrapper **result, lua_State *L, size_t objSize, AlWrap
 	wrapper->objSize = objSize;
 	wrapper->free = free;
 
+	lua_pushlightuserdata(L, &wrapper->states);
+	build_weak_table(L, "k");
+	lua_settable(L, LUA_REGISTRYINDEX);
+
+	lua_pushlightuserdata(L, &wrapper->mt);
+	build_mt(wrapper);
+	lua_settable(L, LUA_REGISTRYINDEX);
+
 	lua_pushlightuserdata(L, &wrapper->ctor);
 	lua_pushlightuserdata(L, wrapper);
 	lua_pushcclosure(L, base_ctor, 1);
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &wrapper->ptrs);
-	lua_newtable(L);
-	lua_newtable(L);
-	lua_pushliteral(L, "__mode");
-	lua_pushliteral(L, "v");
-	lua_settable(L, -3);
-	lua_setmetatable(L, -2);
+	build_weak_table(L, "v");
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &wrapper->retained);
@@ -83,12 +150,7 @@ AlError al_wrapper_init(AlWrapper **result, lua_State *L, size_t objSize, AlWrap
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &wrapper->references);
-	lua_newtable(L);
-	lua_newtable(L);
-	lua_pushliteral(L, "__mode");
-	lua_pushliteral(L, "k");
-	lua_settable(L, -3);
-	lua_setmetatable(L, -2);
+	build_weak_table(L, "k");
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	*result = wrapper;
@@ -100,6 +162,14 @@ void al_wrapper_free(AlWrapper *wrapper)
 {
 	if (wrapper) {
 		lua_State *L = wrapper->lua;
+
+		lua_pushlightuserdata(L, &wrapper->states);
+		lua_pushnil(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
+
+		lua_pushlightuserdata(L, &wrapper->mt);
+		lua_pushnil(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
 
 		lua_pushlightuserdata(L, &wrapper->ctor);
 		lua_pushnil(L);
@@ -136,6 +206,26 @@ static int cmd_wrap_ctor(lua_State *L)
 	return 1;
 }
 
+static int cmd_set_prototype(lua_State *L)
+{
+	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
+
+	lua_pushlightuserdata(L, &wrapper->states);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushvalue(L, 1);
+	lua_gettable(L, -2);
+
+	lua_newtable(L);
+	lua_pushliteral(L, "__index");
+	lua_pushvalue(L, 2);
+	lua_settable(L, -3);
+	lua_setmetatable(L, -2);
+
+	lua_pop(L, 3);
+
+	return 1;
+}
+
 AlError al_wrapper_wrap_ctor(AlWrapper *wrapper, lua_CFunction function, ...)
 {
 	BEGIN()
@@ -162,11 +252,24 @@ AlError al_wrapper_wrap_ctor(AlWrapper *wrapper, lua_CFunction function, ...)
 	PASS()
 }
 
-AlError al_wrapper_register_ctor_wrapper(AlWrapper *wrapper, AlCommands *commands, const char *name)
+AlError al_wrapper_resgister_commands(AlWrapper *wrapper, AlCommands *commands, const char *typeName)
 {
 	BEGIN()
 
+	char name[128];
+	int result;
+
+	result = snprintf(name, sizeof(name), "%s_wrap_ctor", typeName);
+	if (result < 0 || result >= sizeof(name))
+		THROW(AL_ERROR_GENERIC);
+
 	TRY(al_commands_register(commands, name, cmd_wrap_ctor, wrapper, NULL));
+
+	result = snprintf(name, sizeof(name), "%s_set_prototype", typeName);
+	if (result < 0 || result >= sizeof(name))
+		THROW(AL_ERROR_GENERIC);
+
+	TRY(al_commands_register(commands, name, cmd_set_prototype, wrapper, NULL));
 
 	PASS()
 }

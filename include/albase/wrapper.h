@@ -19,7 +19,7 @@ AlError al_wrapper_init(AlWrapper **wrapper, lua_State *L, size_t objSize, AlWra
 void al_wrapper_free(AlWrapper *wrapper);
 
 AlError al_wrapper_wrap_ctor(AlWrapper *wrapper, lua_CFunction function, ...);
-AlError al_wrapper_register_ctor_wrapper(AlWrapper *wrapper, AlCommands *commands, const char *name);
+AlError al_wrapper_resgister_commands(AlWrapper *wrapper, AlCommands *commands, const char *typeName);
 AlError al_wrapper_invoke_ctor(AlWrapper *wrapper, void *result);
 void al_wrapper_retain(AlWrapper *wrapper, void *obj);
 void al_wrapper_release(AlWrapper *wrapper, void *obj);

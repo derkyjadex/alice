@@ -3,8 +3,8 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-Widget = wrap_ctor('widget', function(self)
-	--self._grabbing = false
+Widget = wrap('widget', function(self)
+	self._grabbing = false
 end)
 
 local vars = {

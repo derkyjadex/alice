@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ModelPath = wrap_ctor('model_path')
+ModelPath = wrap('model_path')
 ModelPath.prototype.colour = make_var_accessor('model_path_colour')
 
 function ModelPath.prototype.points(self)
@@ -21,8 +21,7 @@ ModelPath.prototype.set_point = commands.model_path_set_point
 ModelPath.prototype.add_point = commands.model_path_add_point
 ModelPath.prototype.remove_point = commands.model_path_remove_point
 
-Model = wrap_ctor('model_shape')
-
+Model = wrap('model_shape')
 Model.prototype.load = commands.model_shape_load
 Model.prototype.save = commands.model_shape_save
 
