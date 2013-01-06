@@ -160,35 +160,7 @@ AlError al_wrapper_init(AlWrapper **result, lua_State *L, size_t objSize, AlWrap
 
 void al_wrapper_free(AlWrapper *wrapper)
 {
-	if (wrapper) {
-		lua_State *L = wrapper->lua;
-
-		lua_pushlightuserdata(L, &wrapper->states);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		lua_pushlightuserdata(L, &wrapper->mt);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		lua_pushlightuserdata(L, &wrapper->ctor);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		lua_pushlightuserdata(L, &wrapper->ptrs);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		lua_pushlightuserdata(L, &wrapper->retained);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		lua_pushlightuserdata(L, &wrapper->references);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		free(wrapper);
-	}
+	free(wrapper);
 }
 
 static int cmd_wrap_ctor(lua_State *L)
