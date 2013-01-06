@@ -84,6 +84,8 @@ FileWidget = Widget:derive(function(self, callback)
 		list_widget:layout(10, nil, 10, 50, nil, 50)
 
 		layout_files()
+
+		return self
 	end
 
 	cancel_widget:bind_down(function()

@@ -27,5 +27,5 @@ function Toolbar.prototype.add_spacer(self)
 end
 
 function Toolbar.prototype.layout(self, left, width, right, bottom, height, top)
-	Widget.prototype.layout(self, left, self._nextX, right, bottom, 40, top)
+	return Widget.prototype.layout(self, left, self._nextX, right, bottom, 40, top)
 end

@@ -92,6 +92,6 @@ TextBox = Widget:derive(function(self, callback)
 	end
 
 	function self.layout(self, left, width, right, bottom, height, top)
-		Widget.prototype.layout(self, left, width, right, bottom, text_size + padding * 2, top)
+		return Widget.prototype.layout(self, left, width, right, bottom, text_size + padding * 2, top)
 	end
 end)

@@ -121,7 +121,7 @@ function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
 
 	local bounds = {self:bounds()}
 
-	Widget.prototype.layout(self,
+	return Widget.prototype.layout(self,
 		left, width, right,
 		bottom, height, top,
 		(bounds[3] - bounds[1]) / 2, (bounds[4] - bounds[2]) / 2)

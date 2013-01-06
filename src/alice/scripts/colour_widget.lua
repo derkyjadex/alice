@@ -99,5 +99,5 @@ ColourWidget = Widget:derive(function(self, callback)
 end)
 
 function ColourWidget.prototype.layout(self, left, width, right, bottom, height, top)
-	Widget.prototype.layout(self, left, 220, right, bottom, 200, top, 100, 100)
+	return Widget.prototype.layout(self, left, 220, right, bottom, 200, top, 100, 100)
 end

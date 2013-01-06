@@ -24,5 +24,7 @@ SliderWidget = Widget:derive(function(self, callback)
 
 		local bounds = {self:bounds()}
 		length = bounds[4] - bounds[2] - 20
+
+		return self
 	end
 end)
