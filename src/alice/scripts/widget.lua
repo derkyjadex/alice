@@ -36,7 +36,7 @@ Widget.prototype.grab_keyboard = commands.grab_keyboard
 Widget.prototype.release_keyboard = commands.release_keyboard
 
 function Widget.prototype.bind_motion(self, command)
-	commands.widget_bind_motion(self, function(_, x, y)
+	return commands.widget_bind_motion(self, function(_, x, y)
 		if self._grabbing then
 			command(self, x, y)
 		end
@@ -75,9 +75,9 @@ function Widget.prototype.layout(self, left, width, right, bottom, height, top, 
 	offset_x = offset_x or 0
 	offset_y = offset_y or 0
 
-	self:location(left + offset_x - parent_offset_x, bottom + offset_y - parent_offset_y)
-	self:bounds(-offset_x, -offset_y, width - offset_x, height - offset_y)
-	self:invalidate()
+	return self:location(left + offset_x - parent_offset_x, bottom + offset_y - parent_offset_y)
+		:bounds(-offset_x, -offset_y, width - offset_x, height - offset_y)
+		:invalidate()
 end
 
 Widget.root = commands.get_root_widget

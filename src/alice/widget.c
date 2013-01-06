@@ -376,17 +376,15 @@ RELATION_GETTER(prev, prev);
 RELATION_GETTER(parent, parent);
 RELATION_GETTER(first_child, firstChild);
 
-static int cmd_widget_set_model_null(lua_State *L, AlWidget *widget)
+static void cmd_widget_set_model_null(lua_State *L, AlWidget *widget)
 {
 	if (widget->model.model) {
 		al_model_unuse(widget->model.model);
 		widget->model.model = NULL;
 	}
-
-	return 0;
 }
 
-static int cmd_widget_set_model_file(lua_State *L, AlWidget *widget)
+static AlError cmd_widget_set_model_file(lua_State *L, AlWidget *widget)
 {
 	BEGIN()
 
@@ -399,14 +397,12 @@ static int cmd_widget_set_model_file(lua_State *L, AlWidget *widget)
 	}
 
 	CATCH(
-		return luaL_error(L, "Error loading model");
+		luaL_error(L, "Error loading model");
 	)
-	FINALLY(
-		return 0;
-	)
+	FINALLY()
 }
 
-static int cmd_widget_set_model_shape(lua_State *L, AlWidget *widget)
+static AlError cmd_widget_set_model_shape(lua_State *L, AlWidget *widget)
 {
 	BEGIN()
 
@@ -419,11 +415,9 @@ static int cmd_widget_set_model_shape(lua_State *L, AlWidget *widget)
 	}
 
 	CATCH(
-		return luaL_error(L, "Error setting model shape");
+		luaL_error(L, "Error setting model shape");
 	)
-	FINALLY(
-		return 0;
-	)
+	FINALLY()
 }
 
 static int cmd_widget_set_model(lua_State *L)
@@ -431,17 +425,21 @@ static int cmd_widget_set_model(lua_State *L)
 	AlWidget *widget = cmd_accessor(L, "set_model", 2);
 
 	if (lua_isnil(L, 2)) {
-		return cmd_widget_set_model_null(L, widget);
+		cmd_widget_set_model_null(L, widget);
 
 	} else if (lua_isstring(L, 2)) {
-		return cmd_widget_set_model_file(L, widget);
+		cmd_widget_set_model_file(L, widget);
 
 	} else if (lua_isuserdata(L, 2)) {
-		return cmd_widget_set_model_shape(L, widget);
+		cmd_widget_set_model_shape(L, widget);
 
 	} else {
 		return luaL_error(L, "widget_set_model: invalid value for model");
 	}
+
+	lua_pushvalue(L, 1);
+
+	return 1;
 }
 
 static int cmd_widget_add_child(lua_State *L)
@@ -451,7 +449,7 @@ static int cmd_widget_add_child(lua_State *L)
 
 	widget_add_child(widget, child);
 
-	return 0;
+	return 1;
 }
 
 static int cmd_widget_add_sibling(lua_State *L)
@@ -461,21 +459,21 @@ static int cmd_widget_add_sibling(lua_State *L)
 
 	widget_add_sibling(widget, sibling);
 
-	return 0;
+	return 1;
 }
 
 static int cmd_widget_remove(lua_State *L)
 {
 	widget_remove(cmd_accessor(L, "remove", 1));
 
-	return 0;
+	return 1;
 }
 
 static int cmd_widget_invalidate(lua_State *L)
 {
 	widget_invalidate(cmd_accessor(L, "invalidate", 1));
 
-	return 0;
+	return 1;
 }
 
 static int cmd_widget_bind(lua_State *L, size_t bindingOffset)
@@ -503,9 +501,13 @@ static int cmd_widget_bind(lua_State *L, size_t bindingOffset)
 
 	lua_pop(L, 1);
 
+	lua_pushvalue(L, 1);
+	lua_pushvalue(L, 2);
 	al_wrapper_reference(wrapper);
 
-	return 0;
+	lua_pop(L, 1);
+
+	return 1;
 }
 
 static int cmd_widget_bind_plain(lua_State *L, const char *name, size_t bindingOffset)
