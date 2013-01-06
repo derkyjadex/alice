@@ -80,4 +80,4 @@ function Widget.prototype.layout(self, left, width, right, bottom, height, top, 
 	self:invalidate()
 end
 
-Widget.root = commands.get_root_widget()
+Widget.root = commands.get_root_widget
