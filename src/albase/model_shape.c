@@ -355,5 +355,8 @@ AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 void al_model_systems_free()
 {
 	al_wrapper_free(shapeWrapper);
+	shapeWrapper = NULL;
+
 	al_wrapper_free(pathWrapper);
+	pathWrapper = NULL;
 }

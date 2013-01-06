@@ -643,7 +643,7 @@ static AlError widget_system_register_vars(AlVars *vars)
 	PASS()
 }
 
-AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars)
+AlError widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 {
 	BEGIN()
 
@@ -655,4 +655,10 @@ AlError widget_system_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(al_wrapper_resgister_commands(wrapper, commands, "widget"));
 
 	PASS()
+}
+
+void widget_systems_free(void)
+{
+	al_wrapper_free(wrapper);
+	wrapper = NULL;
 }

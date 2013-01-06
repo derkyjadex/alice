@@ -98,7 +98,7 @@ AlError al_host_init(AlHost **result)
 	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
 
 	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
-	TRY(widget_system_init(host->lua, host->commands, host->vars));
+	TRY(widget_systems_init(host->lua, host->commands, host->vars));
 	TRY(file_system_init(host->commands));
 	TRY(text_system_init(host->commands));
 
@@ -132,11 +132,14 @@ AlError al_host_init(AlHost **result)
 void al_host_free(AlHost *host)
 {
 	if (host) {
+		widget_free(host->root);
 		al_commands_free(host->commands);
 		al_vars_free(host->vars);
-		widget_free(host->root);
 		lua_close(host->lua);
 		free(host);
+
+		al_model_systems_free();
+		widget_systems_free();
 	}
 }
 
