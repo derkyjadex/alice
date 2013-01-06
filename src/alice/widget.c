@@ -436,7 +436,7 @@ static int cmd_widget_set_model(lua_State *L)
 	} else if (lua_isstring(L, 2)) {
 		return cmd_widget_set_model_file(L, widget);
 
-	} else if (lua_istable(L, 2)) {
+	} else if (lua_isuserdata(L, 2)) {
 		return cmd_widget_set_model_shape(L, widget);
 
 	} else {
