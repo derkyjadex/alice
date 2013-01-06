@@ -3,12 +3,12 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ModelWidget = Widget:derive(function(self, x, y, width, height)
+local update_handles, update_mid_handles, finish_changes, set_current, add_point
+
+ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
 
-	self:location(x + width / 2, y + height / 2)
-	self:bounds(-width / 2, -height / 2, width / 2, height / 2)
-	self:border_width(0)
+	self:border_width(2)
 	self:fill_colour(0.2, 0.2, 0.2, 0.2)
 	self:model_scale(100)
 	self:grid_size(20, 20)
@@ -16,7 +16,6 @@ ModelWidget = Widget:derive(function(self, x, y, width, height)
 	self:bind_down(set_current, self, nil)
 
 	self._model = Model()
-	self._paths = {}
 	self._handles = {}
 	self._current = nil
 	self._mid_handles = {}
@@ -24,31 +23,19 @@ ModelWidget = Widget:derive(function(self, x, y, width, height)
 	finish_changes(self)
 end)
 
-function ModelWidget.prototype.free(self)
-	Widget.free(self)
-	self._model:free()
-end
-
-function finish_changes(self)
-	self:model(self._model)
-	update_handles(self)
-	update_mid_handles(self)
-end
-
-function update_handles(self)
-	local pathIndex, pointIndex = 0, 0
+update_handles = function(self)
+	local path_index, point_index = 0, 0
 	if self._current then
-		pathIndex, pointIndex = self._current.pathIndex, self._current.pointIndex
+		path_index, point_index = self._current.path_index, self._current.point_index
 	end
 	self._current = nil
 
 	for i, handle in ipairs(self._handles) do
 		handle.widget:remove()
-		handle.widget:free()
 	end
 	self._handles = {}
 
-	for i, path in ipairs(self._paths) do
+	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
 
 		for j, point in ipairs(points) do
@@ -59,14 +46,14 @@ function update_handles(self)
 			widget:fill_colour(0.9, 0.9, 0.9, 0.9)
 			self:add_child(widget)
 
-			local handle = {widget = widget, path = path, pathIndex = i, pointIndex = j}
+			local handle = {widget = widget, path = path, path_index = i, point_index = j}
 
 			make_draggable(widget,
 				function() set_current(self, handle) end,
 				function() finish_changes(self) end,
 				function(x, y) path:set_point(j, x / 100, y / 100) end)
 
-			if i == pathIndex and j == pointIndex then
+			if i == path_index and j == point_index then
 				set_current(self, handle)
 			end
 
@@ -75,14 +62,13 @@ function update_handles(self)
 	end
 end
 
-function update_mid_handles(self)
+update_mid_handles = function(self)
 	for i, handle in ipairs(self._mid_handles) do
 		handle.widget:remove()
-		handle.widget:free()
 	end
 	self._mid_handles = {}
 
-	for i, path in ipairs(self._paths) do
+	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
 
 		for j = 1, #points - 1 do
@@ -98,7 +84,7 @@ function update_mid_handles(self)
 			widget:fill_colour(0.2, 0.5, 0.9, 0.9)
 			self:add_child(widget)
 
-			local handle = {widget = widget, path = path, pathIndex = i, i1 = j, i2 = j + 1}
+			local handle = {widget = widget, path = path, path_index = i, i1 = j, i2 = j + 1}
 
 			widget:bind_down(add_point, self, path, j + 1, x, y)
 
@@ -107,7 +93,13 @@ function update_mid_handles(self)
 	end
 end
 
-function set_current(self, handle)
+finish_changes = function(self)
+	self:model(self._model)
+	update_handles(self)
+	update_mid_handles(self)
+end
+
+set_current = function(self, handle)
 	if self._current then
 		self._current.widget:fill_colour(0.9, 0.9, 0.9, 0.9)
 	end
@@ -119,49 +111,57 @@ function set_current(self, handle)
 	end
 end
 
-function add_point(self, path, index, x, y)
+add_point = function(self, path, index, x, y)
 	path:add_point(index, x, y)
 	finish_changes(self)
 end
 
-function ModelWidget.prototype.load(self, filename)
+function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
+	Widget.prototype.layout(self, left, width, right, bottom, height, top)
+
+	local bounds = {self:bounds()}
+
+	Widget.prototype.layout(self,
+		left, width, right,
+		bottom, height, top,
+		(bounds[3] - bounds[1]) / 2, (bounds[4] - bounds[2]) / 2)
+end
+
+function ModelWidget.prototype:load(filename)
 	self._model:load(filename)
-	self._paths = self._model:paths()
 	finish_changes(self)
 end
 
-function ModelWidget.prototype.save(self, filename)
+function ModelWidget.prototype:save(filename)
 	self._model:save(filename)
 end
 
-function ModelWidget.prototype.add_path(self)
+function ModelWidget.prototype:add_path()
 	self._model:add_path(0, -0.2, 0, 0.2, 0)
-	self._paths = self._model:paths()
 	finish_changes(self)
 end
 
-function ModelWidget.prototype.remove_path(self)
+function ModelWidget.prototype:remove_path()
 	if self._current then
-		self._model:remove_path(self._current.pathIndex)
-		self._paths = self._model:paths()
+		self._model:remove_path(self._current.path_index)
 		finish_changes(self)
 	end
 end
 
-function ModelWidget.prototype.remove_point(self)
+function ModelWidget.prototype:remove_point()
 	if self._current then
 		local path = self._current.path
-		local i = self._current.pointIndex
+		local i = self._current.point_index
 		local num_points = #path:points()
 
 		if i > 1 and i < num_points then
-			path:remove_point(self._current.pointIndex)
+			path:remove_point(self._current.point_index)
 			finish_changes(self)
 		end
 	end
 end
 
-function ModelWidget.prototype.get_path_colour(self)
+function ModelWidget.prototype:get_path_colour()
 	if self._current then
 		return self._current.path:colour()
 	else
@@ -169,7 +169,7 @@ function ModelWidget.prototype.get_path_colour(self)
 	end
 end
 
-function ModelWidget.prototype.set_path_colour(self, r, g, b)
+function ModelWidget.prototype:set_path_colour(r, g, b)
 	if self._current then
 		self._current.path:colour(r, g, b)
 		finish_changes(self)
