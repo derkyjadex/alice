@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-SliderWidget = class(Widget, function(self, callback)
+SliderWidget = Widget:derive(function(self, callback)
 	Widget.init(self)
 
 	local length

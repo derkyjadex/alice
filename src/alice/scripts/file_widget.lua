@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-FileWidget = class(Widget, function(self, callback)
+FileWidget = Widget:derive(function(self, callback)
 	Widget.init(self)
 
 	self:border_width(2)

@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ColourWidget = class(Widget, function(self, callback)
+ColourWidget = Widget:derive(function(self, callback)
 	Widget.init(self)
 
 	local hue, sat, val = 0, 0, 1

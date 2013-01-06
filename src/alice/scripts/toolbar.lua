@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-Toolbar = class(Widget, function(self)
+Toolbar = Widget:derive(function(self)
 	Widget.init(self)
 
 	self:fill_colour(1, 1, 1, 0.8)

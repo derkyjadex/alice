@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ModelWidget = class(Widget, function(self, x, y, width, height)
+ModelWidget = Widget:derive(function(self, x, y, width, height)
 	Widget.init(self)
 
 	self:location(x + width / 2, y + height / 2)

@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-TextBox = class(Widget, function(self, callback)
+TextBox = Widget:derive(function(self, callback)
 	Widget.init(self)
 
 	local text_size = 24
