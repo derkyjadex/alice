@@ -54,10 +54,10 @@ function wrap(type_name, init)
 				derive = derive
 			},
 			{
-				__call = function(self)
+				__call = function(self, ...)
 					local obj = base_ctor(prototype)
 
-					init(obj)
+					init(obj, ...)
 
 					return obj
 				end
