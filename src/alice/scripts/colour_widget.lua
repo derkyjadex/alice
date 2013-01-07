@@ -3,9 +3,10 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-ColourWidget = Widget:derive(function(self, callback)
+ColourWidget = Widget:derive(function(self)
 	Widget.init(self)
 
+	local callback = function() end
 	local hue, sat, val = 0, 0, 1
 	local red, green, blue
 	local hue_handle, val_handle
@@ -96,6 +97,12 @@ ColourWidget = Widget:derive(function(self, callback)
 	set_rgb()
 	hue_handle:location(get_hue_handle_location())
 	val_handle:location(get_val_handle_location())
+
+	function self:bind_change(new_callback)
+		callback = new_callback
+
+		return self
+	end
 end)
 
 function ColourWidget.prototype:layout(left, width, right, bottom, height, top)

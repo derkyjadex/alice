@@ -3,9 +3,10 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-SliderWidget = Widget:derive(function(self, callback)
+SliderWidget = Widget:derive(function(self)
 	Widget.init(self)
 
+	local callback = function() end
 	local length
 	self:fill_colour(0, 0, 0, 1)
 	self:border_colour(1, 1, 1, 1)
@@ -18,6 +19,12 @@ SliderWidget = Widget:derive(function(self, callback)
 		callback(y / length)
 	end)
 	self:add_child(handle)
+
+	function self:bind_change(new_callback)
+		callback = new_callback
+
+		return self
+	end
 
 	function self:layout(left, width, right, bottom, height, top)
 		Widget.prototype.layout(self, left, 20, right, bottom, height, top)

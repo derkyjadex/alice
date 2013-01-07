@@ -3,8 +3,10 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-FileWidget = Widget:derive(function(self, callback)
+FileWidget = Widget:derive(function(self)
 	Widget.init(self)
+
+	local callback = function() end
 
 	self:border_width(2)
 	self:fill_colour(0.2, 0.3, 0.3, 1)
@@ -74,6 +76,12 @@ FileWidget = Widget:derive(function(self, callback)
 			widget:layout(5, nil, 5, nil, 30, top)
 			top = top + 35
 		end
+	end
+
+	function self:bind_result(new_callback)
+		callback = new_callback
+
+		return self
 	end
 
 	function self:layout(left, width, right, bottom, height, top)
