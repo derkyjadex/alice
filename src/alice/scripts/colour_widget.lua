@@ -82,17 +82,15 @@ ColourWidget = Widget:derive(function(self)
 
 	self:border_width(2)
 
-	hue_handle = Widget()
-	hue_handle:bounds(-10, -10, 10, 10)
-	hue_handle:fill_colour(0.5, 0.5, 0.5, 0.8)
+	hue_handle = Widget():add_to(self)
+		:bounds(-10, -10, 10, 10)
+		:fill_colour(0.5, 0.5, 0.5, 0.8)
 	make_draggable(hue_handle, nil, nil, hue_handle_drag)
-	self:add_child(hue_handle)
 
-	val_handle = Widget()
-	val_handle:bounds(-10, -10, 10, 10)
-	val_handle:fill_colour(0.5, 0.5, 0.5, 0.8)
+	val_handle = Widget():add_to(self)
+		:bounds(-10, -10, 10, 10)
+		:fill_colour(0.5, 0.5, 0.5, 0.8)
 	make_draggable(val_handle, nil, nil, val_handle_drag)
-	self:add_child(val_handle)
 
 	set_rgb()
 	hue_handle:location(get_hue_handle_location())

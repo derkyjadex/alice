@@ -11,14 +11,13 @@ TextBox = Widget:derive(function(self, callback)
 	local padding = 3
 
 	self:border_width(2)
-	self:text_size(text_size)
-	self:text_location(padding, padding)
-	self:fill_colour(0, 0, 0, 1)
+		:text_size(text_size)
+		:text_location(padding, padding)
+		:fill_colour(0, 0, 0, 1)
 
-	local cursor = Widget()
-	cursor:bounds(0, 0, 2, 0)
-	cursor:fill_colour(1, 1, 1, 1)
-	self:add_child(cursor)
+	local cursor = Widget():add_to(self)
+		:bounds(0, 0, 2, 0)
+		:fill_colour(1, 1, 1, 1)
 
 	local value = ''
 	local value_length = 0
@@ -27,7 +26,7 @@ TextBox = Widget:derive(function(self, callback)
 	local function update()
 		self:text(value)
 		cursor:location(cursor_pos * char_width + padding, padding)
-		cursor:invalidate()
+			:invalidate()
 	end
 
 	update()
@@ -62,8 +61,7 @@ TextBox = Widget:derive(function(self, callback)
 	end)
 
 	self:bind_keyboard_lost(function()
-		cursor:bounds(0, 0, 2, 0)
-		cursor:invalidate()
+		cursor:bounds(0, 0, 2, 0):invalidate()
 	end)
 
 	self:bind_key(function(_, key)
@@ -87,8 +85,7 @@ TextBox = Widget:derive(function(self, callback)
 
 	function self:grab_keyboard()
 		Widget.prototype.grab_keyboard(self)
-		cursor:bounds(0, 0, 2, char_height)
-		cursor:invalidate()
+		cursor:bounds(0, 0, 2, char_height):invalidate()
 	end
 
 	function self:layout(left, width, right, bottom, height, top)

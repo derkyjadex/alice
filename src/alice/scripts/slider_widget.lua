@@ -9,16 +9,15 @@ SliderWidget = Widget:derive(function(self)
 	local callback = function() end
 	local length
 	self:fill_colour(0, 0, 0, 1)
-	self:border_colour(1, 1, 1, 1)
-	self:border_width(2)
+		:border_colour(1, 1, 1, 1)
+		:border_width(2)
 
-	local handle = Widget()
-	handle:bounds(0, 0, 20, 20)
-	handle:fill_colour(1, 1, 1, 1)
+	local handle = Widget():add_to(self)
+		:bounds(0, 0, 20, 20)
+		:fill_colour(1, 1, 1, 1)
 	make_draggable(handle, nil, nil, function(x, y)
 		callback(y / length)
 	end)
-	self:add_child(handle)
 
 	function self:bind_change(new_callback)
 		callback = new_callback

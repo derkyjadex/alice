@@ -9,11 +9,11 @@ ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
 
 	self:border_width(2)
-	self:fill_colour(0.2, 0.2, 0.2, 1)
-	self:model_scale(100)
-	self:grid_size(20, 20)
-	self:grid_colour(0.4, 0.4, 0.4)
-	self:bind_down(set_current, self, nil)
+		:fill_colour(0.2, 0.2, 0.2, 1)
+		:model_scale(100)
+		:grid_size(20, 20)
+		:grid_colour(0.4, 0.4, 0.4)
+		:bind_down(set_current, self, nil)
 
 	self._model = Model()
 	self._handles = {}
@@ -39,12 +39,11 @@ update_handles = function(self)
 		local points = path:points()
 
 		for j, point in ipairs(points) do
-			local widget = Widget()
-			widget:location(point[1] * 100, point[2] * 100)
-			widget:bounds(-6, -6, 6, 6)
-			widget:border_width(1)
-			widget:fill_colour(0.9, 0.9, 0.9, 0.9)
-			self:add_child(widget)
+			local widget = Widget():add_to(self)
+				:location(point[1] * 100, point[2] * 100)
+				:bounds(-6, -6, 6, 6)
+				:border_width(1)
+				:fill_colour(0.9, 0.9, 0.9, 0.9)
 
 			local handle = {widget = widget, path = path, path_index = i, point_index = j}
 
@@ -78,11 +77,10 @@ update_mid_handles = function(self)
 			local x = p1[1] + (p2[1] - p1[1]) / 2
 			local y = p1[2] + (p2[2] - p1[2]) / 2
 
-			local widget = Widget()
-			widget:location(x * 100, y * 100)
-			widget:bounds(-4, -4, 4, 4)
-			widget:fill_colour(0.2, 0.5, 0.9, 0.9)
-			self:add_child(widget)
+			local widget = Widget():add_to(self)
+				:location(x * 100, y * 100)
+				:bounds(-4, -4, 4, 4)
+				:fill_colour(0.2, 0.5, 0.9, 0.9)
 
 			local handle = {widget = widget, path = path, path_index = i, i1 = j, i2 = j + 1}
 

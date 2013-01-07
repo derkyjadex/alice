@@ -11,11 +11,10 @@ Toolbar = Widget:derive(function(self)
 end)
 
 function Toolbar.prototype.add_button(self, r, g, b)
-	local button = Widget()
-	button:location(self._nextX, 5)
-	button:bounds(0, 0, 30, 30)
-	button:fill_colour(r, g, b, 0.9)
-	self:add_child(button)
+	local button = Widget():add_to(self)
+		:location(self._nextX, 5)
+		:bounds(0, 0, 30, 30)
+		:fill_colour(r, g, b, 0.9)
 
 	self._nextX = self._nextX + 35
 

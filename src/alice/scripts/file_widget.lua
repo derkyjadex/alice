@@ -11,29 +11,25 @@ FileWidget = Widget:derive(function(self)
 	self:border_width(2)
 	self:fill_colour(0.2, 0.3, 0.3, 1)
 
-	local cancel_widget = Widget()
-	cancel_widget:fill_colour(0.7, 0.5, 0.1, 1.0)
-	cancel_widget:text('Cancel')
-	cancel_widget:text_size(24)
-	cancel_widget:text_location(3, 3)
-	self:add_child(cancel_widget)
+	local cancel_widget = Widget():add_to(self)
+		:fill_colour(0.7, 0.5, 0.1, 1.0)
+		:text('Cancel')
+		:text_size(24)
+		:text_location(3, 3)
 
-	local path_widget = Widget()
-	path_widget:fill_colour(0.15, 0.15, 0.15, 1.0)
-	path_widget:text_size(24)
-	path_widget:text_location(3, 3)
-	self:add_child(path_widget)
+	local path_widget = Widget():add_to(self)
+		:fill_colour(0.15, 0.15, 0.15, 1.0)
+		:text_size(24)
+		:text_location(3, 3)
 
-	local list_widget = Widget()
-	list_widget:fill_colour(0.15, 0.15, 0.15, 1.0)
-	self:add_child(list_widget)
+	local list_widget = Widget():add_to(self)
+		:fill_colour(0.15, 0.15, 0.15, 1.0)
 
 	local path, set_path, update_files, layout_files
 
 	set_path = function(new_path)
 		path = new_path
-		path_widget:text(path)
-		path_widget:invalidate()
+		path_widget:text(path):invalidate()
 		update_files()
 	end
 
@@ -46,24 +42,23 @@ FileWidget = Widget:derive(function(self)
 		file_widgets = {}
 
 		for i, file in ipairs{commands.fs_list_dir(path)} do
-			local widget = Widget()
-			widget:fill_colour(0, 0, 0, 1)
-			widget:text(file.name)
-			widget:text_size(24)
-			widget:text_location(3, 3)
+			local widget = Widget():add_to(list_widget)
+				:fill_colour(0, 0, 0, 1)
+				:text(file.name)
+				:text_size(24)
+				:text_location(3, 3)
 
 			if file.is_dir then
 				widget:text_colour(0.8, 0.7, 0.6)
-				widget:bind_down(function()
-					set_path(file.path)
-				end)
+					:bind_down(function()
+						set_path(file.path)
+					end)
 			else
 				widget:bind_down(function()
 					callback(file.path)
 				end)
 			end
 
-			list_widget:add_child(widget)
 			table.insert(file_widgets, widget)
 		end
 
