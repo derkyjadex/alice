@@ -75,12 +75,17 @@ static int cmd_model_shape_add_path(lua_State *L)
 
 	TRY(al_model_shape_add_path(model, index, (Vec2){startX, startY}, (Vec2){endX, endY}));
 
+	if (index == -1)
+		index = model->numPaths - 1;
+
+	al_model_path_push_userdata(model->paths[index]);
+
+	return 1;
+
 	CATCH(
 		return luaL_error(L, "Error adding path:");
 	)
-	FINALLY(
-		return 0;
-	)
+	FINALLY()
 }
 
 static int cmd_model_shape_remove_path(lua_State *L)
