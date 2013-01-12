@@ -7,6 +7,7 @@ sources = Split('''
 	file.c
 	geometry.c
 	model_shape.c
+	model_commands.c
 	vars.c
 	script.c
 	wrapper.c
@@ -20,6 +21,7 @@ scripts = Split('''
 	scripts/common.lua
 	scripts/class.lua
 	scripts/wrapper.lua
+	scripts/model.lua
 ''')
 
 if env['PLATFORM'] == 'darwin':

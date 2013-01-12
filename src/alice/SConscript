@@ -4,7 +4,6 @@ sources = Split('''
 	host.c
 	file_system.c
 	graphics_text.c
-	model_editing.c
 	text.c
 	widget.c
 	widget_graphics.c
@@ -24,7 +23,6 @@ shaders = Split('''
 scripts = Split('''
 	scripts/file_widget.lua
 	scripts/widget.lua
-	scripts/model.lua
 	scripts/draggable.lua
 	scripts/toolbar.lua
 	scripts/slider_widget.lua
