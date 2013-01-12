@@ -19,6 +19,7 @@ ModelWidget = Widget:derive(function(self)
 	self._handles = {}
 	self._current = nil
 	self._mid_handles = {}
+	self._path_colour_binding = function() end
 
 	finish_changes(self)
 end)
@@ -106,6 +107,8 @@ set_current = function(self, handle)
 
 	if self._current then
 		handle.widget:fill_colour(0.9, 0.5, 0.5, 0.9)
+
+		self._path_colour_binding(self._current.path:colour())
 	end
 end
 
@@ -136,6 +139,7 @@ end
 
 function ModelWidget.prototype:add_path()
 	self._model:add_path(0, -0.2, 0, 0.2, 0)
+		:colour(self._path_colour_binding())
 	finish_changes(self)
 end
 
@@ -159,17 +163,13 @@ function ModelWidget.prototype:remove_point()
 	end
 end
 
-function ModelWidget.prototype:get_path_colour()
-	if self._current then
-		return self._current.path:colour()
-	else
-		return 0, 0, 0
-	end
-end
+function ModelWidget.prototype:bind_path_colour(observable)
+	self._path_colour_binding = binding(observable, function(r, g, b)
+		if self._current then
+			self._current.path:colour(r, g, b)
+			finish_changes(self)
+		end
+	end)
 
-function ModelWidget.prototype:set_path_colour(r, g, b)
-	if self._current then
-		self._current.path:colour(r, g, b)
-		finish_changes(self)
-	end
+	return self
 end
