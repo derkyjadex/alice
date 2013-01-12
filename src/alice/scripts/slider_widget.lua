@@ -6,8 +6,11 @@
 SliderWidget = Widget:derive(function(self)
 	Widget.init(self)
 
-	local callback = function() end
-	local length
+	local length = 0
+	local min, max = 0, 1
+	local value = 0
+	local value_binding = function() end
+
 	self:fill_colour(0, 0, 0, 1)
 		:border_colour(1, 1, 1, 1)
 		:border_width(2)
@@ -16,11 +19,29 @@ SliderWidget = Widget:derive(function(self)
 		:bounds(0, 0, 20, 20)
 		:fill_colour(1, 1, 1, 1)
 	make_draggable(handle, nil, nil, function(x, y)
-		callback(y / length)
+		value = min + (max - min) * (y / length)
+		value_binding(value)
 	end)
 
-	function self:bind_change(new_callback)
-		callback = new_callback
+	local function update_location()
+		local y = length * (value - min) / (max - min)
+		handle:location(0, y):invalidate()
+	end
+
+	local function update_value(new_value)
+		value = clamp(new_value, min, max)
+		update_location()
+	end
+
+	self.range = make_accessor(
+		function(_) return min, max end,
+		function(_, new_min, new_max)
+			min, max = new_min, new_max
+			update_value(value)
+		end)
+
+	function self:bind_value(observable)
+		value_binding = binding(observable, update_value)
 
 		return self
 	end
@@ -30,6 +51,8 @@ SliderWidget = Widget:derive(function(self)
 
 		local bounds = {self:bounds()}
 		length = bounds[4] - bounds[2] - 20
+
+		update_location()
 
 		return self
 	end
