@@ -84,4 +84,17 @@ function Widget.prototype:add_to(parent)
 	return parent:add_child(self)
 end
 
+function Widget.prototype:bind_property(name, observable)
+	local var = Widget.prototype[name]
+	observable.watch(function(...)
+		var(self, ...)
+		self:invalidate()
+	end)
+
+	var(self, observable())
+	self:invalidate()
+
+	return self
+end
+
 Widget.root = commands.get_root_widget
