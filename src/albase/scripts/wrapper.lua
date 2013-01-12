@@ -74,7 +74,8 @@ function make_accessor(getter, setter)
 		if select('#', ...) == 0 then
 			return getter(self)
 		else
-			return setter(self, ...)
+			setter(self, ...)
+			return self
 		end
 	end
 end
