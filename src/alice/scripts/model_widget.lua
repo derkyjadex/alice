@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-local update_handles, update_mid_handles, finish_changes, set_current, add_point
+local finish_changes, set_current, add_point
 
 ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
@@ -20,28 +20,31 @@ ModelWidget = Widget:derive(function(self)
 	self._current = nil
 	self._mid_handles = {}
 	self._path_colour_binding = function() end
+	self._scale_binding = function() return 1 end
 
-	finish_changes(self)
+	finish_changes(self, true)
 end)
 
-update_handles = function(self)
+local function rebuild_handles(self)
 	local path_index, point_index = 0, 0
 	if self._current then
 		path_index, point_index = self._current.path_index, self._current.point_index
 	end
 	self._current = nil
 
-	for i, handle in ipairs(self._handles) do
+	for _, handle in pairs(self._handles) do
 		handle.widget:remove()
 	end
 	self._handles = {}
+
+	local scale = self._scale_binding() * 100
 
 	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
 
 		for j, point in ipairs(points) do
 			local widget = Widget():add_to(self)
-				:location(point[1] * 100, point[2] * 100)
+				:location(point[1] * scale, point[2] * scale)
 				:bounds(-6, -6, 6, 6)
 				:border_width(1)
 				:fill_colour(0.9, 0.9, 0.9, 0.9)
@@ -50,8 +53,8 @@ update_handles = function(self)
 
 			make_draggable(widget,
 				function() set_current(self, handle) end,
-				function() finish_changes(self) end,
-				function(x, y) path:set_point(j, x / 100, y / 100) end)
+				function() finish_changes(self, false) end,
+				function(x, y) move_point(self, path, j, x, y) end)
 
 			if i == path_index and j == point_index then
 				set_current(self, handle)
@@ -62,11 +65,13 @@ update_handles = function(self)
 	end
 end
 
-update_mid_handles = function(self)
-	for i, handle in ipairs(self._mid_handles) do
+local function rebuild_mid_handles(self)
+	for _, handle in pairs(self._mid_handles) do
 		handle.widget:remove()
 	end
 	self._mid_handles = {}
+
+	local scale = self._scale_binding() * 100
 
 	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
@@ -79,14 +84,19 @@ update_mid_handles = function(self)
 			local y = p1[2] + (p2[2] - p1[2]) / 2
 
 			local widget = Widget():add_to(self)
-				:location(x * 100, y * 100)
+				:location(x * scale, y * scale)
 				:bounds(-4, -4, 4, 4)
 				:fill_colour(0.2, 0.5, 0.9, 0.9)
 
-			local handle = {widget = widget, path = path, path_index = i, i1 = j, i2 = j + 1}
+			local handle = {
+				widget = widget,
+				path = path, path_index = i,
+				i1 = j, i2 = j + 1,
+				x = x, y = y
+			}
 
 			widget:bind_down(function()
-				add_point(self, path, j + 1, x, y)
+				add_point(self, path, j + 1, handle.x, handle.y)
 			end)
 
 			table.insert(self._mid_handles, handle)
@@ -94,10 +104,43 @@ update_mid_handles = function(self)
 	end
 end
 
-finish_changes = function(self)
+local function update_handles(self)
+	local scale = self._scale_binding() * 100
+
+	for _, handle in pairs(self._handles) do
+		local point = handle.path:points()[handle.point_index]
+		handle.widget:location(point[1] * scale, point[2] * scale)
+			:invalidate()
+	end
+end
+
+local function update_mid_handles(self)
+	local scale = self._scale_binding() * 100
+
+	for _, handle in pairs(self._mid_handles) do
+		local points = handle.path:points()
+		local p1 = points[handle.i1]
+		local p2 = points[handle.i2]
+		local x = p1[1] + (p2[1] - p1[1]) / 2
+		local y = p1[2] + (p2[2] - p1[2]) / 2
+
+		handle.widget:location(x * scale, y * scale)
+			:invalidate()
+		handle.x = x
+		handle.y = y
+	end
+end
+
+finish_changes = function(self, rebuild)
 	self:model(self._model)
-	update_handles(self)
-	update_mid_handles(self)
+
+	if rebuild then
+		rebuild_handles(self)
+		rebuild_mid_handles(self)
+	else
+		update_handles(self)
+		update_mid_handles(self)
+	end
 end
 
 set_current = function(self, handle)
@@ -116,13 +159,20 @@ end
 
 add_point = function(self, path, index, x, y)
 	path:add_point(index, x, y)
-	finish_changes(self)
+	finish_changes(self, true)
+end
+
+move_point = function(self, path, index, x, y)
+	local scale = self._scale_binding() * 100
+	path:set_point(index, x / scale, y / scale)
 end
 
 function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
 	Widget.prototype.layout(self, left, width, right, bottom, height, top)
 
 	local bounds = {self:bounds()}
+
+	self:grid_offset((bounds[3] - bounds[1]) / 2, (bounds[4] - bounds[2]) / 2)
 
 	return Widget.prototype.layout(self,
 		left, width, right,
@@ -132,7 +182,7 @@ end
 
 function ModelWidget.prototype:load(filename)
 	self._model:load(filename)
-	finish_changes(self)
+	finish_changes(self, true)
 end
 
 function ModelWidget.prototype:save(filename)
@@ -142,13 +192,13 @@ end
 function ModelWidget.prototype:add_path()
 	self._model:add_path(0, -0.2, 0, 0.2, 0)
 		:colour(self._path_colour_binding())
-	finish_changes(self)
+	finish_changes(self, true)
 end
 
 function ModelWidget.prototype:remove_path()
 	if self._current then
 		self._model:remove_path(self._current.path_index)
-		finish_changes(self)
+		finish_changes(self, true)
 	end
 end
 
@@ -160,7 +210,7 @@ function ModelWidget.prototype:remove_point()
 
 		if i > 1 and i < num_points then
 			path:remove_point(self._current.point_index)
-			finish_changes(self)
+			finish_changes(self, true)
 		end
 	end
 end
@@ -169,8 +219,20 @@ function ModelWidget.prototype:bind_path_colour(observable)
 	self._path_colour_binding = binding(observable, function(r, g, b)
 		if self._current then
 			self._current.path:colour(r, g, b)
-			finish_changes(self)
+			finish_changes(self, false)
 		end
+	end)
+
+	return self
+end
+
+function ModelWidget.prototype:bind_scale(observable)
+	self._scale_binding = binding(observable, function(scale)
+		self:model_scale(scale * 100)
+			:grid_size(scale * 20, scale * 20)
+
+		update_handles(self)
+		update_mid_handles(self)
 	end)
 
 	return self
