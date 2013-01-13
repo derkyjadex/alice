@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pwd.h>
 
 #include "albase/common.h"
 #include "file_system.h"
@@ -55,7 +56,7 @@ static int cmd_list_dir(lua_State *L)
 	DIR *dir = NULL;
 	struct dirent *entry;
 
-	const char *path =luaL_checkstring(L, 1);
+	const char *path = luaL_checkstring(L, 1);
 
 	dir = opendir(path);
 	if (!dir) {
@@ -90,12 +91,46 @@ static int cmd_list_dir(lua_State *L)
 	return numEntries;
 }
 
+static int cmd_get_home_dir(lua_State *L)
+{
+	const char *dir;
+
+	struct passwd *passwd = getpwuid(getuid());
+	if (!passwd) {
+		dir = "/";
+
+	} else {
+		dir = passwd->pw_dir;
+		if (!dir) {
+			dir = "/";
+		}
+	}
+
+	lua_pushstring(L, dir);
+
+	return 1;
+}
+
+static int cmd_fs_path_append_filename(lua_State *L)
+{
+	luaL_checkstring(L, 1);
+	luaL_checkstring(L, 2);
+
+	lua_pushliteral(L, "/");
+	lua_insert(L, 2);
+	lua_concat(L, 3);
+
+	return 1;
+}
+
 AlError file_system_init(AlCommands *commands)
 {
 	BEGIN()
 
 	TRY(al_commands_register(commands, "fs_get_cwd", cmd_get_cwd, NULL));
 	TRY(al_commands_register(commands, "fs_list_dir", cmd_list_dir, NULL));
+	TRY(al_commands_register(commands, "fs_get_home_dir", cmd_get_home_dir, NULL));
+	TRY(al_commands_register(commands, "fs_path_append_filename", cmd_fs_path_append_filename, NULL));
 
 	PASS()
 }
