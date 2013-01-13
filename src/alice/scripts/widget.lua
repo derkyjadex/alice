@@ -3,9 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-Widget = wrap('widget', function(self)
-	self._grabbing = false
-end)
+Widget = wrap('widget')
 
 local vars = {
 	'location', 'bounds', 'fill_colour',
@@ -29,27 +27,14 @@ Widget.prototype.remove = commands.widget_remove
 Widget.prototype.invalidate = commands.widget_invalidate
 Widget.prototype.bind_up = commands.widget_bind_up
 Widget.prototype.bind_down = commands.widget_bind_down
+Widget.prototype.bind_motion = commands.widget_bind_motion
 Widget.prototype.bind_key = commands.widget_bind_key
 Widget.prototype.bind_text = commands.widget_bind_text
 Widget.prototype.bind_keyboard_lost = commands.widget_bind_keyboard_lost
+Widget.prototype.grab_mouse = commands.grab_mouse
+Widget.prototype.release_mouse = function(_, x, y) return commands.release_mouse(x, y) end
 Widget.prototype.grab_keyboard = commands.grab_keyboard
 Widget.prototype.release_keyboard = commands.release_keyboard
-
-function Widget.prototype:bind_motion(command)
-	return commands.widget_bind_motion(self, function(_, x, y)
-		if self._grabbing then
-			command(self, x, y)
-		end
-	end)
-end
-function Widget.prototype:grab_mouse()
-	self._grabbing = true
-	return commands.grab_mouse(self)
-end
-function Widget.prototype:release_mouse(x, y)
-	self._grabbing = false
-	commands.release_mouse(x, y)
-end
 
 function Widget.prototype:layout(left, width, right, bottom, height, top, offset_x, offset_y)
 	local parent = self:parent()
