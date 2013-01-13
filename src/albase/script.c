@@ -119,3 +119,23 @@ void al_script_push_traceback(lua_State *L)
 	lua_pushlightuserdata(L, &tracebackKey);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 }
+
+AlError al_script_call(lua_State *L, int nargs)
+{
+	BEGIN()
+
+	al_script_push_traceback(L);
+	lua_insert(L, -nargs - 2);
+
+	int result = lua_pcall(L, nargs, 0, -nargs - 2);
+	if (result) {
+		const char *message = lua_tostring(L, -1);
+		al_log_error("Error calling script: \n%s", message);
+		lua_pop(L, 1);
+		THROW(AL_ERROR_SCRIPT);
+	}
+
+	PASS(
+		lua_pop(L, 1);
+	)
+}
