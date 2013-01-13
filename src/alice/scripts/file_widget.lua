@@ -3,10 +3,10 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-FileWidget = Widget:derive(function(self, type)
+FileWidget = Widget:derive(function(self, mode)
 	Widget.init(self)
 
-	local can_save = type == 'save'
+	local can_save = mode == 'save'
 
 	local callback = function() end
 
@@ -129,3 +129,30 @@ FileWidget = Widget:derive(function(self, type)
 
 	set_path(commands.fs_get_home_dir())
 end)
+
+local function show_file(mode, callback)
+	local root = Widget.root()
+	local shield = Widget():add_to(root)
+		:fill_colour(0.2, 0.2, 0.2, 0.5)
+		:layout(0, nil, 0, 0, nil, 0)
+
+	local file_widget
+	file_widget = FileWidget(mode):add_to(root)
+		:bind_result(function(path)
+			shield:remove()
+			file_widget:remove()
+
+			if path then
+				callback(path)
+			end
+		end)
+		:layout(40, nil, 40, 40, nil, 40)
+end
+
+function show_load_file(callback)
+	show_file('load', callback)
+end
+
+function show_save_file(callback)
+	show_file('save', callback)
+end
