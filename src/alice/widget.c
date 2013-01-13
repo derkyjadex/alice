@@ -217,7 +217,17 @@ static AlError widget_send_plain(AlWidget *widget, AlLuaKey *binding)
 	BEGIN()
 
 	if (*binding) {
+		lua_State *L = widget->lua;
+
+		lua_newtable(L);
+		lua_pushinteger(L, 1);
 		push_bound_value(widget, binding);
+		lua_settable(L, -3);
+
+		lua_pushinteger(L, 2);
+		widget_push_userdata(widget);
+		lua_settable(L, -3);
+
 		TRY(al_commands_enqueue(widget->commands));
 	}
 
@@ -476,8 +486,11 @@ static int cmd_widget_invalidate(lua_State *L)
 	return 1;
 }
 
-static int cmd_widget_bind(lua_State *L, size_t bindingOffset)
+static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 {
+	if (lua_gettop(L) != 2)
+		return luaL_error(L, "widget_bind_%s: requires 2 arguments", name);
+
 	AlWidget *widget = lua_touserdata(L, 1);
 	AlLuaKey *binding = (void *)widget + bindingOffset;
 	*binding = true;
@@ -510,63 +523,15 @@ static int cmd_widget_bind(lua_State *L, size_t bindingOffset)
 	return 1;
 }
 
-static int cmd_widget_bind_plain(lua_State *L, const char *name, size_t bindingOffset)
-{
-	int n = lua_gettop(L);
-	if (n < 2)
-		return luaL_error(L, "widget_bind_%s: requires at least two arguments", name);
+#define BINDING(n, x) static int cmd_widget_bind_##n(lua_State *L) \
+{ return cmd_widget_bind(L, #n, offsetof(AlWidget, x##Binding)); }
 
-	lua_newtable(L);
-
-	for (int i = 1; i <= n - 1; i++) {
-		lua_pushinteger(L, i);
-		lua_pushvalue(L, i + 1);
-		lua_settable(L, -3);
-	}
-
-	lua_replace(L, 2);
-	lua_settop(L, 2);
-
-	return cmd_widget_bind(L, bindingOffset);
-}
-
-static int cmd_widget_bind_data(lua_State *L, const char *name, size_t bindingOffset)
-{
-	if (lua_gettop(L) != 2)
-		return luaL_error(L, "widget_bind_%s: requires 2 arguments", name);
-
-	return cmd_widget_bind(L, bindingOffset);
-}
-
-static int cmd_widget_bind_up(lua_State *L)
-{
-	return cmd_widget_bind_plain(L, "up", offsetof(AlWidget, upBinding));
-}
-
-static int cmd_widget_bind_down(lua_State *L)
-{
-	return cmd_widget_bind_plain(L, "down", offsetof(AlWidget, downBinding));
-}
-
-static int cmd_widget_bind_motion(lua_State *L)
-{
-	return cmd_widget_bind_data(L, "motion", offsetof(AlWidget, motionBinding));
-}
-
-static int cmd_widget_bind_key(lua_State *L)
-{
-	return cmd_widget_bind_data(L, "key", offsetof(AlWidget, keyBinding));
-}
-
-static int cmd_widget_bind_text(lua_State *L)
-{
-	return cmd_widget_bind_data(L, "text", offsetof(AlWidget, textBinding));
-}
-
-static int cmd_widget_bind_keyboard_lost(lua_State *L)
-{
-	return cmd_widget_bind_plain(L, "keyboard_lost", offsetof(AlWidget, keyboardLostBinding));
-}
+BINDING(up, up);
+BINDING(down, down);
+BINDING(motion, motion);
+BINDING(key, key);
+BINDING(text, text);
+BINDING(keyboard_lost, keyboardLost);
 
 static void wrapper_widget_free(lua_State *L, void *ptr)
 {
