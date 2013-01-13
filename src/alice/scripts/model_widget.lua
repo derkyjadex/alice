@@ -13,7 +13,7 @@ ModelWidget = Widget:derive(function(self)
 		:model_scale(100)
 		:grid_size(20, 20)
 		:grid_colour(0.4, 0.4, 0.4)
-		:bind_down(set_current, self, nil)
+		:bind_down(function() set_current(self, nil) end)
 
 	self._model = Model()
 	self._handles = {}
@@ -85,7 +85,9 @@ update_mid_handles = function(self)
 
 			local handle = {widget = widget, path = path, path_index = i, i1 = j, i2 = j + 1}
 
-			widget:bind_down(add_point, self, path, j + 1, x, y)
+			widget:bind_down(function()
+				add_point(self, path, j + 1, x, y)
+			end)
 
 			table.insert(self._mid_handles, handle)
 		end
