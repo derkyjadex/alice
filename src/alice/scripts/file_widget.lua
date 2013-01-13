@@ -3,8 +3,10 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-FileWidget = Widget:derive(function(self)
+FileWidget = Widget:derive(function(self, type)
 	Widget.init(self)
+
+	local can_save = type == 'save'
 
 	local callback = function() end
 
@@ -17,13 +19,26 @@ FileWidget = Widget:derive(function(self)
 		:text_size(24)
 		:text_location(3, 3)
 
+	local save_widget, filename_widget
+	if can_save then
+		save_widget = Widget():add_to(self)
+			:fill_colour(0.0, 0.6, 0.1, 1.0)
+			:text('Save')
+			:text_size(24)
+			:text_location(3, 3)
+
+		filename_widget = TextBox():add_to(self)
+	end
+
 	local path_widget = Widget():add_to(self)
 		:fill_colour(0.15, 0.15, 0.15, 1.0)
+		:border_width(2)
 		:text_size(24)
 		:text_location(3, 3)
 
 	local list_widget = Widget():add_to(self)
 		:fill_colour(0.15, 0.15, 0.15, 1.0)
+		:border_width(2)
 
 	local path, set_path, update_files, layout_files
 
@@ -83,8 +98,17 @@ FileWidget = Widget:derive(function(self)
 		Widget.prototype.layout(self, left, width, right, bottom, height, top)
 
 		cancel_widget:layout(10, 70, nil, 10, 30, nil)
+
+		if can_save then
+			save_widget:layout(nil, 70, 10, 10, 30, nil)
+			filename_widget:layout(10, nil, 10, 50, nil, nil)
+
+			list_widget:layout(10, nil, 10, 90, nil, 50)
+		else
+			list_widget:layout(10, nil, 10, 50, nil, 50)
+		end
+
 		path_widget:layout(10, nil, 10, nil, 30, 10)
-		list_widget:layout(10, nil, 10, 50, nil, 50)
 
 		layout_files()
 
@@ -95,5 +119,13 @@ FileWidget = Widget:derive(function(self)
 		callback(nil)
 	end)
 
-	set_path(commands.fs_get_cwd())
+	if can_save then
+		save_widget:bind_down(function()
+			callback(commands.fs_path_append_filename(path, filename_widget:text()))
+		end)
+
+		filename_widget:grab_keyboard()
+	end
+
+	set_path(commands.fs_get_home_dir())
 end)
