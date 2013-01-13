@@ -154,19 +154,22 @@ static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 		return;
 	}
 
+	AlWidget *widget;
+
 	if (host->grabbingWidget) {
-		widget_send_up(host->grabbingWidget);
-		return;
+		widget = host->grabbingWidget;
+
+	} else {
+		Vec2 location = {event.x, host->screenSize.y - event.y};
+		widget = widget_hit_test(host->root, location);
 	}
 
-	Vec2 location = {event.x, host->screenSize.y - event.y};
-	AlWidget *hit = widget_hit_test(host->root, location);
-
-	if (hit) {
-		if (event.state == SDL_PRESSED)
-			widget_send_down(hit);
-		else
-			widget_send_up(hit);
+	if (widget) {
+		if (event.state == SDL_PRESSED) {
+			widget_send_down(widget);
+		} else {
+			widget_send_up(widget);
+		}
 	}
 }
 
