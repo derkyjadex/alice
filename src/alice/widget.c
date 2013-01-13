@@ -219,16 +219,9 @@ static AlError widget_send_plain(AlWidget *widget, AlLuaKey *binding)
 	if (*binding) {
 		lua_State *L = widget->lua;
 
-		lua_newtable(L);
-		lua_pushinteger(L, 1);
 		push_bound_value(widget, binding);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 2);
 		widget_push_userdata(widget);
-		lua_settable(L, -3);
-
-		TRY(al_commands_enqueue(widget->commands));
+		lua_call(L, 1, 0);
 	}
 
 	PASS()
@@ -251,24 +244,11 @@ AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 	if (widget->motionBinding) {
 		lua_State *L = widget->lua;
 
-		lua_newtable(L);
-		lua_pushinteger(L, 1);
 		push_bound_value(widget, &widget->motionBinding);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 2);
 		widget_push_userdata(widget);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 3);
 		lua_pushnumber(L, motion.x);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 4);
 		lua_pushnumber(L, motion.y);
-		lua_settable(L, -3);
-
-		TRY(al_commands_enqueue(widget->commands));
+		lua_call(L, 3, 0);
 	}
 
 	PASS()
@@ -281,20 +261,10 @@ AlError widget_send_key(AlWidget *widget, SDLKey key)
 	if (widget->keyBinding) {
 		lua_State *L = widget->lua;
 
-		lua_newtable(L);
-		lua_pushinteger(L, 1);
 		push_bound_value(widget, &widget->keyBinding);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 2);
 		widget_push_userdata(widget);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 3);
 		lua_pushinteger(L, key);
-		lua_settable(L, -3);
-
-		TRY(al_commands_enqueue(widget->commands));
+		lua_call(L, 2, 0);
 	}
 
 	PASS()
@@ -307,20 +277,10 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 	if (widget->textBinding) {
 		lua_State *L = widget->lua;
 
-		lua_newtable(L);
-		lua_pushinteger(L, 1);
 		push_bound_value(widget, &widget->textBinding);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 2);
 		widget_push_userdata(widget);
-		lua_settable(L, -3);
-
-		lua_pushinteger(L, 3);
 		lua_pushstring(L, text);
-		lua_settable(L, -3);
-
-		TRY(al_commands_enqueue(widget->commands));
+		lua_call(L, 2, 0);
 	}
 
 	PASS()
