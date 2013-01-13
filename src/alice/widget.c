@@ -10,6 +10,7 @@
 #include "alice/widget.h"
 #include "albase/lua.h"
 #include "albase/wrapper.h"
+#include "albase/script.h"
 
 static AlWrapper *wrapper = NULL;
 static AlLuaKey bindings;
@@ -200,28 +201,28 @@ void widget_invalidate(AlWidget *widget)
 	}
 }
 
-static void push_bound_value(AlWidget *widget, AlLuaKey *binding)
-{
-	lua_State *L = widget->lua;
-
-	lua_pushlightuserdata(L, &bindings);
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	lua_pushlightuserdata(L, binding);
-	lua_gettable(L, -2);
-
-	lua_replace(L, -2);
-}
-
-static AlError widget_send_plain(AlWidget *widget, AlLuaKey *binding)
+static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 {
 	BEGIN()
 
-	if (*binding) {
-		lua_State *L = widget->lua;
+	lua_State *L = widget->lua;
 
-		push_bound_value(widget, binding);
+	if (*binding) {
+		lua_pushlightuserdata(L, &bindings);
+		lua_gettable(L, LUA_REGISTRYINDEX);
+		lua_pushlightuserdata(L, binding);
+		lua_gettable(L, -2);
+
+		lua_insert(L, -nargs - 2);
+		lua_pop(L, 1);
+
 		widget_push_userdata(widget);
-		lua_call(L, 1, 0);
+		lua_insert(L, -nargs - 1);
+
+		TRY(al_script_call(L, nargs + 1));
+
+	} else {
+		lua_pop(L, nargs);
 	}
 
 	PASS()
@@ -229,66 +230,42 @@ static AlError widget_send_plain(AlWidget *widget, AlLuaKey *binding)
 
 AlError widget_send_down(AlWidget *widget)
 {
-	return widget_send_plain(widget, &widget->downBinding);
+	return call_binding(widget, &widget->downBinding, 0);
 }
 
 AlError widget_send_up(AlWidget *widget)
 {
-	return widget_send_plain(widget, &widget->upBinding);
+	return call_binding(widget, &widget->upBinding, 0);
 }
 
 AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 {
-	BEGIN()
+	lua_State *L = widget->lua;
+	lua_pushnumber(L, motion.x);
+	lua_pushnumber(L, motion.y);
 
-	if (widget->motionBinding) {
-		lua_State *L = widget->lua;
-
-		push_bound_value(widget, &widget->motionBinding);
-		widget_push_userdata(widget);
-		lua_pushnumber(L, motion.x);
-		lua_pushnumber(L, motion.y);
-		lua_call(L, 3, 0);
-	}
-
-	PASS()
+	return call_binding(widget, &widget->motionBinding, 2);
 }
 
 AlError widget_send_key(AlWidget *widget, SDLKey key)
 {
-	BEGIN()
+	lua_State *L = widget->lua;
+	lua_pushinteger(L, key);
 
-	if (widget->keyBinding) {
-		lua_State *L = widget->lua;
-
-		push_bound_value(widget, &widget->keyBinding);
-		widget_push_userdata(widget);
-		lua_pushinteger(L, key);
-		lua_call(L, 2, 0);
-	}
-
-	PASS()
+	return call_binding(widget, &widget->motionBinding, 1);
 }
 
 AlError widget_send_text(AlWidget *widget, const char *text)
 {
-	BEGIN()
+	lua_State *L = widget->lua;
+	lua_pushstring(L, text);
 
-	if (widget->textBinding) {
-		lua_State *L = widget->lua;
-
-		push_bound_value(widget, &widget->textBinding);
-		widget_push_userdata(widget);
-		lua_pushstring(L, text);
-		lua_call(L, 2, 0);
-	}
-
-	PASS()
+	return call_binding(widget, &widget->motionBinding, 1);
 }
 
 AlError widget_send_keyboard_lost(AlWidget *widget)
 {
-	return widget_send_plain(widget, &widget->keyboardLostBinding);
+	return call_binding(widget, &widget->keyboardLostBinding, 0);
 }
 
 AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
