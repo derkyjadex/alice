@@ -252,7 +252,7 @@ AlError widget_send_key(AlWidget *widget, SDLKey key)
 	lua_State *L = widget->lua;
 	lua_pushinteger(L, key);
 
-	return call_binding(widget, &widget->motionBinding, 1);
+	return call_binding(widget, &widget->keyBinding, 1);
 }
 
 AlError widget_send_text(AlWidget *widget, const char *text)
@@ -260,7 +260,7 @@ AlError widget_send_text(AlWidget *widget, const char *text)
 	lua_State *L = widget->lua;
 	lua_pushstring(L, text);
 
-	return call_binding(widget, &widget->motionBinding, 1);
+	return call_binding(widget, &widget->textBinding, 1);
 }
 
 AlError widget_send_keyboard_lost(AlWidget *widget)
