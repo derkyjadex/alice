@@ -1,5 +1,5 @@
 -- slider_widget.lua
--- Copyright (c) 2011-2012 James Deery
+-- Copyright (c) 2011-2013 James Deery
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
@@ -7,7 +7,8 @@ SliderWidget = Widget:derive(function(self)
 	Widget.init(self)
 
 	local length = 0
-	local min, max = 0, 1
+	local scale_type = SliderWidget.LinearScale
+	local scale = scale_type(0, 1)
 	local value = 0
 	local value_binding = function() end
 
@@ -19,26 +20,34 @@ SliderWidget = Widget:derive(function(self)
 		:bounds(0, 0, 20, 20)
 		:fill_colour(1, 1, 1, 1)
 	make_draggable(handle, nil, nil, function(x, y)
-		value = min + (max - min) * (y / length)
+		value = scale.value(y / length)
 		value_binding(value)
 	end)
 
 	local function update_location()
-		local y = length * (value - min) / (max - min)
+		local y = length * scale.invert(value)
 		handle:location(0, y):invalidate()
 	end
 
 	local function update_value(new_value)
-		value = clamp(new_value, min, max)
+		value = scale.clamp(new_value)
 		update_location()
 	end
 
-	self.range = make_accessor(
-		function(_) return min, max end,
-		function(_, new_min, new_max)
-			min, max = new_min, new_max
-			update_value(value)
-		end)
+	function self:range(min, max)
+		scale = scale_type(min, max)
+		update_value(value)
+
+		return self
+	end
+
+	function self:scale_type(type)
+		scale_type = type
+		scale = scale_type(scale.range())
+		update_value(value)
+
+		return self
+	end
 
 	function self:bind_value(observable)
 		value_binding = Binding(observable, update_value)
@@ -57,3 +66,30 @@ SliderWidget = Widget:derive(function(self)
 		return self
 	end
 end)
+
+local function Scale(min, max, value, invert)
+	local range = max - min
+
+	return {
+		range = function() return min, max end,
+		clamp = function(x) return clamp(x, min, max) end,
+		value = value,
+		invert = invert
+	}
+end
+
+function SliderWidget.LinearScale(min, max)
+	local range = max - min
+
+	return Scale(min, max,
+		function(x) return min + range * x end,
+		function(y) return (y - min) / range end)
+end
+
+function SliderWidget.LogScale(min, max)
+	local range = math.log(max / min)
+
+	return Scale(min, max,
+		function(x) return min * math.exp(range * x) end,
+		function(y) return math.log(y / min) / range end)
+end
