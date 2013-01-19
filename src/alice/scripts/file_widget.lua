@@ -1,5 +1,5 @@
 -- file_widget.lua
--- Copyright (c) 2012 James Deery
+-- Copyright (c) 2012-2013 James Deery
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 

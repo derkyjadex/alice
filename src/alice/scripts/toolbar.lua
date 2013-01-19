@@ -1,5 +1,5 @@
 -- toolbar.lua
--- Copyright (c) 2011-2012 James Deery
+-- Copyright (c) 2011-2013 James Deery
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
