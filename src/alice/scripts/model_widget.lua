@@ -10,7 +10,7 @@ ModelWidget = Widget:derive(function(self)
 
 	self:border_width(2)
 		:fill_colour(0.2, 0.2, 0.2, 1)
-		:model_scale(100)
+		:model_scale(1)
 		:grid_size(20, 20)
 		:grid_colour(0.4, 0.4, 0.4)
 		:bind_down(function() set_current(self, nil) end)
@@ -21,6 +21,8 @@ ModelWidget = Widget:derive(function(self)
 	self._mid_handles = {}
 	self._path_colour_binding = function() end
 	self._scale_binding = function() return 1 end
+	self._centre_offset = {0, 0}
+	self._pan_binding = function() return 0, 0 end
 
 	finish_changes(self, true)
 end)
@@ -37,14 +39,15 @@ local function rebuild_handles(self)
 	end
 	self._handles = {}
 
-	local scale = self._scale_binding() * 100
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
 
 	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
 
 		for j, point in ipairs(points) do
 			local widget = Widget():add_to(self)
-				:location(point[1] * scale, point[2] * scale)
+				:location((point[1] + pan_x) * scale, (point[2] + pan_y) * scale)
 				:bounds(-6, -6, 6, 6)
 				:border_width(1)
 				:fill_colour(0.9, 0.9, 0.9, 0.9)
@@ -71,7 +74,8 @@ local function rebuild_mid_handles(self)
 	end
 	self._mid_handles = {}
 
-	local scale = self._scale_binding() * 100
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
 
 	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
@@ -84,7 +88,7 @@ local function rebuild_mid_handles(self)
 			local y = p1[2] + (p2[2] - p1[2]) / 2
 
 			local widget = Widget():add_to(self)
-				:location(x * scale, y * scale)
+				:location((x + pan_x) * scale, (y + pan_y) * scale)
 				:bounds(-4, -4, 4, 4)
 				:fill_colour(0.2, 0.5, 0.9, 0.9)
 
@@ -105,17 +109,19 @@ local function rebuild_mid_handles(self)
 end
 
 local function update_handles(self)
-	local scale = self._scale_binding() * 100
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
 
 	for _, handle in pairs(self._handles) do
 		local point = handle.path:points()[handle.point_index]
-		handle.widget:location(point[1] * scale, point[2] * scale)
+		handle.widget:location((point[1] + pan_x) * scale, (point[2] + pan_y) * scale)
 			:invalidate()
 	end
 end
 
 local function update_mid_handles(self)
-	local scale = self._scale_binding() * 100
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
 
 	for _, handle in pairs(self._mid_handles) do
 		local points = handle.path:points()
@@ -124,7 +130,7 @@ local function update_mid_handles(self)
 		local x = p1[1] + (p2[1] - p1[1]) / 2
 		local y = p1[2] + (p2[2] - p1[2]) / 2
 
-		handle.widget:location(x * scale, y * scale)
+		handle.widget:location((x + pan_x) * scale, (y + pan_y) * scale)
 			:invalidate()
 		handle.x = x
 		handle.y = y
@@ -163,8 +169,25 @@ add_point = function(self, path, index, x, y)
 end
 
 move_point = function(self, path, index, x, y)
-	local scale = self._scale_binding() * 100
-	path:set_point(index, x / scale, y / scale)
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
+
+	path:set_point(index, (x / scale) - pan_x, (y / scale) - pan_y)
+end
+
+local function update_transform(self)
+	local offset = self._centre_offset
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
+
+	self:model_scale(scale)
+		:model_location(pan_x * scale, pan_y * scale)
+		:grid_size(scale * 20, scale * 20)
+		:grid_offset(pan_x * scale + offset[1], pan_y * scale + offset[2])
+		:invalidate()
+
+	update_handles(self)
+	update_mid_handles(self)
 end
 
 function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
@@ -172,7 +195,12 @@ function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
 
 	local bounds = {self:bounds()}
 
-	self:grid_offset((bounds[3] - bounds[1]) / 2, (bounds[4] - bounds[2]) / 2)
+	self._centre_offset = {
+		(bounds[3] - bounds[1]) / 2,
+		(bounds[4] - bounds[2]) / 2
+	}
+
+	update_transform(self)
 
 	return Widget.prototype.layout(self,
 		left, width, right,
@@ -190,7 +218,7 @@ function ModelWidget.prototype:save(filename)
 end
 
 function ModelWidget.prototype:add_path()
-	self._model:add_path(0, -0.2, 0, 0.2, 0)
+	self._model:add_path(0, -20, 0, 20, 0)
 		:colour(self._path_colour_binding())
 	finish_changes(self, true)
 end
@@ -227,12 +255,16 @@ function ModelWidget.prototype:bind_path_colour(observable)
 end
 
 function ModelWidget.prototype:bind_scale(observable)
-	self._scale_binding = binding(observable, function(scale)
-		self:model_scale(scale * 100)
-			:grid_size(scale * 20, scale * 20)
+	self._scale_binding = binding(observable, function()
+		update_transform(self)
+	end)
 
-		update_handles(self)
-		update_mid_handles(self)
+	return self
+end
+
+function ModelWidget.prototype:bind_pan(observable)
+	self._pan_binding = binding(observable, function()
+		update_transform(self)
 	end)
 
 	return self
