@@ -125,7 +125,7 @@ ColourWidget = Widget:derive(function(self)
 	make_draggable(val_handle, nil, nil, val_handle_drag)
 
 	function self:bind_value(observable)
-		value_binding = binding(observable, update_value)
+		value_binding = Binding(observable, update_value)
 
 		return self
 	end

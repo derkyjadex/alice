@@ -7,7 +7,7 @@ function clamp(value, min, max)
 	return math.min(math.max(min, value), max)
 end
 
-function observable(...)
+function Observable(...)
 	local value = {...}
 	local watchers = {}
 
@@ -31,7 +31,7 @@ function observable(...)
 		})
 end
 
-function binding(observable, callback)
+function Binding(observable, callback)
 	local updating_self = false
 
 	observable.watch(function(...)

@@ -244,7 +244,7 @@ function ModelWidget.prototype:remove_point()
 end
 
 function ModelWidget.prototype:bind_path_colour(observable)
-	self._path_colour_binding = binding(observable, function(r, g, b)
+	self._path_colour_binding = Binding(observable, function(r, g, b)
 		if self._current then
 			self._current.path:colour(r, g, b)
 			finish_changes(self, false)
@@ -255,7 +255,7 @@ function ModelWidget.prototype:bind_path_colour(observable)
 end
 
 function ModelWidget.prototype:bind_scale(observable)
-	self._scale_binding = binding(observable, function()
+	self._scale_binding = Binding(observable, function()
 		update_transform(self)
 	end)
 
@@ -263,7 +263,7 @@ function ModelWidget.prototype:bind_scale(observable)
 end
 
 function ModelWidget.prototype:bind_pan(observable)
-	self._pan_binding = binding(observable, function()
+	self._pan_binding = Binding(observable, function()
 		update_transform(self)
 	end)
 

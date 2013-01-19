@@ -41,7 +41,7 @@ SliderWidget = Widget:derive(function(self)
 		end)
 
 	function self:bind_value(observable)
-		value_binding = binding(observable, update_value)
+		value_binding = Binding(observable, update_value)
 
 		return self
 	end

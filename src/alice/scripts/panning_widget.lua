@@ -33,7 +33,7 @@ PanningWidget = Widget:derive(function(self)
 		end)
 
 	function self:bind_value(observable)
-		value_binding = binding(observable, function(new_x, new_y)
+		value_binding = Binding(observable, function(new_x, new_y)
 			x, y = new_x, new_y
 		end)
 
