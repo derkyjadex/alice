@@ -70,7 +70,7 @@ function Widget.prototype:add_to(parent)
 end
 
 function Widget.prototype:bind_property(name, observable)
-	local var = Widget.prototype[name]
+	local var = self[name]
 	observable.watch(function(...)
 		var(self, ...)
 		self:invalidate()
