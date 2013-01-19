@@ -18,5 +18,6 @@ AL_SCRIPT_DECLARE(colour_widget)
 AL_SCRIPT_DECLARE(model_widget)
 AL_SCRIPT_DECLARE(file_widget)
 AL_SCRIPT_DECLARE(text_box)
+AL_SCRIPT_DECLARE(panning_widget)
 
 #endif
