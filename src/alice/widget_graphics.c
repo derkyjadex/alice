@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 James Deery
+ * Copyright (c) 2011-2013 James Deery
  * Released under the MIT license <http://opensource.org/licenses/MIT>.
  * See COPYING for details.
  */
@@ -184,10 +184,10 @@ AlError widget_graphics_system_init()
 
 	glViewport(0, 0, size.x, size.y);
 
+	glEnable(GL_SCISSOR_TEST);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glClearColor(0, 0, 0, 1);
 
 	TRY(init_shaders());
 
@@ -346,11 +346,7 @@ static void render_cursor(Vec2 location)
 void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
 {
 	if (!root->valid) {
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		glEnable(GL_SCISSOR_TEST);
 		render_widget(root, (Vec2){0, 0}, (Box){{0, 0}, {viewportSize[0], viewportSize[1]}});
-		glDisable(GL_SCISSOR_TEST);
 
 		if (renderCursor) {
 			render_cursor(cursorLocation);
