@@ -100,12 +100,55 @@ Vec2 vec2_ceil(Vec2 v)
 	return (Vec2){ceil(v.x), ceil(v.y)};
 }
 
+double vec2_dot(Vec2 a, Vec2 b)
+{
+	return a.x * b.x + a.y + b.y;
+}
+
+double vec2_cross(Vec2 a, Vec2 b, Vec2 c)
+{
+	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
 Box box_add_vec2(Box box, Vec2 v)
 {
 	return (Box){
 		{box.min.x + v.x, box.min.y + v.y},
 		{box.max.x + v.x, box.max.y + v.y}
 	};
+}
+
+Box box_include_vec2(Box box, Vec2 v)
+{
+	Box result;
+
+	if (v.x < box.min.x) {
+		result.min.x = v.x;
+		result.max.x = box.max.x;
+
+	} else if (v.x > box.max.x) {
+		result.min.x = box.min.x;
+		result.max.x = v.x;
+
+	} else {
+		result.min.x = box.min.x;
+		result.max.x = box.max.x;
+	}
+
+	if (v.y < box.min.y) {
+		result.min.y = v.y;
+		result.max.y = box.max.y;
+
+	} else if (v.y > box.max.y) {
+		result.min.y = box.min.y;
+		result.max.y = v.y;
+
+	} else {
+		result.min.y = box.min.y;
+		result.max.y = box.max.y;
+	}
+
+	return result;
 }
 
 bool box_contains(Box box, Vec2 v)
