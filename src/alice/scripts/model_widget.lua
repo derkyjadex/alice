@@ -3,7 +3,19 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-local finish_changes, set_current, subdivide
+local finish_changes, set_current, subdivide, move_point
+
+local function adjacent_vertices(i, n)
+	i = ((i - 1) % n) + 1
+
+	if i == 1 then
+		return n, 1, 2
+	elseif i == n then
+		return n - 1, n, 1
+	else
+		return i - 1, i, i + 1
+	end
+end
 
 ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
@@ -45,18 +57,14 @@ local function rebuild_handles(self)
 	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
 
-		for j, point in ipairs(points) do
+		for j = 2, #points, 2 do
+			local p = points[j]
 			local widget = Widget():add_to(self)
-				:location((point[1] + pan_x) * scale, (point[2] + pan_y) * scale)
+				:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
 				:bounds(-6, -6, 6, 6)
+				:fill_colour(1.0, 1.0, 1.0, 1.0)
 				:border_width(1)
 				:border_colour(0.1, 0.1, 0.1, 1.0)
-
-			if j % 2 == 0 then
-				widget:fill_colour(0.3, 0.9, 0.3, 1.0)
-			else
-				widget:fill_colour(1.0, 1.0, 1.0, 1.0)
-			end
 
 			local handle = {
 				widget = widget,
@@ -96,16 +104,10 @@ local function rebuild_mid_handles(self)
 
 		local n = #points
 		for j = 1, n, 2 do
-			local j1, j2, j3 = j, j % n + 1, (j + 1) % n + 1
-			local p1 = points[j1]
-			local p2 = points[j2]
-			local p3 = points[j3]
-
-			local x = 0.25 * p1[1] + 0.5 * p2[1] + 0.25 * p3[1]
-			local y = 0.25 * p1[2] + 0.5 * p2[2] + 0.25 * p3[2]
+			local p = points[j]
 
 			local widget = Widget():add_to(self)
-				:location((x + pan_x) * scale, (y + pan_y) * scale)
+				:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
 				:bounds(-4, -4, 4, 4)
 				:fill_colour(0.2, 0.5, 0.9, 1.0)
 				:border_colour(0.9, 0.9, 0.9, 1.0)
@@ -114,11 +116,11 @@ local function rebuild_mid_handles(self)
 			local handle = {
 				widget = widget,
 				path = path, path_index = i,
-				i1 = j1, i2 = j2, i3 = j3
+				i = j
 			}
 
 			widget:bind_down(function()
-				subdivide(self, path, j1, j2, j3)
+				subdivide(self, path, j)
 			end)
 
 			table.insert(self._mid_handles, handle)
@@ -131,8 +133,8 @@ local function update_handles(self)
 	local pan_x, pan_y = self._pan_binding()
 
 	for _, handle in pairs(self._handles) do
-		local point = handle.path:points()[handle.point_index]
-		handle.widget:location((point[1] + pan_x) * scale, (point[2] + pan_y) * scale)
+		local p = handle.path:points()[handle.point_index]
+		handle.widget:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
 			:invalidate()
 	end
 end
@@ -143,13 +145,9 @@ local function update_mid_handles(self)
 
 	for _, handle in pairs(self._mid_handles) do
 		local points = handle.path:points()
-		local p1 = points[handle.i1]
-		local p2 = points[handle.i2]
-		local p3 = points[handle.i3]
-		local x = 0.25 * p1[1] + 0.5 * p2[1] + 0.25 * p3[1]
-		local y = 0.25 * p1[2] + 0.5 * p2[2] + 0.25 * p3[2]
+		local p = points[handle.i]
 
-		handle.widget:location((x + pan_x) * scale, (y + pan_y) * scale)
+		handle.widget:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
 			:invalidate()
 	end
 end
@@ -184,24 +182,34 @@ set_current = function(self, handle)
 	end
 end
 
-subdivide = function(self, path, i1, i2, i3)
+subdivide = function(self, path, i)
 	local points = path:points()
+	local i1, i2, i3 = adjacent_vertices(i, #points)
 	local p1 = points[i1]
 	local p2 = points[i2]
 	local p3 = points[i3]
 
 	local x1 = 0.5 * p1[1] + 0.5 * p2[1]
 	local y1 = 0.5 * p1[2] + 0.5 * p2[2]
-	local x2 = 0.25 * p1[1] + 0.5 * p2[1] + 0.25 * p3[1]
-	local y2 = 0.25 * p1[2] + 0.5 * p2[2] + 0.25 * p3[2]
 	local x3 = 0.5 * p2[1] + 0.5 * p3[1]
 	local y3 = 0.5 * p2[2] + 0.5 * p3[2]
 
-	path:set_point(i2, x3, y3)
-	path:add_point(i2, x2, y2)
+	path:add_point(i3, x3, y3)
 	path:add_point(i2, x1, y1)
 
 	finish_changes(self, true)
+end
+
+local function smooth_point(self, path, i)
+	local points = path:points()
+	local i1, i2, i3 = adjacent_vertices(i, #points)
+	local p1 = points[i1]
+	local p3 = points[i3]
+
+	local x = 0.5 * p1[1] + 0.5 * p3[1]
+	local y = 0.5 * p1[2] + 0.5 * p3[2]
+
+	path:set_point(i2, x, y)
 end
 
 move_point = function(self, path, index, x, y)
@@ -209,6 +217,22 @@ move_point = function(self, path, index, x, y)
 	local pan_x, pan_y = self._pan_binding()
 
 	path:set_point(index, (x / scale) - pan_x, (y / scale) - pan_y)
+
+	smooth_point(self, path, index - 1)
+	smooth_point(self, path, index + 1)
+end
+
+local function remove_point(self, path, i)
+	local points = path:points()
+	local i1, i2, i3 = adjacent_vertices(i, #points)
+
+	if i1 < i3 then
+		path:remove_point(i3)
+		path:remove_point(i1)
+	else
+		path:remove_point(i1)
+		path:remove_point(i3)
+	end
 end
 
 local function update_transform(self)
@@ -254,9 +278,13 @@ function ModelWidget.prototype:save(filename)
 end
 
 function ModelWidget.prototype:add_path()
-	local path = self._model:add_path(0, 20, -20, 20, 20)
+	local path = self._model:add_path(0, 0, -20, 20, -20)
 		:colour(self._path_colour_binding())
+	path:add_point(0, 20, 0)
+	path:add_point(0, 20, 20)
+	path:add_point(0, 0, 20)
 	path:add_point(0, -20, 20)
+	path:add_point(0, -20, 0)
 	path:add_point(0, -20, -20)
 
 	finish_changes(self, true)
@@ -273,12 +301,9 @@ function ModelWidget.prototype:remove_point()
 	if self._current then
 		local path = self._current.path
 		local i = self._current.point_index
-		local num_points = #path:points()
 
-		if i >= 1 and i <= num_points then
-			path:remove_point(self._current.point_index)
-			finish_changes(self, true)
-		end
+		remove_point(self, path, i)
+		finish_changes(self, true)
 	end
 end
 
