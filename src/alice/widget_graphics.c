@@ -36,10 +36,9 @@ static struct {
 	GLuint viewportSize;
 	GLuint translate;
 	GLuint scale;
-	GLuint width;
 	GLuint colour;
 	GLuint position;
-	GLuint normal;
+	GLuint param;
 } modelShader;
 
 static struct {
@@ -127,10 +126,9 @@ static AlError init_shaders()
 	AL_GET_GL_UNIFORM(modelShader, viewportSize);
 	AL_GET_GL_UNIFORM(modelShader, translate);
 	AL_GET_GL_UNIFORM(modelShader, scale);
-	AL_GET_GL_UNIFORM(modelShader, width);
 	AL_GET_GL_UNIFORM(modelShader, colour);
 	AL_GET_GL_ATTRIB(modelShader, position);
-	AL_GET_GL_ATTRIB(modelShader, normal);
+	AL_GET_GL_ATTRIB(modelShader, param);
 
 	TRY(al_gl_shader_init_with_sources(&textShader.shader, AL_VERT_SHADER(text), AL_FRAG_SHADER(text)));
 	AL_GET_GL_UNIFORM(textShader, viewportSize);
@@ -214,26 +212,25 @@ static void render_model(AlModel *model, Vec2 location, double scale)
 	glUniform2fv(modelShader.viewportSize, 1, viewportSize);
 	glUniform2f(modelShader.translate, location.x, location.y);
 	glUniform1f(modelShader.scale, scale);
-	glUniform1f(modelShader.width, 4);
 
 	glEnableVertexAttribArray(modelShader.position);
-	glEnableVertexAttribArray(modelShader.normal);
+	glEnableVertexAttribArray(modelShader.param);
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->vertexBuffer);
 	glVertexAttribPointer(modelShader.position, 2, GL_FLOAT, GL_FALSE, sizeof(AlGlModelVertex), (void *)offsetof(AlGlModelVertex, position));
-	glVertexAttribPointer(modelShader.normal, 2, GL_FLOAT, GL_FALSE, sizeof(AlGlModelVertex), (void *)offsetof(AlGlModelVertex, normal));
+	glVertexAttribPointer(modelShader.param, 3, GL_FLOAT, GL_FALSE, sizeof(AlGlModelVertex), (void *)offsetof(AlGlModelVertex, param));
 
 	int start = 0;
 	for (int i = 0; i < model->numPaths; i++) {
 		Vec3 colour = model->colours[i];
 		glUniform3f(modelShader.colour, colour.x, colour.y, colour.z);
-		glDrawArrays(GL_TRIANGLE_STRIP, start, model->vertexCounts[i]);
+		glDrawArrays(GL_TRIANGLES, start, model->vertexCounts[i]);
 		start += model->vertexCounts[i];
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(modelShader.position);
-	glDisableVertexAttribArray(modelShader.normal);
+	glDisableVertexAttribArray(modelShader.param);
 }
 
 static void render_text(const char *text, Vec3 colour, Vec2 location, double size)

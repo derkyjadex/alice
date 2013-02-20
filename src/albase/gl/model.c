@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "albase/gl/model.h"
 #include "albase/model_shape.h"
@@ -52,43 +53,129 @@ static void model_free(AlModel *model)
 	}
 }
 
-static AlError model_build_path_vertices(AlGlModelVertex *vertices, AlModelPath *path)
+typedef struct VertexNode {
+	struct VertexNode *next;
+	int i;
+} VertexNode;
+
+static bool triangle_contains(Vec2 t1, Vec2 t2, Vec2 t3, Vec2 p)
+{
+	return vec2_cross(t1, p, t2) < 0 &&
+		   vec2_cross(t2, p, t3) < 0 &&
+		   vec2_cross(t3, p, t1) < 0;
+}
+
+static AlError model_build_curve_triangles(AlModelPath *path, VertexNode *nodes, AlGlModelVertex *output, int *outputCount)
+{
+	BEGIN()
+
+	int n = path->numPoints;
+	Vec2 *points = path->points;
+
+	VertexNode *lastNode = nodes;
+	*lastNode = (VertexNode){nodes, 0};
+
+	for (int i = 0; i < n - 1; i += 2) {
+		bool last = i == n - 2;
+
+		Vec2 p1 = points[i + 0];
+		Vec2 p2 = points[i + 1];
+		Vec2 p3 = points[last ? 0 : i + 2];
+
+		float sign = (vec2_cross(p1, p3, p2) < 0) ? -1 : 1;
+
+		*output++ = (AlGlModelVertex){{p1.x, p1.y}, {0.0, 0.0, sign}};
+		*output++ = (AlGlModelVertex){{p2.x, p2.y}, {0.5, 0.0, sign}};
+		*output++ = (AlGlModelVertex){{p3.x, p3.y}, {1.0, 1.0, sign}};
+		*outputCount += 3;
+
+		if (sign > 0) {
+			lastNode->next = lastNode + 1;
+			lastNode++;
+			*lastNode = (VertexNode){nodes, i + 1};
+		}
+
+		if (!last) {
+			lastNode->next = lastNode + 1;
+			lastNode++;
+			*lastNode = (VertexNode){nodes, i + 2};
+		}
+	}
+
+	PASS()
+}
+
+static AlError model_build_inner_triangles(AlModelPath *path, VertexNode *vertices, AlGlModelVertex *output, int *outputCount)
 {
 	BEGIN()
 
 	Vec2 *points = path->points;
+	VertexNode *v1 = vertices, *lastSuccess = v1;
 
-	if (path->numPoints < 2)
-		THROW(AL_ERROR_INVALID_DATA)
+	while (true) {
+		VertexNode *v3 = v1->next->next;
 
-	Vec2 p1;
-	Vec2 p2 = points[0];
+		if (v3 == v1)
+			RETURN()
 
-	for (int i = 1; i < path->numPoints; i++) {
-		p1 = p2;
-		p2 = points[i];
-		Vec2 n = vec2_normal(vec2_normalise(vec2_subtract(p2, p1)));
+		Vec2 p1 = points[v1->i];
+		Vec2 p2 = points[v1->next->i];
+		Vec2 p3	= points[v3->i];
+		bool success = false;
 
-		*vertices++ = (AlGlModelVertex){{p1.x, p1.y}, {n.x, n.y}};
-		*vertices++ = (AlGlModelVertex){{p1.x, p1.y}, {-n.x, -n.y}};
-		*vertices++ = (AlGlModelVertex){{p2.x, p2.y}, {n.x, n.y}};
-		*vertices++ = (AlGlModelVertex){{p2.x, p2.y}, {-n.x, -n.y}};
-	}
+		if (vec2_cross(p1, p3, p2) < 0) {
+			bool empty = true;
 
-	if (vec2_equals(path->points[0], path->points[path->numPoints - 1])) {
-		p1 = points[0];
-		p2 = points[1];
-		Vec2 n = vec2_normal(vec2_normalise(vec2_subtract(p2, p1)));
+			for (VertexNode *v = v3->next; v != v1; v = v->next) {
+				if (triangle_contains(p1, p2, p3, points[v->i])) {
+					empty = false;
+					break;
+				}
+			}
 
-		*vertices++ = (AlGlModelVertex){{p1.x, p1.y}, {n.x, n.y}};
-		*vertices++ = (AlGlModelVertex){{p1.x, p1.y}, {-n.x, -n.y}};
+			if (empty) {
+				*output++ = (AlGlModelVertex){{p1.x, p1.y}, {0.0, 1.0, -1}};
+				*output++ = (AlGlModelVertex){{p2.x, p2.y}, {0.0, 1.0, -1}};
+				*output++ = (AlGlModelVertex){{p3.x, p3.y}, {0.0, 1.0, -1}};
+				*outputCount += 3;
 
-	} else {
-		*vertices++ = (AlGlModelVertex){{p2.x, p2.y}, {0, 0}};
-		*vertices++ = (AlGlModelVertex){{p2.x, p2.y}, {0, 0}};
+				v1->next = v3;
+				success = true;
+				lastSuccess = v1;
+			}
+		}
+
+		if (!success) {
+			v1 = v1->next;
+
+			if (v1 == lastSuccess)
+				RETURN()
+		}
 	}
 
 	PASS()
+}
+
+static AlError model_build_path_vertices(AlModelPath *path, AlGlModelVertex *output, int *outputCount)
+{
+	BEGIN()
+
+	int n = path->numPoints;
+	VertexNode *nodes = NULL;
+
+	if (n < 2)
+		THROW(AL_ERROR_INVALID_DATA)
+
+	*outputCount = 0;
+
+	TRY(al_malloc(&nodes, sizeof(VertexNode), n));
+
+	TRY(model_build_curve_triangles(path, nodes, output, outputCount));
+	TRY(model_build_inner_triangles(path, nodes, output, outputCount));
+
+	PASS(
+		free(nodes);
+	)
 }
 
 static AlError model_load(AlModel *model, const char *filename)
@@ -184,59 +271,49 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 	int *vertexCounts = NULL;
 	AlGlModelVertex *vertices = NULL;
 
-	Vec2 min = {0, 0};
-	Vec2 max = {0, 0};
+	Box bounds = {{0, 0}, {0, 0}};
 
 	TRY(al_malloc(&colours, sizeof(Vec3), shape->numPaths));
 	TRY(al_malloc(&vertexCounts, sizeof(int), shape->numPaths));
 
-	Vec3 *colour = colours;
-	int *vertexCount = vertexCounts;
 	AlModelPath **pathPtr = shape->paths;
-	AlModelPath *path;
-	int totalVertices = 0;
+	Vec3 *colour = colours;
+	int maxVertices = 0;
 
-	for (int i = 0; i < shape->numPaths; i++, colour++, vertexCount++, pathPtr++) {
+	for (int i = 0; i < shape->numPaths; i++, pathPtr++, colour++) {
 		AlModelPath *path = *pathPtr;
 
 		*colour = path->colour;
-		*vertexCount = (path->numPoints * 4) - 2;
-		totalVertices += *vertexCount;
+		maxVertices += ceil(path->numPoints / 2.0) * 9 - 6;
 
 		for (int j = 0; j < path->numPoints; j++) {
-			Vec2 point = path->points[j];
-
-			if (point.x < min.x) min.x = point.x;
-			else if (point.x > max.x) max.x = point.x;
-			if (point.y < min.y) min.y = point.y;
-			else if (point.y > max.y) max.y = point.y;
+			bounds = box_include_vec2(bounds, path->points[j]);
 		}
 	}
 
-	TRY(al_malloc(&vertices, sizeof(AlGlModelVertex), totalVertices));
+	TRY(al_malloc(&vertices, sizeof(AlGlModelVertex), maxVertices));
 
-	vertexCount = vertexCounts;
 	pathPtr = shape->paths;
 	AlGlModelVertex *pathVertices = vertices;
-	for (int i = 0; i < shape->numPaths; i++, vertexCount++, pathPtr++) {
-		path = *pathPtr;
-
-		TRY(model_build_path_vertices(pathVertices, path));
+	int *vertexCount = vertexCounts;
+	int totalVertices = 0;
+	for (int i = 0; i < shape->numPaths; i++, pathPtr++, vertexCount++) {
+		TRY(model_build_path_vertices(*pathPtr, pathVertices, vertexCount));
 		pathVertices += *vertexCount;
+		totalVertices += *vertexCount;
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, model->vertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(AlGlModelVertex) * totalVertices, vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	free(model->vertexCounts);
 	free(model->colours);
+	free(model->vertexCounts);
 
 	model->numPaths = shape->numPaths;
-	model->vertexCounts = vertexCounts;
 	model->colours = colours;
-	model->bounds.min = min;
-	model->bounds.max = max;
+	model->vertexCounts = vertexCounts;
+	model->bounds = bounds;
 
 	CATCH(
 		al_log_error("Error building GL data from model shape");

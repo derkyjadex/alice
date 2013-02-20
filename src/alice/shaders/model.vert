@@ -9,13 +9,15 @@ uniform vec2 viewportSize;
 uniform vec2 translate;
 uniform float scale;
 
-uniform float width;
-
 attribute vec2 position;
-attribute vec2 normal;
+attribute vec3 param;
+
+varying vec3 p;
 
 void main()
 {
-	vec2 pos = translate + scale * position + width * 0.5 * normal;
+	vec2 pos = translate + scale * position;
+
 	gl_Position = vec4(vec2(2) * pos / viewportSize - vec2(1), 0, 1) ;
+	p = param;
 }

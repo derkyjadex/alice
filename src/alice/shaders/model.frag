@@ -6,7 +6,12 @@
 
 uniform vec3 colour;
 
+varying vec3 p;
+
 void main()
 {
-	gl_FragColor = vec4(colour, 1);
+	float s = p.x * p.x - p.y;
+	float a = step(0.0, p.z * s);
+
+	gl_FragColor = vec4(colour, a);
 }

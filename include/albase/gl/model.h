@@ -27,8 +27,8 @@ struct AlModel {
 };
 
 typedef struct AlGlModelVertex {
-	struct { float x, y; } position;
-	struct { float x, y; } normal;
+	struct { GLfloat x, y; } position;
+	struct { GLfloat u, v, s; } param;
 } AlGlModelVertex;
 
 #endif
