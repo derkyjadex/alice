@@ -3,7 +3,7 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-local finish_changes, set_current, add_point
+local finish_changes, set_current, subdivide
 
 ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
@@ -50,14 +50,28 @@ local function rebuild_handles(self)
 				:location((point[1] + pan_x) * scale, (point[2] + pan_y) * scale)
 				:bounds(-6, -6, 6, 6)
 				:border_width(1)
-				:fill_colour(0.9, 0.9, 0.9, 0.9)
+				:border_colour(0.1, 0.1, 0.1, 1.0)
 
-			local handle = {widget = widget, path = path, path_index = i, point_index = j}
+			if j % 2 == 0 then
+				widget:fill_colour(0.3, 0.9, 0.3, 1.0)
+			else
+				widget:fill_colour(1.0, 1.0, 1.0, 1.0)
+			end
+
+			local handle = {
+				widget = widget,
+				path = path,
+				path_index = i,
+				point_index = j
+			}
 
 			make_draggable(widget,
 				function() set_current(self, handle) end,
 				function() finish_changes(self, false) end,
-				function(x, y) move_point(self, path, j, x, y) end)
+				function(x, y)
+					move_point(self, path, j, x, y)
+					finish_changes(self, false)
+				end)
 
 			if i == path_index and j == point_index then
 				set_current(self, handle)
@@ -80,27 +94,31 @@ local function rebuild_mid_handles(self)
 	for i, path in ipairs(self._model:paths()) do
 		local points = path:points()
 
-		for j = 1, #points - 1 do
-			local p1 = points[j]
-			local p2 = points[j + 1]
+		local n = #points
+		for j = 1, n, 2 do
+			local j1, j2, j3 = j, j % n + 1, (j + 1) % n + 1
+			local p1 = points[j1]
+			local p2 = points[j2]
+			local p3 = points[j3]
 
-			local x = p1[1] + (p2[1] - p1[1]) / 2
-			local y = p1[2] + (p2[2] - p1[2]) / 2
+			local x = 0.25 * p1[1] + 0.5 * p2[1] + 0.25 * p3[1]
+			local y = 0.25 * p1[2] + 0.5 * p2[2] + 0.25 * p3[2]
 
 			local widget = Widget():add_to(self)
 				:location((x + pan_x) * scale, (y + pan_y) * scale)
 				:bounds(-4, -4, 4, 4)
-				:fill_colour(0.2, 0.5, 0.9, 0.9)
+				:fill_colour(0.2, 0.5, 0.9, 1.0)
+				:border_colour(0.9, 0.9, 0.9, 1.0)
+				:border_width(1)
 
 			local handle = {
 				widget = widget,
 				path = path, path_index = i,
-				i1 = j, i2 = j + 1,
-				x = x, y = y
+				i1 = j1, i2 = j2, i3 = j3
 			}
 
 			widget:bind_down(function()
-				add_point(self, path, j + 1, handle.x, handle.y)
+				subdivide(self, path, j1, j2, j3)
 			end)
 
 			table.insert(self._mid_handles, handle)
@@ -127,13 +145,12 @@ local function update_mid_handles(self)
 		local points = handle.path:points()
 		local p1 = points[handle.i1]
 		local p2 = points[handle.i2]
-		local x = p1[1] + (p2[1] - p1[1]) / 2
-		local y = p1[2] + (p2[2] - p1[2]) / 2
+		local p3 = points[handle.i3]
+		local x = 0.25 * p1[1] + 0.5 * p2[1] + 0.25 * p3[1]
+		local y = 0.25 * p1[2] + 0.5 * p2[2] + 0.25 * p3[2]
 
 		handle.widget:location((x + pan_x) * scale, (y + pan_y) * scale)
 			:invalidate()
-		handle.x = x
-		handle.y = y
 	end
 end
 
@@ -151,20 +168,39 @@ end
 
 set_current = function(self, handle)
 	if self._current then
-		self._current.widget:fill_colour(0.9, 0.9, 0.9, 0.9)
+		self._current.widget
+			:border_colour(0.1, 0.1, 0.1, 1.0)
+			:border_width(1)
 	end
 
 	self._current = handle
 
 	if self._current then
-		handle.widget:fill_colour(0.9, 0.5, 0.5, 0.9)
+		handle.widget
+			:border_colour(0.9, 0.3, 0.2, 1.0)
+			:border_width(3)
 
 		self._path_colour_binding(self._current.path:colour())
 	end
 end
 
-add_point = function(self, path, index, x, y)
-	path:add_point(index, x, y)
+subdivide = function(self, path, i1, i2, i3)
+	local points = path:points()
+	local p1 = points[i1]
+	local p2 = points[i2]
+	local p3 = points[i3]
+
+	local x1 = 0.5 * p1[1] + 0.5 * p2[1]
+	local y1 = 0.5 * p1[2] + 0.5 * p2[2]
+	local x2 = 0.25 * p1[1] + 0.5 * p2[1] + 0.25 * p3[1]
+	local y2 = 0.25 * p1[2] + 0.5 * p2[2] + 0.25 * p3[2]
+	local x3 = 0.5 * p2[1] + 0.5 * p3[1]
+	local y3 = 0.5 * p2[2] + 0.5 * p3[2]
+
+	path:set_point(i2, x3, y3)
+	path:add_point(i2, x2, y2)
+	path:add_point(i2, x1, y1)
+
 	finish_changes(self, true)
 end
 
@@ -218,8 +254,11 @@ function ModelWidget.prototype:save(filename)
 end
 
 function ModelWidget.prototype:add_path()
-	self._model:add_path(0, -20, 0, 20, 0)
+	local path = self._model:add_path(0, 20, -20, 20, 20)
 		:colour(self._path_colour_binding())
+	path:add_point(0, -20, 20)
+	path:add_point(0, -20, -20)
+
 	finish_changes(self, true)
 end
 
@@ -236,7 +275,7 @@ function ModelWidget.prototype:remove_point()
 		local i = self._current.point_index
 		local num_points = #path:points()
 
-		if i > 1 and i < num_points then
+		if i >= 1 and i <= num_points then
 			path:remove_point(self._current.point_index)
 			finish_changes(self, true)
 		end
