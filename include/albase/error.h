@@ -30,6 +30,8 @@ typedef enum {
 	goto catch; \
 }
 
+#define RETURN() goto finally;
+
 #define CATCH(x) catch: {\
 	if (!error) goto finally; \
 	x \
