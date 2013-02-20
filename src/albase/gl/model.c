@@ -171,6 +171,8 @@ static AlError model_build_path_vertices(AlModelPath *path, AlGlModelVertex *out
 	TRY(al_malloc(&nodes, sizeof(VertexNode), n));
 
 	TRY(model_build_curve_triangles(path, nodes, output, outputCount));
+	output += *outputCount;
+
 	TRY(model_build_inner_triangles(path, nodes, output, outputCount));
 
 	PASS(
