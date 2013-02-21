@@ -36,6 +36,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1A2148F916D674AF003D3B68 /* model_view_model.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = model_view_model.lua; sourceTree = "<group>"; };
 		1A42FD63160DED0800807A51 /* host.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = host.c; sourceTree = "<group>"; };
 		1A42FD64160DED0800807A51 /* widget.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = widget.c; sourceTree = "<group>"; };
 		1A42FD65160DED1300807A51 /* host.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = host.h; sourceTree = "<group>"; };
@@ -208,6 +209,7 @@
 		1A42FD77160DEE2900807A51 /* scripts */ = {
 			isa = PBXGroup;
 			children = (
+				1A2148F916D674AF003D3B68 /* model_view_model.lua */,
 				1A42FD78160DEE2900807A51 /* colour_widget.lua */,
 				1A42FD79160DEE2900807A51 /* draggable.lua */,
 				1AE55F8816298C7D00FA402E /* file_widget.lua */,
@@ -466,6 +468,7 @@
 				"$(SRCROOT)/src/alice/scripts/file_widget.lua",
 				"$(SRCROOT)/src/alice/scripts/text_box.lua",
 				"$(SRCROOT)/src/alice/scripts/panning_widget.lua",
+				"$(SRCROOT)/src/alice/scripts/model_view_model.lua",
 			);
 			name = "Compile Scripts";
 			outputPaths = (
