@@ -11,6 +11,11 @@ ModelWidget = Widget:derive(function(self)
 		:model_scale(1)
 		:grid_size(20, 20)
 		:grid_colour(0.4, 0.4, 0.4)
+		:bind_down(function()
+				if self._model then
+					self._model.selected_path(nil)
+				end
+			end)
 
 	self._model = nil
 	self._paths = {}
@@ -93,9 +98,10 @@ local function insert_handle(self, path, i, point_vm)
 		update_model(self)
 	end)
 
-	make_draggable(handle, nil, nil, function(x, y)
-		move_point(self, point_vm, x, y)
-	end)
+	make_draggable(handle,
+		function() point_vm.path().select() end,
+		nil,
+		function(x, y) move_point(self, point_vm, x, y) end)
 
 	table.insert(path.handles, handle)
 	update_model(self)
@@ -159,6 +165,8 @@ local function insert_path(self, i, path_vm)
 		handles = {},
 		mid_handles = {}
 	}
+
+	path_vm.colour.watch(function() update_model(self) end)
 
 	points.watch_insert(function(i, point) insert_handle(self, path, i, point) end)
 	points.watch_remove(function(i, point) remove_handle(self, path, i, point) end)

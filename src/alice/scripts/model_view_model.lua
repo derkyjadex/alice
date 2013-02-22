@@ -13,12 +13,13 @@ local function smooth_point(point_vm)
 	point_vm.location(x, y)
 end
 
-function ModelPointViewModel(path_vm, p, index)
+local function ModelPointViewModel(path_vm, p, index)
 	index = Observable(index)
 	local location = Observable(p[1], p[2])
 
 	local self
 	self = {
+		path = function() return path_vm end,
 		index = index,
 		location = location,
 		remove = function() path_vm.remove(self) end
@@ -34,7 +35,7 @@ function ModelPointViewModel(path_vm, p, index)
 	return self
 end
 
-function ModelMidPointViewModel(path_vm, p, index)
+local function ModelMidPointViewModel(path_vm, p, index)
 	index = Observable(index)
 	local location = Observable(p[1], p[2])
 
@@ -52,7 +53,7 @@ function ModelMidPointViewModel(path_vm, p, index)
 	return self
 end
 
-function ModelPathViewModel(model_vm, path, index)
+local function ModelPathViewModel(model_vm, path, index)
 	local point_vms = ObservableArray()
 	local mid_point_vms = ObservableArray()
 
@@ -192,9 +193,11 @@ function ModelViewModel(model)
 
 			local path_vm = ModelPathViewModel(self, path, #path_vms + 1)
 			path_vms.insert(path_vm)
+
+			return path_vm
 		end,
 		remove_path = function(path_vm)
-			local index = current.index()
+			local index = path_vm.index()
 			model:remove_path(index)
 			path_vms.remove(index)
 
@@ -213,6 +216,55 @@ function ModelViewModel(model)
 	}
 
 	rebuild_path_vms()
+
+	return self
+end
+
+function ModelContextViewModel(model)
+	self = ModelViewModel(model)
+	local selected_path = Observable()
+	local current_colour = Observable(1, 1, 1)
+
+	selected_path.watch(function(path_vm)
+		if path_vm then
+			current_colour(path_vm.colour())
+		end
+	end)
+	current_colour.watch(function(r, g, b)
+		local path_vm = selected_path()
+		if path_vm then
+			path_vm.colour(r, g, b)
+		end
+	end)
+
+	self.paths().watch_insert(function(i, path_vm)
+		path_vm.select = function()
+			selected_path(path_vm)
+		end
+	end)
+	self.paths().watch_remove(function(i, path_vm)
+		if path_vm == selected_path() then
+			selected_path(nil)
+		end
+	end)
+	self.paths().watch_clear(function() selected_path(nil) end)
+
+	self.selected_path = selected_path
+	self.current_colour = current_colour
+
+	local base_remove_path = self.remove_path
+	self.remove_path = function(path_vm)
+		path_vm = path_vm or selected_path()
+		if not path_vm then
+			return
+		end
+
+		if selected_path() == path_vm then
+			selected_path(nil)
+		end
+
+		base_remove_path(path_vm)
+	end
 
 	return self
 end
