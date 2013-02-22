@@ -55,7 +55,7 @@ end
 function Binding(observable, callback)
 	local updating_self = false
 
-	observable.changed:add(function(...)
+	local handle = observable.changed:add(function(...)
 		if not updating_self then
 			callback(...)
 		end
@@ -63,15 +63,23 @@ function Binding(observable, callback)
 
 	callback(observable())
 
-	return function(...)
-		if select('#', ...) == 0 then
-			return observable()
-		else
-			updating_self = true
-			observable(...)
-			updating_self = false
-		end
-	end
+	return setmetatable(
+		{
+			unbind = function()
+				observable.changed:remove(handle)
+			end
+		},
+		{
+			__call = function(_, ...)
+				if select('#', ...) == 0 then
+					return observable()
+				else
+					updating_self = true
+					observable(...)
+					updating_self = false
+				end
+			end
+		})
 end
 
 function ObservableArray(...)
