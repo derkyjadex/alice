@@ -323,6 +323,8 @@ static void render_cursor(Vec2 location)
 {
 	location = vec2_subtract(location, cursorInfo.midPoint);
 
+	glDisable(GL_SCISSOR_TEST);
+
 	glUseProgram(cursorShader.shader->id);
 	glUniform2fv(cursorShader.viewportSize, 1, viewportSize);
 	glUniform2f(cursorShader.location, location.x, location.y);
@@ -338,6 +340,8 @@ static void render_cursor(Vec2 location)
 	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glEnable(GL_SCISSOR_TEST);
 }
 
 void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
