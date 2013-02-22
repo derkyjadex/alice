@@ -71,7 +71,7 @@ end
 
 function Widget.prototype:bind_property(name, observable)
 	local var = self[name]
-	observable.watch(function(...)
+	observable.changed:add(function(...)
 		var(self, ...)
 		self:invalidate()
 	end)

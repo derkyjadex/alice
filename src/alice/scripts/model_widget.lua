@@ -166,23 +166,23 @@ local function insert_path(self, i, path_vm)
 		mid_handles = {}
 	}
 
-	path_vm.colour.watch(function() update_model(self) end)
+	path_vm.colour.changed:add(function() update_model(self) end)
 
-	points.watch_insert(function(i, point) insert_handle(self, path, i, point) end)
-	points.watch_remove(function(i, point) remove_handle(self, path, i, point) end)
-	points.watch_update(function(i, point)
+	points.inserted:add(function(i, point) insert_handle(self, path, i, point) end)
+	points.removed:add(function(i, point) remove_handle(self, path, i, point) end)
+	points.updated:add(function(i, point)
 		remove_handle(self, path, i, point)
 		insert_handle(self, path, i, point)
 	end)
-	points.watch_clear(function() clear_handles(self, path) end)
+	points.cleared:add(function() clear_handles(self, path) end)
 
-	mid_points.watch_insert(function(i, point) insert_mid_handle(self, path, i, point) end)
-	mid_points.watch_remove(function(i, point) remove_mid_handle(self, path, i, point) end)
-	mid_points.watch_update(function(i, point)
+	mid_points.inserted:add(function(i, point) insert_mid_handle(self, path, i, point) end)
+	mid_points.removed:add(function(i, point) remove_mid_handle(self, path, i, point) end)
+	mid_points.updated:add(function(i, point)
 		remove_mid_handle(self, path, i, point)
 		insert_mid_handle(self, path, i, point)
 	end)
-	mid_points.watch_clear(function() clear_mid_handles(self, path) end)
+	mid_points.cleared:add(function() clear_mid_handles(self, path) end)
 
 	for i, point in ipairs(points) do
 		insert_handle(self, path, i, point)
@@ -219,13 +219,13 @@ function ModelWidget.prototype:bind_model(model)
 	self._model = model
 
 	local paths = model.paths()
-	paths.watch_insert(function(i, path) insert_path(self, i, path) end)
-	paths.watch_remove(function(i, path) remove_path(self, i, path) end)
-	paths.watch_update(function(i, path)
+	paths.inserted:add(function(i, path) insert_path(self, i, path) end)
+	paths.removed:add(function(i, path) remove_path(self, i, path) end)
+	paths.updated:add(function(i, path)
 		remove_path(self, i, path)
 		insert_path(self, i, path)
 	end)
-	paths.watch_clear(function() clear_paths(self) end)
+	paths.cleared:add(function() clear_paths(self) end)
 
 	clear_paths(self)
 

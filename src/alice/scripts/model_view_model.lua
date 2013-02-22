@@ -25,7 +25,7 @@ local function ModelPointViewModel(path_vm, p, index)
 		remove = function() path_vm.remove(self) end
 	}
 
-	location.watch(function(x, y)
+	location.changed:add(function(x, y)
 		path_vm.path():set_point(index(), x, y)
 
 		smooth_point(self.prev)
@@ -46,7 +46,7 @@ local function ModelMidPointViewModel(path_vm, p, index)
 		subdivide = function() path_vm.subdivide(self) end
 	}
 
-	location.watch(function(x, y)
+	location.changed:add(function(x, y)
 		path_vm.path():set_point(index(), x, y)
 	end)
 
@@ -58,7 +58,7 @@ local function ModelPathViewModel(model_vm, path, index)
 	local mid_point_vms = ObservableArray()
 
 	local colour = Observable(path:colour())
-	colour.watch(function(r, g, b)
+	colour.changed:add(function(r, g, b)
 		path:colour(r, g, b)
 	end)
 
@@ -225,29 +225,29 @@ function ModelContextViewModel(model)
 	local selected_path = Observable()
 	local current_colour = Observable(1, 1, 1)
 
-	selected_path.watch(function(path_vm)
+	selected_path.changed:add(function(path_vm)
 		if path_vm then
 			current_colour(path_vm.colour())
 		end
 	end)
-	current_colour.watch(function(r, g, b)
+	current_colour.changed:add(function(r, g, b)
 		local path_vm = selected_path()
 		if path_vm then
 			path_vm.colour(r, g, b)
 		end
 	end)
 
-	self.paths().watch_insert(function(i, path_vm)
+	self.paths().inserted:add(function(i, path_vm)
 		path_vm.select = function()
 			selected_path(path_vm)
 		end
 	end)
-	self.paths().watch_remove(function(i, path_vm)
+	self.paths().removed:add(function(i, path_vm)
 		if path_vm == selected_path() then
 			selected_path(nil)
 		end
 	end)
-	self.paths().watch_clear(function() selected_path(nil) end)
+	self.paths().cleared:add(function() selected_path(nil) end)
 
 	self.selected_path = selected_path
 	self.current_colour = current_colour

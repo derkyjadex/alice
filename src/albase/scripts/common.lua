@@ -34,13 +34,11 @@ end
 
 function Observable(...)
 	local value = {...}
-	local watchers = {}
+	local changed = Multicast()
 
 	return setmetatable(
 		{
-			watch = function(callback)
-				table.insert(watchers, callback)
-			end
+			changed = changed
 		},
 		{
 			__call = function(_, ...)
@@ -48,9 +46,7 @@ function Observable(...)
 					return table.unpack(value)
 				else
 					value = {...}
-					for _,callback in ipairs(watchers) do
-						callback(...)
-					end
+					changed(...)
 				end
 			end
 		})
@@ -59,7 +55,7 @@ end
 function Binding(observable, callback)
 	local updating_self = false
 
-	observable.watch(function(...)
+	observable.changed:add(function(...)
 		if not updating_self then
 			callback(...)
 		end
@@ -81,10 +77,10 @@ end
 function ObservableArray(...)
 	local values = {...}
 	local length = select('#', ...)
-	local insert_watchers = {}
-	local remove_watchers = {}
-	local update_watchers = {}
-	local clear_watchers = {}
+	local inserted = Multicast()
+	local removed = Multicast()
+	local updated = Multicast()
+	local cleared = Multicast()
 
 	local function check_index(i, min, max)
 		if math.floor(i) ~= i then
@@ -107,18 +103,10 @@ function ObservableArray(...)
 
 	return setmetatable(
 		{
-			watch_insert = function(callback)
-				table.insert(insert_watchers, callback)
-			end,
-			watch_remove = function(callback)
-				table.insert(remove_watchers, callback)
-			end,
-			watch_update = function(callback)
-				table.insert(update_watchers, callback)
-			end,
-			watch_clear = function(callback)
-				table.insert(clear_watchers, callback)
-			end,
+			inserted = inserted,
+			removed = removed,
+			updated = updated,
+			cleared = cleared,
 
 			insert = function(i_or_value, ...)
 				local i, value
@@ -133,50 +121,32 @@ function ObservableArray(...)
 
 				length = length + 1
 				table.insert(values, i, value)
-
-				for _,callback in ipairs(insert_watchers) do
-					callback(i, value)
-				end
+				inserted(i, value)
 			end,
 			remove = function(i)
-				if i == nil then
-					i = length
-				end
-
+				i = i or length
 				check_index(i, 1, length)
 
 				local value = values[i]
 
 				length = length - 1
 				table.remove(values, i)
-
-				for _,callback in ipairs(remove_watchers) do
-					callback(i, value)
-				end
+				removed(i, value)
 			end,
 			clear = function()
-				values = {}
 				length = 0
-
-				for _,callback in ipairs(clear_watchers) do
-					callback()
-				end
+				values = {}
+				cleared()
 			end
 		},
 		{
 			__index = function(_, i) return values[i] end,
 			__newindex = function(_, i, value)
 				check_index(i, 1, length)
-
 				values[i] = value
-
-				for _,callback in ipairs(update_watchers) do
-					callback(i, value)
-				end
+				updated(i, value)
 			end,
-			__len = function(_)
-				return length
-			end,
+			__len = function(_) return length end,
 			__ipairs = build_iterator,
 			__pairs = build_iterator
 		})
