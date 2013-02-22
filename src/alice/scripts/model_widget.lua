@@ -3,20 +3,6 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-local finish_changes, set_current, subdivide, move_point
-
-local function adjacent_vertices(i, n)
-	i = ((i - 1) % n) + 1
-
-	if i == 1 then
-		return n, 1, 2
-	elseif i == n then
-		return n - 1, n, 1
-	else
-		return i - 1, i, i + 1
-	end
-end
-
 ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
 
@@ -25,229 +11,47 @@ ModelWidget = Widget:derive(function(self)
 		:model_scale(1)
 		:grid_size(20, 20)
 		:grid_colour(0.4, 0.4, 0.4)
-		:bind_down(function() set_current(self, nil) end)
 
-	self._model = Model()
-	self._handles = {}
-	self._current = nil
-	self._mid_handles = {}
-	self._path_colour_binding = function() end
+	self._model = nil
+	self._paths = {}
 	self._scale_binding = function() return 1 end
 	self._centre_offset = {0, 0}
 	self._pan_binding = function() return 0, 0 end
-
-	finish_changes(self, true)
 end)
 
-local function rebuild_handles(self)
-	local path_index, point_index = 0, 0
-	if self._current then
-		path_index, point_index = self._current.path_index, self._current.point_index
-	end
-	self._current = nil
+local function update_model(self)
+	self:model(self._model.model())
+end
 
-	for _, handle in pairs(self._handles) do
-		handle.widget:remove()
-	end
-	self._handles = {}
-
+local function get_transform(self)
 	local scale = self._scale_binding()
 	local pan_x, pan_y = self._pan_binding()
-
-	for i, path in ipairs(self._model:paths()) do
-		local points = path:points()
-
-		for j = 2, #points, 2 do
-			local p = points[j]
-			local widget = Widget():add_to(self)
-				:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
-				:bounds(-6, -6, 6, 6)
-				:fill_colour(1.0, 1.0, 1.0, 1.0)
-				:border_width(1)
-				:border_colour(0.1, 0.1, 0.1, 1.0)
-
-			local handle = {
-				widget = widget,
-				path = path,
-				path_index = i,
-				point_index = j
-			}
-
-			make_draggable(widget,
-				function() set_current(self, handle) end,
-				function() finish_changes(self, false) end,
-				function(x, y)
-					move_point(self, path, j, x, y)
-					finish_changes(self, false)
-				end)
-
-			if i == path_index and j == point_index then
-				set_current(self, handle)
-			end
-
-			table.insert(self._handles, handle)
-		end
-	end
+	return scale, pan_x, pan_y
 end
 
-local function rebuild_mid_handles(self)
-	for _, handle in pairs(self._mid_handles) do
-		handle.widget:remove()
-	end
-	self._mid_handles = {}
-
-	local scale = self._scale_binding()
-	local pan_x, pan_y = self._pan_binding()
-
-	for i, path in ipairs(self._model:paths()) do
-		local points = path:points()
-
-		local n = #points
-		for j = 1, n, 2 do
-			local p = points[j]
-
-			local widget = Widget():add_to(self)
-				:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
-				:bounds(-4, -4, 4, 4)
-				:fill_colour(0.2, 0.5, 0.9, 1.0)
-				:border_colour(0.9, 0.9, 0.9, 1.0)
-				:border_width(1)
-
-			local handle = {
-				widget = widget,
-				path = path, path_index = i,
-				i = j
-			}
-
-			widget:bind_down(function()
-				subdivide(self, path, j)
-			end)
-
-			table.insert(self._mid_handles, handle)
-		end
-	end
-end
-
-local function update_handles(self)
-	local scale = self._scale_binding()
-	local pan_x, pan_y = self._pan_binding()
-
-	for _, handle in pairs(self._handles) do
-		local p = handle.path:points()[handle.point_index]
-		handle.widget:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
-			:invalidate()
-	end
-end
-
-local function update_mid_handles(self)
-	local scale = self._scale_binding()
-	local pan_x, pan_y = self._pan_binding()
-
-	for _, handle in pairs(self._mid_handles) do
-		local points = handle.path:points()
-		local p = points[handle.i]
-
-		handle.widget:location((p[1] + pan_x) * scale, (p[2] + pan_y) * scale)
-			:invalidate()
-	end
-end
-
-finish_changes = function(self, rebuild)
-	self:model(self._model)
-
-	if rebuild then
-		rebuild_handles(self)
-		rebuild_mid_handles(self)
-	else
-		update_handles(self)
-		update_mid_handles(self)
-	end
-end
-
-set_current = function(self, handle)
-	if self._current then
-		self._current.widget
-			:border_colour(0.1, 0.1, 0.1, 1.0)
-			:border_width(1)
-	end
-
-	self._current = handle
-
-	if self._current then
-		handle.widget
-			:border_colour(0.9, 0.3, 0.2, 1.0)
-			:border_width(3)
-
-		self._path_colour_binding(self._current.path:colour())
-	end
-end
-
-subdivide = function(self, path, i)
-	local points = path:points()
-	local i1, i2, i3 = adjacent_vertices(i, #points)
-	local p1 = points[i1]
-	local p2 = points[i2]
-	local p3 = points[i3]
-
-	local x1 = 0.5 * p1[1] + 0.5 * p2[1]
-	local y1 = 0.5 * p1[2] + 0.5 * p2[2]
-	local x3 = 0.5 * p2[1] + 0.5 * p3[1]
-	local y3 = 0.5 * p2[2] + 0.5 * p3[2]
-
-	path:add_point(i3, x3, y3)
-	path:add_point(i2, x1, y1)
-
-	finish_changes(self, true)
-end
-
-local function smooth_point(self, path, i)
-	local points = path:points()
-	local i1, i2, i3 = adjacent_vertices(i, #points)
-	local p1 = points[i1]
-	local p3 = points[i3]
-
-	local x = 0.5 * p1[1] + 0.5 * p3[1]
-	local y = 0.5 * p1[2] + 0.5 * p3[2]
-
-	path:set_point(i2, x, y)
-end
-
-move_point = function(self, path, index, x, y)
-	local scale = self._scale_binding()
-	local pan_x, pan_y = self._pan_binding()
-
-	path:set_point(index, (x / scale) - pan_x, (y / scale) - pan_y)
-
-	smooth_point(self, path, index - 1)
-	smooth_point(self, path, index + 1)
-end
-
-local function remove_point(self, path, i)
-	local points = path:points()
-	local i1, i2, i3 = adjacent_vertices(i, #points)
-
-	if i1 < i3 then
-		path:remove_point(i3)
-		path:remove_point(i1)
-	else
-		path:remove_point(i1)
-		path:remove_point(i3)
-	end
+local function transform_handle(handle, scale, pan_x, pan_y)
+	local x, y = handle.point.location()
+	handle:location((x + pan_x) * scale, (y + pan_y) * scale)
 end
 
 local function update_transform(self)
 	local offset = self._centre_offset
-	local scale = self._scale_binding()
-	local pan_x, pan_y = self._pan_binding()
+	local scale, pan_x, pan_y = get_transform(self)
+
+	for _, path in ipairs(self._paths) do
+		for _, handle in ipairs(path.handles) do
+			transform_handle(handle, scale, pan_x, pan_y)
+		end
+		for _, handle in ipairs(path.mid_handles) do
+			transform_handle(handle, scale, pan_x, pan_y)
+		end
+	end
 
 	self:model_scale(scale)
 		:model_location(pan_x * scale, pan_y * scale)
 		:grid_size(scale * 20, scale * 20)
 		:grid_offset(pan_x * scale + offset[1], pan_y * scale + offset[2])
 		:invalidate()
-
-	update_handles(self)
-	update_mid_handles(self)
 end
 
 function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
@@ -268,52 +72,160 @@ function ModelWidget.prototype:layout(left, width, right, bottom, height, top)
 		(bounds[3] - bounds[1]) / 2, (bounds[4] - bounds[2]) / 2)
 end
 
-function ModelWidget.prototype:load(filename)
-	self._model:load(filename)
-	finish_changes(self, true)
+local function move_point(self, point_vm, x, y)
+	local scale, pan_x, pan_y = get_transform(self)
+	point_vm.location((x / scale) - pan_x, (y / scale) - pan_y)
+	update_model(self)
 end
 
-function ModelWidget.prototype:save(filename)
-	self._model:save(filename)
-end
+local function insert_handle(self, path, i, point_vm)
+	local handle = Widget():add_to(self)
+		:bounds(-6, -6, 6, 6)
+		:fill_colour(1.0, 1.0, 1.0, 1.0)
+		:border_width(1)
+		:border_colour(0.1, 0.1, 0.1, 1.0)
 
-function ModelWidget.prototype:add_path()
-	local path = self._model:add_path(0, 0, -20, 20, -20)
-		:colour(self._path_colour_binding())
-	path:add_point(0, 20, 0)
-	path:add_point(0, 20, 20)
-	path:add_point(0, 0, 20)
-	path:add_point(0, -20, 20)
-	path:add_point(0, -20, 0)
-	path:add_point(0, -20, -20)
+	handle.point = point_vm
 
-	finish_changes(self, true)
-end
-
-function ModelWidget.prototype:remove_path()
-	if self._current then
-		self._model:remove_path(self._current.path_index)
-		finish_changes(self, true)
-	end
-end
-
-function ModelWidget.prototype:remove_point()
-	if self._current then
-		local path = self._current.path
-		local i = self._current.point_index
-
-		remove_point(self, path, i)
-		finish_changes(self, true)
-	end
-end
-
-function ModelWidget.prototype:bind_path_colour(observable)
-	self._path_colour_binding = Binding(observable, function(r, g, b)
-		if self._current then
-			self._current.path:colour(r, g, b)
-			finish_changes(self, false)
-		end
+	Binding(point_vm.location, function(x, y)
+		local scale, pan_x, pan_y = get_transform(self)
+		transform_handle(handle, scale, pan_x, pan_y)
+		update_model(self)
 	end)
+
+	make_draggable(handle, nil, nil, function(x, y)
+		move_point(self, point_vm, x, y)
+	end)
+
+	table.insert(path.handles, handle)
+	update_model(self)
+end
+
+local function insert_mid_handle(self, path, i, point_vm)
+	local handle = Widget():add_to(self)
+		:bounds(-4, -4, 4, 4)
+		:fill_colour(0.2, 0.5, 0.9, 1.0)
+		:border_colour(0.9, 0.9, 0.9, 1.0)
+		:border_width(1)
+		:bind_down(point_vm.subdivide)
+
+	handle.point = point_vm
+
+	Binding(point_vm.location, function(x, y)
+		local scale, pan_x, pan_y = get_transform(self)
+		transform_handle(handle, scale, pan_x, pan_y)
+		update_model(self)
+	end)
+
+	table.insert(path.mid_handles, handle)
+	update_model(self)
+end
+
+local function remove_handle(self, path, i, point_vm)
+	path.handles[i]:remove()
+	table.remove(path.handles, i)
+	update_model(self)
+end
+
+local function remove_mid_handle(self, path, i, point_vm)
+	path.mid_handles[i]:remove()
+	table.remove(path.mid_handles, i)
+	update_model(self)
+end
+
+local function clear_handles(self, path)
+	for i, handle in ipairs(path.handles) do
+		handle:remove()
+	end
+
+	path.handles = {}
+	update_model(self)
+end
+
+local function clear_mid_handles(self, path)
+	for i, handle in ipairs(path.mid_handles) do
+		handle:remove()
+	end
+
+	path.mid_handles = {}
+	update_model(self)
+end
+
+local function insert_path(self, i, path_vm)
+	local points = path_vm.points()
+	local mid_points = path_vm.mid_points()
+
+	local path = {
+		handles = {},
+		mid_handles = {}
+	}
+
+	points.watch_insert(function(i, point) insert_handle(self, path, i, point) end)
+	points.watch_remove(function(i, point) remove_handle(self, path, i, point) end)
+	points.watch_update(function(i, point)
+		remove_handle(self, path, i, point)
+		insert_handle(self, path, i, point)
+	end)
+	points.watch_clear(function() clear_handles(self, path) end)
+
+	mid_points.watch_insert(function(i, point) insert_mid_handle(self, path, i, point) end)
+	mid_points.watch_remove(function(i, point) remove_mid_handle(self, path, i, point) end)
+	mid_points.watch_update(function(i, point)
+		remove_mid_handle(self, path, i, point)
+		insert_mid_handle(self, path, i, point)
+	end)
+	mid_points.watch_clear(function() clear_mid_handles(self, path) end)
+
+	for i, point in ipairs(points) do
+		insert_handle(self, path, i, point)
+	end
+
+	for i, point in ipairs(mid_points) do
+		insert_mid_handle(self, path, i, point)
+	end
+
+	table.insert(self._paths, i, path)
+	update_model(self)
+end
+
+local function remove_path(self, i, path_vm)
+	local path = self._paths[i]
+	clear_handles(self, path)
+	clear_mid_handles(self, path)
+
+	table.remove(self._paths, i)
+	update_model(self)
+end
+
+local function clear_paths(self)
+	for i, path in ipairs(self._paths) do
+		clear_handles(self, path)
+		clear_mid_handles(self, path)
+	end
+
+	self._paths = {}
+	update_model(self)
+end
+
+function ModelWidget.prototype:bind_model(model)
+	self._model = model
+
+	local paths = model.paths()
+	paths.watch_insert(function(i, path) insert_path(self, i, path) end)
+	paths.watch_remove(function(i, path) remove_path(self, i, path) end)
+	paths.watch_update(function(i, path)
+		remove_path(self, i, path)
+		insert_path(self, i, path)
+	end)
+	paths.watch_clear(function() clear_paths(self) end)
+
+	clear_paths(self)
+
+	for i, path in ipairs(paths) do
+		insert_path(i, path)
+	end
+
+	update_model(self)
 
 	return self
 end
