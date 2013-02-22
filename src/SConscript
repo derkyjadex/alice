@@ -6,7 +6,7 @@ env.Replace(CPPPATH=['.', '../../include'])
 
 if env['PLATFORM'] == 'raspi':
 	env.Append(CCFLAGS=['-D_GNU_SOURCE', '-DRASPI'])
-	env.Append(CPPPATH=['/opt/vc/include', '/opt/vc/include/interface/vcos/pthreads'])
+	env.Append(CPPPATH=['/opt/vc/include', '/opt/vc/include/interface/vcos/pthreads', '/opt/vc/include/interface/vmcs_host/linux'])
 
 for lib in ['albase', 'alice']:
 	SConscript('%s/SConscript' % lib, 'env')
