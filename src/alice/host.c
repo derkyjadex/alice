@@ -112,6 +112,7 @@ AlError al_host_init(AlHost **result)
 		AL_SCRIPT(file_widget),
 		AL_SCRIPT(text_box),
 		AL_SCRIPT(panning_widget),
+		AL_SCRIPT(model_view_model),
 		AL_SCRIPT_END
 	};
 
