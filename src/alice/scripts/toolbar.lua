@@ -10,19 +10,22 @@ Toolbar = Widget:derive(function(self)
 	self._nextX = 5
 end)
 
-function Toolbar.prototype.add_button(self, r, g, b)
-	local button = Widget():add_to(self)
+function Toolbar.prototype.add_button(self, r, g, b, binding)
+	Widget():add_to(self)
 		:location(self._nextX, 5)
 		:bounds(0, 0, 30, 30)
 		:fill_colour(r, g, b, 0.9)
+		:bind_down(binding)
 
 	self._nextX = self._nextX + 35
 
-	return button
+	return self
 end
 
 function Toolbar.prototype:add_spacer()
 	self._nextX = self._nextX + 10
+
+	return self
 end
 
 function Toolbar.prototype:layout(left, width, right, bottom, height, top)
