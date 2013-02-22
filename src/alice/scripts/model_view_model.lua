@@ -14,19 +14,16 @@ local function smooth_point(point_vm)
 end
 
 local function ModelPointViewModel(path_vm, p, index)
-	index = Observable(index)
-	local location = Observable(p[1], p[2])
-
-	local self
-	self = {
-		path = function() return path_vm end,
+	local self = {
 		index = index,
-		location = location,
-		remove = function() path_vm.remove(self) end
+		location = Observable(p[1], p[2])
 	}
 
-	location.changed:add(function(x, y)
-		path_vm.path():set_point(index(), x, y)
+	function self:path() return path_vm end
+	function self:remove() path_vm:remove(self) end
+
+	self.location.changed:add(function(x, y)
+		path_vm.path():set_point(self.index, x, y)
 
 		smooth_point(self.prev)
 		smooth_point(self.next)
@@ -36,18 +33,15 @@ local function ModelPointViewModel(path_vm, p, index)
 end
 
 local function ModelMidPointViewModel(path_vm, p, index)
-	index = Observable(index)
-	local location = Observable(p[1], p[2])
-
-	local self
-	self = {
+	local self = {
 		index = index,
-		location = location,
-		subdivide = function() path_vm.subdivide(self) end
+		location = Observable(p[1], p[2])
 	}
 
-	location.changed:add(function(x, y)
-		path_vm.path():set_point(index(), x, y)
+	function self:subdivide() path_vm:subdivide(self) end
+
+	self.location.changed:add(function(x, y)
+		path_vm.path():set_point(self.index, x, y)
 	end)
 
 	return self
@@ -57,82 +51,83 @@ local function ModelPathViewModel(model_vm, path, index)
 	local point_vms = ObservableArray()
 	local mid_point_vms = ObservableArray()
 
-	local colour = Observable(path:colour())
-	colour.changed:add(function(r, g, b)
+	local self = {
+		index = index,
+		colour = Observable(path:colour())
+	}
+
+	self.colour.changed:add(function(r, g, b)
 		path:colour(r, g, b)
 	end)
 
-	local self
-	self = {
-		index = Observable(index),
-		colour = colour,
-		points = function() return point_vms end,
-		mid_points = function() return mid_point_vms end,
-		remove_point = function(point_vm)
-			local p1, p2, p3 = point_vm.prev, point_vm, point_vm.next
-			local i1, i2, i3 = p1.index(), p2.index(), p3.index()
+	function self:path() return path end
+	function self:points() return point_vms end
+	function self:mid_points() return mid_point_vms end
 
-			if i3 < i1 then
-				path:remove(i2)
-				path:remove(i1)
+	function self:remove_point(point_vm)
+		local p1, p2, p3 = point_vm.prev, point_vm, point_vm.next
+		local i1, i2, i3 = p1.index, p2.index, p3.index
 
-				i3 = i1
-				p1, p3 = p3, p1
+		if i3 < i1 then
+			path:remove(i2)
+			path:remove(i1)
 
-				p1.prev = p3.prev
-				p3.prev.next = p1
-			else
-				path:remove(i3)
-				path:remove(i2)
+			i3 = i1
+			p1, p3 = p3, p1
 
-				p1.next = p3.next
-				p3.next.prev = p1
-			end
+			p1.prev = p3.prev
+			p3.prev.next = p1
+		else
+			path:remove(i3)
+			path:remove(i2)
 
-			mid_point_vms:remove((i3 + 1) / 2)
-			for i = (i3 + 1) / 2, #mid_point_vms do
-				mid_point_vms[i].index(i * 2 - 1)
-			end
+			p1.next = p3.next
+			p3.next.prev = p1
+		end
 
-			point_vms:remove(i2 / 2)
-			for i = i2 / 2, #point_vms do
-				point_vms[i].index(i * 2)
-			end
+		mid_point_vms:remove((i3 + 1) / 2)
+		for i = (i3 + 1) / 2, #mid_point_vms do
+			mid_point_vms[i].index = i * 2 - 1
+		end
 
-			smooth_point(p1)
-		end,
-		subdivide = function(mid_point_vm)
-			local p1, p4 = mid_point_vm, mid_point_vm.next
-			local i4 = p4.index()
-			local x, y = p1.location()
+		point_vms:remove(i2 / 2)
+		for i = i2 / 2, #point_vms do
+			point_vms[i].index = i * 2
+		end
 
-			path:add_point(i4, x, y)
-			path:add_point(i4, x, y)
+		smooth_point(p1)
+	end
 
-			local i2, i3 = i4, i4 + 1
-			local p2 = ModelPointViewModel(self, {x, y}, i2)
-			local p3 = ModelMidPointViewModel(self, {x, y}, i3)
+	function self:subdivide(mid_point_vm)
+		local p1, p4 = mid_point_vm, mid_point_vm.next
+		local i4 = p4.index
+		local x, y = p1.location()
 
-			p1.next = p2
-			p2.prev, p2.next = p1, p3
-			p3.prev, p3.next = p2, p4
-			p4.prev = p3
+		path:add_point(i4, x, y)
+		path:add_point(i4, x, y)
 
-			point_vms:insert(i2 / 2, p2)
-			for i = i2 / 2, #point_vms do
-				point_vms[i].index(i * 2)
-			end
+		local i2, i3 = i4, i4 + 1
+		local p2 = ModelPointViewModel(self, {x, y}, i2)
+		local p3 = ModelMidPointViewModel(self, {x, y}, i3)
 
-			mid_point_vms:insert((i3 + 1) / 2, p3)
-			for i = (i3 + 1) / 2, #mid_point_vms do
-				mid_point_vms[i].index(i * 2 - 1)
-			end
+		p1.next = p2
+		p2.prev, p2.next = p1, p3
+		p3.prev, p3.next = p2, p4
+		p4.prev = p3
 
-			smooth_point(p1)
-			smooth_point(p3)
-		end,
-		path = function() return path end
-	}
+		point_vms:insert(i2 / 2, p2)
+		for i = i2 / 2, #point_vms do
+			point_vms[i].index = i * 2
+		end
+
+		mid_point_vms:insert((i3 + 1) / 2, p3)
+		for i = (i3 + 1) / 2, #mid_point_vms do
+			mid_point_vms[i].index = i * 2 - 1
+		end
+
+		smooth_point(p1)
+		smooth_point(p3)
+	end
 
 	local function rebuild_point_vms()
 		point_vms:clear()
@@ -157,9 +152,8 @@ local function ModelPathViewModel(model_vm, path, index)
 			end
 		end
 
-		local prev = point_vms[#point_vms]
-		prev.next = mid_point_vms[1]
-		mid_point_vms[1].prev = prev
+		point_vms[#point_vms].next = mid_point_vms[1]
+		mid_point_vms[1].prev = point_vms[#point_vms]
 	end
 
 	rebuild_point_vms()
@@ -171,7 +165,8 @@ function ModelViewModel(model)
 	model = model or Model()
 	local path_vms = ObservableArray()
 
-	local self
+	local self = {}
+
 	local function rebuild_path_vms()
 		path_vms:clear()
 
@@ -180,40 +175,42 @@ function ModelViewModel(model)
 		end
 	end
 
-	self = {
-		paths = function() return path_vms end,
-		add_path = function()
-			local path = model:add_path(0, 0, -20, 20, -20)
-			path:add_point(0, 20, 0)
-			path:add_point(0, 20, 20)
-			path:add_point(0, 0, 20)
-			path:add_point(0, -20, 20)
-			path:add_point(0, -20, 0)
-			path:add_point(0, -20, -20)
+	function self:model() return model end
+	function self:paths() return path_vms end
 
-			local path_vm = ModelPathViewModel(self, path, #path_vms + 1)
-			path_vms:insert(path_vm)
+	function self:add_path()
+		local path = model:add_path(0, 0, -20, 20, -20)
+		path:add_point(0, 20, 0)
+		path:add_point(0, 20, 20)
+		path:add_point(0, 0, 20)
+		path:add_point(0, -20, 20)
+		path:add_point(0, -20, 0)
+		path:add_point(0, -20, -20)
 
-			return path_vm
-		end,
-		remove_path = function(path_vm)
-			local index = path_vm.index()
-			model:remove_path(index)
-			path_vms:remove(index)
+		local path_vm = ModelPathViewModel(self, path, #path_vms + 1)
+		path_vms:insert(path_vm)
 
-			for i = index, #path_vms do
-				path_vms[i].index(i)
-			end
-		end,
-		load = function(filename)
-			model:load(filename)
-			rebuild_path_vms()
-		end,
-		save = function(filename)
-			model:save(filename)
-		end,
-		model = function() return model end
-	}
+		return path_vm
+	end
+
+	function self:remove_path(path_vm)
+		local index = path_vm.index
+		model:remove_path(index)
+		path_vms:remove(index)
+
+		for i = index, #path_vms do
+			path_vms[i].index = i
+		end
+	end
+
+	function self:load(filename)
+		model:load(filename)
+		rebuild_path_vms()
+	end
+
+	function self:save(filename)
+		model:save(filename)
+	end
 
 	rebuild_path_vms()
 
@@ -221,9 +218,10 @@ function ModelViewModel(model)
 end
 
 function ModelContextViewModel(model)
-	self = ModelViewModel(model)
+	local self = ModelViewModel(model)
 	local selected_path = Observable()
 	local current_colour = Observable(1, 1, 1)
+	local paths = self.paths()
 
 	selected_path.changed:add(function(path_vm)
 		if path_vm then
@@ -237,9 +235,8 @@ function ModelContextViewModel(model)
 		end
 	end)
 
-	local paths = self.paths()
 	paths.inserted:add(function(i, path_vm)
-		path_vm.select = function()
+		function path_vm:select()
 			selected_path(path_vm)
 		end
 	end)
@@ -254,7 +251,7 @@ function ModelContextViewModel(model)
 	self.current_colour = current_colour
 
 	local base_remove_path = self.remove_path
-	self.remove_path = function(path_vm)
+	function self:remove_path(path_vm)
 		path_vm = path_vm or selected_path()
 		if not path_vm then
 			return
@@ -264,7 +261,7 @@ function ModelContextViewModel(model)
 			selected_path(nil)
 		end
 
-		base_remove_path(path_vm)
+		base_remove_path(self, path_vm)
 	end
 
 	return self

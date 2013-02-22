@@ -25,7 +25,7 @@ ModelWidget = Widget:derive(function(self)
 end)
 
 local function update_model(self)
-	self:model(self._model.model())
+	self:model(self._model:model())
 end
 
 local function get_transform(self)
@@ -99,7 +99,7 @@ local function insert_handle(self, path, i, point_vm)
 	end)
 
 	make_draggable(handle,
-		function() point_vm.path().select() end,
+		function() point_vm:path():select() end,
 		nil,
 		function(x, y) move_point(self, point_vm, x, y) end)
 
@@ -113,7 +113,7 @@ local function insert_mid_handle(self, path, i, point_vm)
 		:fill_colour(0.2, 0.5, 0.9, 1.0)
 		:border_colour(0.9, 0.9, 0.9, 1.0)
 		:border_width(1)
-		:bind_down(point_vm.subdivide)
+		:bind_down(function() point_vm:subdivide() end)
 
 	handle.point = point_vm
 
@@ -158,8 +158,8 @@ local function clear_mid_handles(self, path)
 end
 
 local function insert_path(self, i, path_vm)
-	local points = path_vm.points()
-	local mid_points = path_vm.mid_points()
+	local points = path_vm:points()
+	local mid_points = path_vm:mid_points()
 
 	local path = {
 		handles = {},
@@ -218,7 +218,7 @@ end
 function ModelWidget.prototype:bind_model(model)
 	self._model = model
 
-	local paths = model.paths()
+	local paths = model:paths()
 	paths.inserted:add(function(i, path) insert_path(self, i, path) end)
 	paths.removed:add(function(i, path) remove_path(self, i, path) end)
 	paths.updated:add(function(i, path)
