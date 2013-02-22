@@ -30,6 +30,7 @@ scripts = Split('''
 	scripts/model_widget.lua
 	scripts/text_box.lua
 	scripts/panning_widget.lua
+	scripts/model_view_model.lua
 ''')
 
 images = Split('''
