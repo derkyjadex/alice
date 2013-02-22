@@ -7,6 +7,31 @@ function clamp(value, min, max)
 	return math.min(math.max(min, value), max)
 end
 
+function Multicast()
+	return setmetatable(
+		{
+			add = function(self, f)
+				table.insert(self, f)
+				return f
+			end,
+			remove = function(self, f)
+				for i, current in ipairs(self) do
+					if current == f then
+						table.remove(self, i)
+						return
+					end
+				end
+			end
+		},
+		{
+			__call = function(self, ...)
+				for _, f in ipairs(self) do
+					f(...)
+				end
+			end
+		})
+end
+
 function Observable(...)
 	local value = {...}
 	local watchers = {}
