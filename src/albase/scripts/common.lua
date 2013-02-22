@@ -139,7 +139,7 @@ function ObservableArray(...)
 			end
 		},
 		{
-			__index = values,
+			__index = function(_, i) return values[i] end,
 			__newindex = function(_, i, value)
 				check_index(i, 1, length)
 
