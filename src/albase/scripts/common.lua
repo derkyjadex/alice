@@ -116,7 +116,7 @@ function ObservableArray(...)
 			updated = updated,
 			cleared = cleared,
 
-			insert = function(i_or_value, ...)
+			insert = function(_, i_or_value, ...)
 				local i, value
 				if select('#', ...) == 0 then
 					i = length + 1
@@ -131,7 +131,7 @@ function ObservableArray(...)
 				table.insert(values, i, value)
 				inserted(i, value)
 			end,
-			remove = function(i)
+			remove = function(_, i)
 				i = i or length
 				check_index(i, 1, length)
 

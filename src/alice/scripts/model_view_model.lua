@@ -89,12 +89,12 @@ local function ModelPathViewModel(model_vm, path, index)
 				p3.next.prev = p1
 			end
 
-			mid_point_vms.remove((i3 + 1) / 2)
+			mid_point_vms:remove((i3 + 1) / 2)
 			for i = (i3 + 1) / 2, #mid_point_vms do
 				mid_point_vms[i].index(i * 2 - 1)
 			end
 
-			point_vms.remove(i2 / 2)
+			point_vms:remove(i2 / 2)
 			for i = i2 / 2, #point_vms do
 				point_vms[i].index(i * 2)
 			end
@@ -118,12 +118,12 @@ local function ModelPathViewModel(model_vm, path, index)
 			p3.prev, p3.next = p2, p4
 			p4.prev = p3
 
-			point_vms.insert(i2 / 2, p2)
+			point_vms:insert(i2 / 2, p2)
 			for i = i2 / 2, #point_vms do
 				point_vms[i].index(i * 2)
 			end
 
-			mid_point_vms.insert((i3 + 1) / 2, p3)
+			mid_point_vms:insert((i3 + 1) / 2, p3)
 			for i = (i3 + 1) / 2, #mid_point_vms do
 				mid_point_vms[i].index(i * 2 - 1)
 			end
@@ -135,8 +135,8 @@ local function ModelPathViewModel(model_vm, path, index)
 	}
 
 	local function rebuild_point_vms()
-		point_vms.clear()
-		mid_point_vms.clear()
+		point_vms:clear()
+		mid_point_vms:clear()
 
 		for i, p in ipairs(path:points()) do
 			local prev, point_vm
@@ -144,11 +144,11 @@ local function ModelPathViewModel(model_vm, path, index)
 			if i % 2 == 0 then
 				prev = mid_point_vms[#mid_point_vms]
 				point_vm = ModelPointViewModel(self, p, i)
-				point_vms.insert(point_vm)
+				point_vms:insert(point_vm)
 			else
 				prev = point_vms[#point_vms]
 				point_vm = ModelMidPointViewModel(self, p, i)
-				mid_point_vms.insert(point_vm)
+				mid_point_vms:insert(point_vm)
 			end
 
 			if prev then
@@ -173,10 +173,10 @@ function ModelViewModel(model)
 
 	local self
 	local function rebuild_path_vms()
-		path_vms.clear()
+		path_vms:clear()
 
 		for i, path in ipairs(model:paths()) do
-			path_vms.insert(ModelPathViewModel(self, path, i))
+			path_vms:insert(ModelPathViewModel(self, path, i))
 		end
 	end
 
@@ -192,14 +192,14 @@ function ModelViewModel(model)
 			path:add_point(0, -20, -20)
 
 			local path_vm = ModelPathViewModel(self, path, #path_vms + 1)
-			path_vms.insert(path_vm)
+			path_vms:insert(path_vm)
 
 			return path_vm
 		end,
 		remove_path = function(path_vm)
 			local index = path_vm.index()
 			model:remove_path(index)
-			path_vms.remove(index)
+			path_vms:remove(index)
 
 			for i = index, #path_vms do
 				path_vms[i].index(i)
@@ -237,17 +237,18 @@ function ModelContextViewModel(model)
 		end
 	end)
 
-	self.paths().inserted:add(function(i, path_vm)
+	local paths = self.paths()
+	paths.inserted:add(function(i, path_vm)
 		path_vm.select = function()
 			selected_path(path_vm)
 		end
 	end)
-	self.paths().removed:add(function(i, path_vm)
+	paths.removed:add(function(i, path_vm)
 		if path_vm == selected_path() then
 			selected_path(nil)
 		end
 	end)
-	self.paths().cleared:add(function() selected_path(nil) end)
+	paths.cleared:add(function() selected_path(nil) end)
 
 	self.selected_path = selected_path
 	self.current_colour = current_colour
