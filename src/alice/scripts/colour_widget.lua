@@ -75,9 +75,10 @@ ColourWidget = Widget:derive(function(self)
 	end
 
 	local function update_fill_colours()
-		self:fill_colour(red, green, blue, 1)
 		hue_handle:fill_colour(1 - red, 1 - green, 1 - blue, 1)
 		val_handle:fill_colour(1 - red, 1 - green, 1 - blue, 1)
+		self:fill_colour(red, green, blue, 1)
+			:invalidate()
 	end
 
 	local function update_value(r, g, b)
