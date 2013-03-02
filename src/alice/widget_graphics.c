@@ -272,8 +272,8 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 
 	glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
 
-	glEnableVertexAttribArray(widgetShader.position);
-	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(textShader.position);
+	glVertexAttribPointer(textShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 	struct TextReadState state;
 	graphics_text_read_init(&state, text);
