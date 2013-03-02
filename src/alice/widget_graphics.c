@@ -15,7 +15,7 @@
 #include "images.h"
 #include "graphics_text.h"
 
-static float viewportSize[2];
+static Vec2 viewportSize;
 
 static struct {
 	AlGlShader *shader;
@@ -172,17 +172,30 @@ static AlError init_shaders()
 	FINALLY()
 }
 
+static void update_viewport_size()
+{
+	viewportSize = al_gl_system_screen_size();
+
+	glViewport(0, 0, viewportSize.x, viewportSize.y);
+
+	glUseProgram(widgetShader.shader->id);
+	glUniform2f(widgetShader.viewportSize, viewportSize.x, viewportSize.y);
+
+	glUseProgram(modelShader.shader->id);
+	glUniform2f(modelShader.viewportSize, viewportSize.x, viewportSize.y);
+
+	glUseProgram(textShader.shader->id);
+	glUniform2f(textShader.viewportSize, viewportSize.x, viewportSize.y);
+
+	glUseProgram(cursorShader.shader->id);
+	glUniform2f(cursorShader.viewportSize, viewportSize.x, viewportSize.y);
+}
+
 AlError widget_graphics_system_init()
 {
 	BEGIN()
 
 	TRY(al_gl_system_init());
-
-	Vec2 size = al_gl_system_screen_size();
-	viewportSize[0] = size.x;
-	viewportSize[1] = size.y;
-
-	glViewport(0, 0, size.x, size.y);
 
 	glEnable(GL_SCISSOR_TEST);
 
@@ -196,6 +209,8 @@ AlError widget_graphics_system_init()
 	float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	update_viewport_size();
 
 	CATCH(
 		widget_graphics_system_free();
@@ -212,13 +227,12 @@ void widget_graphics_system_free()
 
 Vec2 widget_graphics_screen_size()
 {
-	return al_gl_system_screen_size();
+	return viewportSize;
 }
 
 static void render_model(AlModel *model, Vec2 location, double scale)
 {
 	glUseProgram(modelShader.shader->id);
-	glUniform2fv(modelShader.viewportSize, 1, viewportSize);
 	glUniform2f(modelShader.translate, location.x, location.y);
 	glUniform1f(modelShader.scale, scale);
 
@@ -248,7 +262,6 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	double edgeSpread = fontInfo.edgeSpread / size;
 
 	glUseProgram(textShader.shader->id);
-	glUniform2fv(textShader.viewportSize, 1, viewportSize);
 	glUniform2f(textShader.size, charWidth, size);
 	glUniform2f(textShader.charSize, 1.0 / fontInfo.numCharsW, 1.0 / fontInfo.numCharsH);
 	glUniform3f(textShader.colour, colour.x, colour.y, colour.z);
@@ -294,7 +307,6 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		Vec3 gridColour = widget->grid.colour;
 
 		glUseProgram(widgetShader.shader->id);
-		glUniform2fv(widgetShader.viewportSize, 1, viewportSize);
 		glUniform2f(widgetShader.min, bounds.min.x, bounds.min.y);
 		glUniform2f(widgetShader.size, size.x, size.y);
 		glUniform1f(widgetShader.borderWidth, widget->border.width);
@@ -336,7 +348,6 @@ static void render_cursor(Vec2 location)
 	glDisable(GL_SCISSOR_TEST);
 
 	glUseProgram(cursorShader.shader->id);
-	glUniform2fv(cursorShader.viewportSize, 1, viewportSize);
 	glUniform2f(cursorShader.location, location.x, location.y);
 	glUniform2f(cursorShader.size, cursorInfo.textureSize.x, cursorInfo.textureSize.y);
 
@@ -357,7 +368,7 @@ static void render_cursor(Vec2 location)
 void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
 {
 	if (!root->valid) {
-		render_widget(root, (Vec2){0, 0}, (Box){{0, 0}, {viewportSize[0], viewportSize[1]}});
+		render_widget(root, (Vec2){0, 0}, (Box){{0, 0}, viewportSize});
 
 		if (renderCursor) {
 			render_cursor(cursorLocation);
