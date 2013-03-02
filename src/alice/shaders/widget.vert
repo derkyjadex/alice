@@ -11,26 +11,35 @@ uniform vec2 size;
 uniform float borderWidth;
 uniform vec2 gridSize;
 uniform vec2 gridOffset;
+const float _gridWidth = 1.0;
 
 attribute vec2 position;
 
-varying vec2 coords;
-varying vec2 borderSize;
+varying vec2 borderCoords;
+varying vec2 borderStep;
 varying vec2 gridCoords;
 varying vec2 gridStep;
 
 void main()
 {
-	coords = vec2(2) * position - vec2(1);
-	borderSize = (vec2(2) * borderWidth) / size;
+	vec2 _min = floor(min);
+	vec2 _size = floor(size);
+	float _borderWidth = floor(borderWidth);
+	vec2 _gridSize = floor(gridSize);
+	vec2 _gridOffset = floor(gridOffset);
+
+	borderCoords = 2.0 * position - 1.0;
+	borderStep = (2.0 * _borderWidth) / _size;
+
 	if (all(notEqual(gridSize, vec2(0)))) {
-		gridCoords = (position * size) / gridSize - (gridOffset / gridSize);
-		gridStep = (gridSize - vec2(1)) / gridSize;
+		gridCoords = (_size * position - _gridOffset - _borderWidth) / _gridSize;
+		gridStep = _gridWidth / _gridSize;
+
 	} else {
 		gridCoords = vec2(0);
-		gridStep = vec2(1);
+		gridStep = vec2(0);
 	}
 
-	vec2 pos = floor(min) + floor(size) * position;
-	gl_Position = vec4(vec2(2) * pos / viewportSize - vec2(1), 0, 1);
+	vec2 pos = _min + _size * position;
+	gl_Position = vec4(2.0 * pos / viewportSize - 1.0, 0, 1);
 }
