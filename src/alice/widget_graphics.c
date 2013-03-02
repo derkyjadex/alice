@@ -81,6 +81,8 @@ static struct {
 	Vec2 midPoint;
 } cursorInfo;
 
+static GLuint plainVertices;
+
 static void free_shaders()
 {
 	al_gl_shader_free(widgetShader.shader);
@@ -189,6 +191,12 @@ AlError widget_graphics_system_init()
 
 	TRY(init_shaders());
 
+	glGenBuffers(1, &plainVertices);
+	glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
+	float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, vertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	CATCH(
 		widget_graphics_system_free();
 	)
@@ -197,6 +205,7 @@ AlError widget_graphics_system_init()
 
 void widget_graphics_system_free()
 {
+	glDeleteBuffers(1, &plainVertices);
 	free_shaders();
 	al_gl_system_free();
 }
@@ -249,10 +258,10 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	glBindTexture(GL_TEXTURE_2D, textShader.texture->id);
 	glUniform1i(textShader.font, 0);
 
-	float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+	glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
 
 	glEnableVertexAttribArray(widgetShader.position);
-	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 	struct TextReadState state;
 	graphics_text_read_init(&state, text);
@@ -295,10 +304,10 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		glUniform4f(widgetShader.borderColour, borderColour.x, borderColour.y, borderColour.z, borderColour.w);
 		glUniform4f(widgetShader.gridColour, gridColour.x, gridColour.y, gridColour.z, 1);
 
-		const float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+		glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
 
 		glEnableVertexAttribArray(widgetShader.position);
-		glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+		glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 		glScissor(scissor.min.x, scissor.min.y, scissorSize.x, scissorSize.y);
 
@@ -335,10 +344,10 @@ static void render_cursor(Vec2 location)
 	glBindTexture(GL_TEXTURE_2D, cursorShader.texture->id);
 	glUniform1i(cursorShader.image, 0);
 
-	float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+	glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
 
 	glEnableVertexAttribArray(cursorShader.position);
-	glVertexAttribPointer(cursorShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	glVertexAttribPointer(cursorShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
