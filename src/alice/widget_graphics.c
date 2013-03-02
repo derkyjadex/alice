@@ -336,8 +336,8 @@ static void render_cursor(Vec2 location)
 
 	float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
 
-	glEnableVertexAttribArray(widgetShader.position);
-	glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	glEnableVertexAttribArray(cursorShader.position);
+	glVertexAttribPointer(cursorShader.position, 2, GL_FLOAT, GL_FALSE, 0, vertices);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
