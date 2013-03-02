@@ -282,6 +282,7 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		Vec2 size = box_size(bounds);
 		Vec4 fillColour = widget->fillColour;
 		Vec4 borderColour = widget->border.colour;
+		Vec3 gridColour = widget->grid.colour;
 
 		glUseProgram(widgetShader.shader->id);
 		glUniform2fv(widgetShader.viewportSize, 1, viewportSize);
@@ -292,7 +293,7 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		glUniform2f(widgetShader.gridOffset, widget->grid.offset.x, widget->grid.offset.y);
 		glUniform4f(widgetShader.fillColour, fillColour.x, fillColour.y, fillColour.z, fillColour.w);
 		glUniform4f(widgetShader.borderColour, borderColour.x, borderColour.y, borderColour.z, borderColour.w);
-		glUniform3f(widgetShader.gridColour, widget->grid.colour.x, widget->grid.colour.y, widget->grid.colour.z);
+		glUniform4f(widgetShader.gridColour, gridColour.x, gridColour.y, gridColour.z, 1);
 
 		const float vertices[][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
 

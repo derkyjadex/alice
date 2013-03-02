@@ -6,7 +6,7 @@
 
 uniform vec4 fillColour;
 uniform vec4 borderColour;
-uniform vec3 gridColour;
+uniform vec4 gridColour;
 
 varying vec2 borderCoords;
 varying vec2 borderStep;
@@ -16,8 +16,8 @@ varying vec2 gridStep;
 void main()
 {
 	vec2 grid = step(gridStep, fract(gridCoords));
-	vec2 border = step(borderStep, 1.0 - abs(borderCoords));
+	vec2 border = step(borderStep, abs(borderCoords));
 
-	vec4 innerColour = mix(vec4(gridColour, 1), fillColour, min(grid.x, grid.y));
-	gl_FragColor = mix(borderColour, innerColour, min(border.x, border.y));
+	vec4 innerColour = mix(gridColour, fillColour, min(grid.x, grid.y));
+	gl_FragColor = mix(innerColour, borderColour, max(border.x, border.y));
 }

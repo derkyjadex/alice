@@ -28,8 +28,8 @@ void main()
 	vec2 _gridSize = floor(gridSize);
 	vec2 _gridOffset = floor(gridOffset);
 
-	borderCoords = 2.0 * position - 1.0;
-	borderStep = (2.0 * _borderWidth) / _size;
+	borderCoords = position - 0.5;
+	borderStep = 0.5 - _borderWidth / _size;
 
 	if (all(notEqual(gridSize, vec2(0)))) {
 		gridCoords = (_size * position - _gridOffset - _borderWidth) / _gridSize;
