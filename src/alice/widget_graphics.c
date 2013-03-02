@@ -233,7 +233,7 @@ Vec2 widget_graphics_screen_size()
 static void render_model(AlModel *model, Vec2 location, double scale)
 {
 	glUseProgram(modelShader.shader->id);
-	glUniform2f(modelShader.translate, location.x, location.y);
+	al_gl_uniform_vec2(modelShader.translate, location);
 	glUniform1f(modelShader.scale, scale);
 
 	glEnableVertexAttribArray(modelShader.position);
@@ -245,8 +245,7 @@ static void render_model(AlModel *model, Vec2 location, double scale)
 
 	int start = 0;
 	for (int i = 0; i < model->numPaths; i++) {
-		Vec3 colour = model->colours[i];
-		glUniform3f(modelShader.colour, colour.x, colour.y, colour.z);
+		al_gl_uniform_vec3(modelShader.colour, model->colours[i]);
 		glDrawArrays(GL_TRIANGLES, start, model->vertexCounts[i]);
 		start += model->vertexCounts[i];
 	}
@@ -264,7 +263,7 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	glUseProgram(textShader.shader->id);
 	glUniform2f(textShader.size, charWidth, size);
 	glUniform2f(textShader.charSize, 1.0 / fontInfo.numCharsW, 1.0 / fontInfo.numCharsH);
-	glUniform3f(textShader.colour, colour.x, colour.y, colour.z);
+	al_gl_uniform_vec3(textShader.colour, colour);
 	glUniform2f(textShader.edge, fontInfo.edgeCenter - edgeSpread, fontInfo.edgeCenter + edgeSpread);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -283,7 +282,7 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 		float x = (float)(c % fontInfo.numCharsW) / fontInfo.numCharsW;
 		float y = (float)(c / fontInfo.numCharsW) / fontInfo.numCharsH;
 
-		glUniform2f(textShader.min, location.x, location.y);
+		al_gl_uniform_vec2(textShader.min, location);
 		glUniform2f(textShader.charMin, x, y);
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
