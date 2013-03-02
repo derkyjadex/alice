@@ -9,6 +9,7 @@
 
 #include "albase/common.h"
 #include "albase/gl/opengl.h"
+#include "albase/geometry.h"
 
 #define AL_VERT_SHADER_VAR(name) shaders_##name##_vert
 #define AL_FRAG_SHADER_VAR(name) shaders_##name##_frag
@@ -43,5 +44,9 @@ typedef struct AlGlShader {
 AlError al_gl_shader_init_with_files(AlGlShader **shader, const char *vertexFilename, const char *fragmentFilename);
 AlError al_gl_shader_init_with_sources(AlGlShader **shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource);
 void al_gl_shader_free(AlGlShader *shader);
+
+void al_gl_uniform_vec2(GLuint uniform, Vec2 v);
+void al_gl_uniform_vec3(GLuint uniform, Vec3 v);
+void al_gl_uniform_vec4(GLuint uniform, Vec4 v);
 
 #endif

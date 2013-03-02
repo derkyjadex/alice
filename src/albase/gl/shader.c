@@ -137,3 +137,18 @@ static AlError compile_shader(GLenum type, AlGLShaderSource source, GLuint *resu
 	)
 	FINALLY()
 }
+
+void al_gl_uniform_vec2(GLuint uniform, Vec2 v)
+{
+	glUniform2f(uniform, v.x, v.y);
+}
+
+void al_gl_uniform_vec3(GLuint uniform, Vec3 v)
+{
+	glUniform3f(uniform, v.x, v.y, v.z);
+}
+
+void al_gl_uniform_vec4(GLuint uniform, Vec4 v)
+{
+	glUniform4f(uniform, v.x, v.y, v.z, v.w);
+}
