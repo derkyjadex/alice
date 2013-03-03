@@ -190,13 +190,14 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 	CATCH(
 		al_log_error("Error reading model file");
 		if (paths) {
-		  for (int i = 0; i < numPaths; i++) {
+			for (int i = 0; i < numPaths; i++) {
 			  if (!paths[i])
 				  break;
 
-			  reference(shape, paths[i]);
-		  }
-		  free(paths);
+			  unreference(shape, paths[i]);
+			}
+
+			free(paths);
 		}
 	)
 	FINALLY(
