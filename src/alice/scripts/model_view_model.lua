@@ -38,6 +38,7 @@ local function ModelMidPointViewModel(path_vm, p, index)
 		location = Observable(p[1], p[2])
 	}
 
+	function self:path() return path_vm end
 	function self:subdivide() path_vm:subdivide(self) end
 
 	self.location.changed:add(function(x, y)

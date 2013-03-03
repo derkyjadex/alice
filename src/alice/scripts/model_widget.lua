@@ -123,7 +123,10 @@ local function insert_mid_handle(self, path, i, point_vm)
 		:fill_colour(0.2, 0.5, 0.9, 1.0)
 		:border_colour(0.9, 0.9, 0.9, 1.0)
 		:border_width(1)
-		:bind_down(function() point_vm:subdivide() end)
+		:bind_down(function()
+			point_vm:path():select()
+			point_vm:subdivide()
+		end)
 
 	handle.point = point_vm
 
