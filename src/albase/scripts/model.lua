@@ -48,3 +48,4 @@ function Model.prototype:paths()
 end
 Model.prototype.add_path = commands.model_shape_add_path
 Model.prototype.remove_path = commands.model_shape_remove_path
+Model.prototype.hit_test = commands.model_shape_hit_test
