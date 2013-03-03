@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 James Deery
+ * Copyright (c) 2011-2013 James Deery
  * Released under the MIT license <http://opensource.org/licenses/MIT>.
  * See COPYING for details.
  */
@@ -43,6 +43,8 @@ AlError al_model_shape_remove_path(AlModelShape *shape, int index);
 
 AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location);
 AlError al_model_path_remove_point(AlModelPath *path, int index);
+
+AlModelPath *al_model_shape_hit_test(AlModelShape *shape, Vec2 point);
 
 void al_model_shape_push_userdata(AlModelShape *shape);
 void al_model_path_push_userdata(AlModelPath *path);
