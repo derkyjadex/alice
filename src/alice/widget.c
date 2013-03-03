@@ -12,10 +12,11 @@
 #include "albase/wrapper.h"
 #include "albase/script.h"
 
+static lua_State *lua = NULL;
 static AlWrapper *wrapper = NULL;
 static AlLuaKey bindings;
 
-static void _widget_init(AlWidget *widget, lua_State *lua, AlCommands *commands)
+static void _widget_init(AlWidget *widget)
 {
 	widget->next = NULL;
 	widget->prev = NULL;
@@ -40,8 +41,6 @@ static void _widget_init(AlWidget *widget, lua_State *lua, AlCommands *commands)
 	widget->text.size = 12;
 	widget->text.location = (Vec2){0, 0};
 
-	widget->lua = lua;
-	widget->commands = commands;
 	widget->downBinding = false;
 	widget->upBinding = false;
 	widget->motionBinding = false;
@@ -56,8 +55,7 @@ static int widget_ctor(lua_State *L)
 	lua_call(L, 0, 1);
 	AlWidget *widget = lua_touserdata(L, -1);
 
-	AlCommands *commands = lua_touserdata(L, lua_upvalueindex(2));
-	_widget_init(widget, L, commands);
+	_widget_init(widget);
 
 	return 1;
 }
@@ -98,11 +96,9 @@ static void free_binding(AlWidget *widget, size_t bindingOffset)
 {
 	AlLuaKey *binding = (void *)widget + bindingOffset;
 	if (*binding) {
-		lua_State *L = widget->lua;
-
-		lua_pushlightuserdata(L, binding);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
+		lua_pushlightuserdata(lua, binding);
+		lua_pushnil(lua);
+		lua_settable(lua, LUA_REGISTRYINDEX);
 	}
 }
 
@@ -205,24 +201,22 @@ static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 {
 	BEGIN()
 
-	lua_State *L = widget->lua;
-
 	if (*binding) {
-		lua_pushlightuserdata(L, &bindings);
-		lua_gettable(L, LUA_REGISTRYINDEX);
-		lua_pushlightuserdata(L, binding);
-		lua_gettable(L, -2);
+		lua_pushlightuserdata(lua, &bindings);
+		lua_gettable(lua, LUA_REGISTRYINDEX);
+		lua_pushlightuserdata(lua, binding);
+		lua_gettable(lua, -2);
 
-		lua_insert(L, -nargs - 2);
-		lua_pop(L, 1);
+		lua_insert(lua, -nargs - 2);
+		lua_pop(lua, 1);
 
 		widget_push_userdata(widget);
-		lua_insert(L, -nargs - 1);
+		lua_insert(lua, -nargs - 1);
 
-		TRY(al_script_call(L, nargs + 1));
+		TRY(al_script_call(lua, nargs + 1));
 
 	} else {
-		lua_pop(L, nargs);
+		lua_pop(lua, nargs);
 	}
 
 	PASS()
@@ -240,25 +234,22 @@ AlError widget_send_up(AlWidget *widget)
 
 AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 {
-	lua_State *L = widget->lua;
-	lua_pushnumber(L, motion.x);
-	lua_pushnumber(L, motion.y);
+	lua_pushnumber(lua, motion.x);
+	lua_pushnumber(lua, motion.y);
 
 	return call_binding(widget, &widget->motionBinding, 2);
 }
 
 AlError widget_send_key(AlWidget *widget, SDLKey key)
 {
-	lua_State *L = widget->lua;
-	lua_pushinteger(L, key);
+	lua_pushinteger(lua, key);
 
 	return call_binding(widget, &widget->keyBinding, 1);
 }
 
 AlError widget_send_text(AlWidget *widget, const char *text)
 {
-	lua_State *L = widget->lua;
-	lua_pushstring(L, text);
+	lua_pushstring(lua, text);
 
 	return call_binding(widget, &widget->textBinding, 1);
 }
@@ -550,6 +541,8 @@ static AlError widget_system_register_vars(AlVars *vars)
 AlError widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 {
 	BEGIN()
+
+	lua = L;
 
 	TRY(widget_system_init_lua(L));
 	TRY(widget_system_register_commands(commands));

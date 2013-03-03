@@ -53,8 +53,6 @@ typedef struct AlWidget {
 		Vec2 location;
 	} text;
 
-	lua_State *lua;
-	AlCommands *commands;
 	AlLuaKey downBinding;
 	AlLuaKey upBinding;
 	AlLuaKey motionBinding;
