@@ -334,7 +334,7 @@ static void wrapper_model_path_free(lua_State *L, void *ptr)
 	_al_model_path_free(ptr);
 }
 
-static bool al_model_path_contains_point(AlModelPath *path, Vec2 point)
+bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
 {
 	// TODO: This is incorrect right now, doesn't do the curves properly
 	bool result = false;
@@ -364,18 +364,6 @@ static bool al_model_path_contains_point(AlModelPath *path, Vec2 point)
 	}
 
 	return result;
-}
-
-AlModelPath *al_model_shape_hit_test(AlModelShape *shape, Vec2 point)
-{
-	for (int i = 0; i < shape->numPaths; i++) {
-		AlModelPath *path = shape->paths[i];
-		if (al_model_path_contains_point(path, point)) {
-			return path;
-		}
-	}
-
-	return NULL;
 }
 
 AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)

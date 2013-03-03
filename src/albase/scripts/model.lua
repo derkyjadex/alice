@@ -20,6 +20,7 @@ end
 ModelPath.prototype.set_point = commands.model_path_set_point
 ModelPath.prototype.add_point = commands.model_path_add_point
 ModelPath.prototype.remove_point = commands.model_path_remove_point
+ModelPath.prototype.hit_test = commands.model_path_hit_test
 
 local function build_path(self, data)
 	local path = self:add_path(0, data[1], data[2], data[3], data[4])
@@ -48,4 +49,3 @@ function Model.prototype:paths()
 end
 Model.prototype.add_path = commands.model_shape_add_path
 Model.prototype.remove_path = commands.model_shape_remove_path
-Model.prototype.hit_test = commands.model_shape_hit_test

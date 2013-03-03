@@ -105,23 +105,6 @@ static int cmd_model_shape_remove_path(lua_State *L)
 	)
 }
 
-static int cmd_model_shape_hit_test(lua_State *L)
-{
-	AlModelShape *model = cmd_model_shape_accessor(L, "hit_test", 3);
-	double x = luaL_checknumber(L, 2);
-	double y = luaL_checknumber(L, 3);
-
-	AlModelPath *result = al_model_shape_hit_test(model, (Vec2){x, y});
-
-	if (result) {
-		al_model_path_push_userdata(result);
-	} else {
-		lua_pushnil(L);
-	}
-
-	return 1;
-}
-
 static AlModelPath *cmd_path_accessor(lua_State *L, const char *name, int numArgs)
 {
 	if (lua_gettop(L) != numArgs) {
@@ -191,6 +174,18 @@ static int cmd_model_path_remove_point(lua_State *L)
 	)
 }
 
+static int cmd_model_path_hit_test(lua_State *L)
+{
+	AlModelPath *path = cmd_path_accessor(L, "hit_test", 3);
+	double x = luaL_checknumber(L, 2);
+	double y = luaL_checknumber(L, 3);
+
+	bool result = al_model_path_hit_test(path, (Vec2){x, y});
+	lua_pushboolean(L, result);
+
+	return 1;
+}
+
 #define REG_SHAPE_CMD(x) TRY(al_commands_register(commands, "model_shape_"#x, cmd_model_shape_ ## x, NULL))
 #define REG_PATH_CMD(x) TRY(al_commands_register(commands, "model_path_"#x, cmd_model_path_ ## x, NULL))
 
@@ -204,12 +199,12 @@ AlError al_model_commands_init(AlCommands *commands)
 	REG_SHAPE_CMD(get_paths);
 	REG_SHAPE_CMD(add_path);
 	REG_SHAPE_CMD(remove_path);
-	REG_SHAPE_CMD(hit_test);
 
 	REG_PATH_CMD(get_points);
 	REG_PATH_CMD(set_point);
 	REG_PATH_CMD(add_point);
 	REG_PATH_CMD(remove_point);
+	REG_PATH_CMD(hit_test);
 
 	PASS()
 }
