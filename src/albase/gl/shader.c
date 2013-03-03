@@ -10,10 +10,10 @@
 #include "albase/gl/shader.h"
 #include "albase/file.h"
 
-static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource);
-static AlError compile_shader(GLenum type, AlGLShaderSource source, GLuint *shader);
+static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines);
+static AlError compile_shader(GLenum type, AlGLShaderSource source, const char *defines, GLuint *shader);
 
-AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFilename, const char *fragmentFilename)
+AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFilename, const char *fragmentFilename, const char *defines)
 {
 	BEGIN()
 
@@ -26,7 +26,8 @@ AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFile
 
 	TRY(al_gl_shader_init_with_sources(&shader,
 		(AlGLShaderSource){vertexFilename, vertexSource},
-		(AlGLShaderSource){fragmentFilename, fragmentSource}));
+		(AlGLShaderSource){fragmentFilename, fragmentSource},
+		defines));
 
 	*result = shader;
 
@@ -39,7 +40,7 @@ AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFile
 	)
 }
 
-AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource)
+AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines)
 {
 	BEGIN()
 
@@ -50,7 +51,7 @@ AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource ver
 	shader->vertexShader = 0;
 	shader->fragmentShader = 0;
 
-	TRY(build_program(shader, vertexSource, fragmentSource));
+	TRY(build_program(shader, vertexSource, fragmentSource, defines));
 
 	*result = shader;
 
@@ -70,12 +71,12 @@ void al_gl_shader_free(AlGlShader *shader)
 	}
 }
 
-static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource)
+static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines)
 {
 	BEGIN()
 
-	TRY(compile_shader(GL_VERTEX_SHADER, vertexSource, &shader->vertexShader));
-	TRY(compile_shader(GL_FRAGMENT_SHADER, fragmentSource, &shader->fragmentShader));
+	TRY(compile_shader(GL_VERTEX_SHADER, vertexSource, defines, &shader->vertexShader));
+	TRY(compile_shader(GL_FRAGMENT_SHADER, fragmentSource, defines, &shader->fragmentShader));
 
 	shader->id = glCreateProgram();
 	glAttachShader(shader->id, shader->vertexShader);
@@ -100,21 +101,23 @@ static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, 
 	PASS()
 }
 
-static AlError compile_shader(GLenum type, AlGLShaderSource source, GLuint *result)
+static AlError compile_shader(GLenum type, AlGLShaderSource source, const char *defines, GLuint *result)
 {
 	BEGIN()
 
-	const char *sources[2] = {
+	const char *sources[] = {
 #ifdef GL_VERSION_2_1
 		"#version 120\n",
 #else
 		"#version 100\n",
 #endif
+		(!defines) ? "" : defines,
+		"\n",
 		source.source
 	};
 
 	GLuint shader = glCreateShader(type);
-	glShaderSource(shader, 2, sources, NULL);
+	glShaderSource(shader, 4, sources, NULL);
 	glCompileShader(shader);
 
 	GLint status;

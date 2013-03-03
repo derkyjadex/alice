@@ -112,7 +112,10 @@ static AlError init_shaders()
 	cursorShader.shader = NULL;
 	cursorShader.texture = NULL;
 
-	TRY(al_gl_shader_init_with_sources(&widgetShader.shader, AL_VERT_SHADER(widget), AL_FRAG_SHADER(widget)));
+	TRY(al_gl_shader_init_with_sources(&widgetShader.shader,
+		AL_VERT_SHADER(widget),
+		AL_FRAG_SHADER(widget),
+		NULL));
 	AL_GET_GL_UNIFORM(widgetShader, viewportSize);
 	AL_GET_GL_UNIFORM(widgetShader, min);
 	AL_GET_GL_UNIFORM(widgetShader, size);
@@ -124,7 +127,10 @@ static AlError init_shaders()
 	AL_GET_GL_UNIFORM(widgetShader, gridColour);
 	AL_GET_GL_ATTRIB(widgetShader, position);
 
-	TRY(al_gl_shader_init_with_sources(&modelShader.shader, AL_VERT_SHADER(model), AL_FRAG_SHADER(model)));
+	TRY(al_gl_shader_init_with_sources(&modelShader.shader,
+		AL_VERT_SHADER(model),
+		AL_FRAG_SHADER(model),
+		NULL));
 	AL_GET_GL_UNIFORM(modelShader, viewportSize);
 	AL_GET_GL_UNIFORM(modelShader, translate);
 	AL_GET_GL_UNIFORM(modelShader, scale);
@@ -132,7 +138,10 @@ static AlError init_shaders()
 	AL_GET_GL_ATTRIB(modelShader, position);
 	AL_GET_GL_ATTRIB(modelShader, param);
 
-	TRY(al_gl_shader_init_with_sources(&textShader.shader, AL_VERT_SHADER(text), AL_FRAG_SHADER(text)));
+	TRY(al_gl_shader_init_with_sources(&textShader.shader,
+		AL_VERT_SHADER(text),
+		AL_FRAG_SHADER(text),
+		NULL));
 	AL_GET_GL_UNIFORM(textShader, viewportSize);
 	AL_GET_GL_UNIFORM(textShader, min);
 	AL_GET_GL_UNIFORM(textShader, size);
@@ -153,7 +162,10 @@ static AlError init_shaders()
 	fontInfo.edgeCenter = 0.38;
 	fontInfo.edgeSpread = 4.0;
 
-	TRY(al_gl_shader_init_with_sources(&cursorShader.shader, AL_VERT_SHADER(cursor), AL_FRAG_SHADER(cursor)));
+	TRY(al_gl_shader_init_with_sources(&cursorShader.shader,
+		AL_VERT_SHADER(cursor),
+		AL_FRAG_SHADER(cursor),
+		NULL));
 	AL_GET_GL_UNIFORM(cursorShader, viewportSize);
 	AL_GET_GL_UNIFORM(cursorShader, location);
 	AL_GET_GL_UNIFORM(cursorShader, size);
