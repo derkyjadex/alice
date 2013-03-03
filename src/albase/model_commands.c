@@ -22,7 +22,7 @@ static int cmd_model_shape_load(lua_State *L)
 	BEGIN()
 
 	AlModelShape *model = cmd_model_shape_accessor(L, "load", 2);
-	const char *filename = lua_tostring(L, -1);
+	const char *filename = luaL_checkstring(L, 2);
 
 	TRY(al_model_shape_load(model, filename));
 
@@ -39,7 +39,7 @@ static int cmd_model_shape_save(lua_State *L)
 	BEGIN()
 
 	AlModelShape *model = cmd_model_shape_accessor(L, "save", 2);
-	const char *filename = lua_tostring(L, -1);
+	const char *filename = luaL_checkstring(L, 2);
 
 	TRY(al_model_shape_save(model, filename));
 
