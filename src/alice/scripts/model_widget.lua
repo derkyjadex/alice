@@ -3,6 +3,26 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
+local function get_transform(self)
+	local scale = self._scale_binding()
+	local pan_x, pan_y = self._pan_binding()
+	return scale, pan_x, pan_y
+end
+
+local function select_path(self, x, y)
+	local scale, pan_x, pan_y = get_transform(self)
+	x, y = (x / scale) - pan_x, (y / scale) - pan_y
+
+	for _, path_vm in ipairs(self._model:paths()) do
+		if path_vm:path():hit_test(x, y) then
+			path_vm:select()
+			return
+		end
+	end
+
+	self._model.selected_path(nil)
+end
+
 ModelWidget = Widget:derive(function(self)
 	Widget.init(self)
 
@@ -11,11 +31,7 @@ ModelWidget = Widget:derive(function(self)
 		:model_scale(1)
 		:grid_size(20, 20)
 		:grid_colour(0.4, 0.4, 0.4)
-		:bind_down(function()
-				if self._model then
-					self._model.selected_path(nil)
-				end
-			end)
+		:bind_down(select_path)
 
 	self._model = nil
 	self._paths = {}
@@ -26,12 +42,6 @@ end)
 
 local function update_model(self)
 	self:model(self._model:model())
-end
-
-local function get_transform(self)
-	local scale = self._scale_binding()
-	local pan_x, pan_y = self._pan_binding()
-	return scale, pan_x, pan_y
 end
 
 local function transform_handle(handle, scale, pan_x, pan_y)
