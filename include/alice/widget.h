@@ -78,7 +78,7 @@ AlError widget_send_key(AlWidget *widget, SDLKey key);
 AlError widget_send_text(AlWidget *widget, const char *text);
 AlError widget_send_keyboard_lost(AlWidget *widget);
 
-AlWidget *widget_hit_test(AlWidget *widget, Vec2 location);
+AlWidget *widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation);
 
 void widget_push_userdata(AlWidget *widget);
 

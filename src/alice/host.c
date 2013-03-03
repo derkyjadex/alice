@@ -157,13 +157,15 @@ static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 	}
 
 	AlWidget *widget;
+	Vec2 hitLocation;
 
 	if (host->grabbingWidget) {
 		widget = host->grabbingWidget;
+		hitLocation = (Vec2){0, 0};
 
 	} else {
 		Vec2 location = {event.x, host->screenSize.y - event.y};
-		widget = widget_hit_test(host->root, location);
+		widget = widget_hit_test(host->root, location, &hitLocation);
 	}
 
 	if (widget) {

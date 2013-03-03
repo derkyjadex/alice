@@ -259,7 +259,7 @@ AlError widget_send_keyboard_lost(AlWidget *widget)
 	return call_binding(widget, &widget->keyboardLostBinding, 0);
 }
 
-AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
+AlWidget *widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 {
 	AlWidget *result = NULL;
 
@@ -267,11 +267,19 @@ AlWidget *widget_hit_test(AlWidget *widget, Vec2 location)
 		result = widget;
 
 		for (AlWidget *child = widget->lastChild; child; child = child->prev) {
-			AlWidget *childResult =  widget_hit_test(child, vec2_subtract(location, widget->location));
+			AlWidget *childResult = widget_hit_test(
+				child,
+				vec2_subtract(location, widget->location),
+				hitLocation);
+
 			if (childResult) {
 				result = childResult;
 				break;
 			}
+		}
+
+		if (result == widget && hitLocation) {
+			*hitLocation = vec2_subtract(location, widget->location);
 		}
 	}
 
