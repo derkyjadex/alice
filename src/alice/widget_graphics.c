@@ -22,6 +22,26 @@ static struct {
 	GLuint viewportSize;
 	GLuint min;
 	GLuint size;
+	GLuint fillColour;
+	GLuint position;
+} plainWidgetShader;
+
+static struct {
+	AlGlShader *shader;
+	GLuint viewportSize;
+	GLuint min;
+	GLuint size;
+	GLuint borderWidth;
+	GLuint fillColour;
+	GLuint borderColour;
+	GLuint position;
+} borderWidgetShader;
+
+static struct {
+	AlGlShader *shader;
+	GLuint viewportSize;
+	GLuint min;
+	GLuint size;
 	GLuint borderWidth;
 	GLuint gridSize;
 	GLuint gridOffset;
@@ -29,7 +49,7 @@ static struct {
 	GLuint borderColour;
 	GLuint gridColour;
 	GLuint position;
-} widgetShader;
+} gridBorderWidgetShader;
 
 static struct {
 	AlGlShader *shader;
@@ -85,8 +105,13 @@ static GLuint plainVertices;
 
 static void free_shaders()
 {
-	al_gl_shader_free(widgetShader.shader);
-	widgetShader.shader = NULL;
+	al_gl_shader_free(plainWidgetShader.shader);
+	plainWidgetShader.shader = NULL;
+	al_gl_shader_free(borderWidgetShader.shader);
+	borderWidgetShader.shader = NULL;
+	al_gl_shader_free(gridBorderWidgetShader.shader);
+	gridBorderWidgetShader.shader = NULL;
+
 	al_gl_shader_free(modelShader.shader);
 	modelShader.shader = NULL;
 
@@ -105,27 +130,52 @@ static AlError init_shaders()
 {
 	BEGIN()
 
-	widgetShader.shader = NULL;
+	plainWidgetShader.shader = NULL;
+	borderWidgetShader.shader = NULL;
+	gridBorderWidgetShader.shader = NULL;
 	modelShader.shader = NULL;
 	textShader.shader = NULL;
 	textShader.texture = NULL;
 	cursorShader.shader = NULL;
 	cursorShader.texture = NULL;
 
-	TRY(al_gl_shader_init_with_sources(&widgetShader.shader,
+	TRY(al_gl_shader_init_with_sources(&plainWidgetShader.shader,
 		AL_VERT_SHADER(widget),
 		AL_FRAG_SHADER(widget),
 		NULL));
-	AL_GET_GL_UNIFORM(widgetShader, viewportSize);
-	AL_GET_GL_UNIFORM(widgetShader, min);
-	AL_GET_GL_UNIFORM(widgetShader, size);
-	AL_GET_GL_UNIFORM(widgetShader, borderWidth);
-	AL_GET_GL_UNIFORM(widgetShader, gridSize);
-	AL_GET_GL_UNIFORM(widgetShader, gridOffset);
-	AL_GET_GL_UNIFORM(widgetShader, fillColour);
-	AL_GET_GL_UNIFORM(widgetShader, borderColour);
-	AL_GET_GL_UNIFORM(widgetShader, gridColour);
-	AL_GET_GL_ATTRIB(widgetShader, position);
+	AL_GET_GL_UNIFORM(plainWidgetShader, viewportSize);
+	AL_GET_GL_UNIFORM(plainWidgetShader, min);
+	AL_GET_GL_UNIFORM(plainWidgetShader, size);
+	AL_GET_GL_UNIFORM(plainWidgetShader, fillColour);
+	AL_GET_GL_ATTRIB(plainWidgetShader, position);
+
+	TRY(al_gl_shader_init_with_sources(&borderWidgetShader.shader,
+		AL_VERT_SHADER(widget),
+		AL_FRAG_SHADER(widget),
+		"#define WITH_BORDER\n"));
+	AL_GET_GL_UNIFORM(borderWidgetShader, viewportSize);
+	AL_GET_GL_UNIFORM(borderWidgetShader, min);
+	AL_GET_GL_UNIFORM(borderWidgetShader, size);
+	AL_GET_GL_UNIFORM(borderWidgetShader, borderWidth);
+	AL_GET_GL_UNIFORM(borderWidgetShader, fillColour);
+	AL_GET_GL_UNIFORM(borderWidgetShader, borderColour);
+	AL_GET_GL_ATTRIB(borderWidgetShader, position);
+
+	TRY(al_gl_shader_init_with_sources(&gridBorderWidgetShader.shader,
+		AL_VERT_SHADER(widget),
+		AL_FRAG_SHADER(widget),
+		"#define WITH_BORDER\n"
+		"#define WITH_GRID"));
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, viewportSize);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, min);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, size);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, borderWidth);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, gridSize);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, gridOffset);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, fillColour);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, borderColour);
+	AL_GET_GL_UNIFORM(gridBorderWidgetShader, gridColour);
+	AL_GET_GL_ATTRIB(gridBorderWidgetShader, position);
 
 	TRY(al_gl_shader_init_with_sources(&modelShader.shader,
 		AL_VERT_SHADER(model),
@@ -190,8 +240,14 @@ static void update_viewport_size()
 
 	glViewport(0, 0, viewportSize.x, viewportSize.y);
 
-	glUseProgram(widgetShader.shader->id);
-	glUniform2f(widgetShader.viewportSize, viewportSize.x, viewportSize.y);
+	glUseProgram(plainWidgetShader.shader->id);
+	glUniform2f(plainWidgetShader.viewportSize, viewportSize.x, viewportSize.y);
+
+	glUseProgram(borderWidgetShader.shader->id);
+	glUniform2f(borderWidgetShader.viewportSize, viewportSize.x, viewportSize.y);
+
+	glUseProgram(gridBorderWidgetShader.shader->id);
+	glUniform2f(gridBorderWidgetShader.viewportSize, viewportSize.x, viewportSize.y);
 
 	glUseProgram(modelShader.shader->id);
 	glUniform2f(modelShader.viewportSize, viewportSize.x, viewportSize.y);
@@ -311,27 +367,46 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 	scissor = box_round(box_intersect(scissor, bounds));
 
 	if (box_is_valid(scissor)) {
-		Vec2 scissorSize = box_size(scissor);
-		Vec2 size = box_size(bounds);
-		Vec4 fillColour = widget->fillColour;
-		Vec4 borderColour = widget->border.colour;
-		Vec3 gridColour = widget->grid.colour;
+		GLuint position;
 
-		glUseProgram(widgetShader.shader->id);
-		glUniform2f(widgetShader.min, bounds.min.x, bounds.min.y);
-		glUniform2f(widgetShader.size, size.x, size.y);
-		glUniform1f(widgetShader.borderWidth, widget->border.width);
-		glUniform2f(widgetShader.gridSize, widget->grid.size.x, widget->grid.size.y);
-		glUniform2f(widgetShader.gridOffset, widget->grid.offset.x, widget->grid.offset.y);
-		glUniform4f(widgetShader.fillColour, fillColour.x, fillColour.y, fillColour.z, fillColour.w);
-		glUniform4f(widgetShader.borderColour, borderColour.x, borderColour.y, borderColour.z, borderColour.w);
-		glUniform4f(widgetShader.gridColour, gridColour.x, gridColour.y, gridColour.z, 1);
+		if (!widget->grid.size.x && !widget->grid.size.y) {
+			if (!widget->border.width) {
+				position = plainWidgetShader.position;
+				glUseProgram(plainWidgetShader.shader->id);
+				al_gl_uniform_vec2(plainWidgetShader.min, bounds.min);
+				al_gl_uniform_vec2(plainWidgetShader.size, box_size(bounds));
+				al_gl_uniform_vec4(plainWidgetShader.fillColour, widget->fillColour);
+
+			} else {
+				position = borderWidgetShader.position;
+				glUseProgram(borderWidgetShader.shader->id);
+				al_gl_uniform_vec2(borderWidgetShader.min, bounds.min);
+				al_gl_uniform_vec2(borderWidgetShader.size, box_size(bounds));
+				glUniform1f(borderWidgetShader.borderWidth, widget->border.width);
+				al_gl_uniform_vec4(borderWidgetShader.fillColour, widget->fillColour);
+				al_gl_uniform_vec4(borderWidgetShader.borderColour, widget->border.colour);
+			}
+		} else {
+			position = gridBorderWidgetShader.position;
+			glUseProgram(gridBorderWidgetShader.shader->id);
+			al_gl_uniform_vec2(gridBorderWidgetShader.min, bounds.min);
+			al_gl_uniform_vec2(gridBorderWidgetShader.size, box_size(bounds));
+			glUniform1f(gridBorderWidgetShader.borderWidth, widget->border.width);
+			al_gl_uniform_vec2(gridBorderWidgetShader.gridSize, widget->grid.size);
+			al_gl_uniform_vec2(gridBorderWidgetShader.gridOffset, widget->grid.offset);
+			al_gl_uniform_vec4(gridBorderWidgetShader.fillColour, widget->fillColour);
+			al_gl_uniform_vec4(gridBorderWidgetShader.borderColour, widget->border.colour);
+			Vec3 gridColour = widget->grid.colour;
+			al_gl_uniform_vec4(gridBorderWidgetShader.gridColour, (Vec4){
+				gridColour.x, gridColour.y, gridColour.z, 1
+			});
+		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
+		glEnableVertexAttribArray(position);
+		glVertexAttribPointer(position, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-		glEnableVertexAttribArray(widgetShader.position);
-		glVertexAttribPointer(widgetShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
+		Vec2 scissorSize = box_size(scissor);
 		glScissor(scissor.min.x, scissor.min.y, scissorSize.x, scissorSize.y);
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

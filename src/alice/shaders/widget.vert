@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 James Deery
+ * Copyright (c) 2011-2013 James Deery
  * Released under the MIT license <http://opensource.org/licenses/MIT>.
  * See COPYING for details.
  */
@@ -31,14 +31,8 @@ void main()
 	borderCoords = position - 0.5;
 	borderStep = 0.5 - _borderWidth / _size;
 
-	if (all(notEqual(gridSize, vec2(0)))) {
-		gridCoords = (_size * position - _gridOffset - _borderWidth) / _gridSize;
-		gridStep = _gridWidth / _gridSize;
-
-	} else {
-		gridCoords = vec2(0);
-		gridStep = vec2(0);
-	}
+	gridCoords = (_size * position - _gridOffset - _borderWidth) / _gridSize;
+	gridStep = _gridWidth / _gridSize;
 
 	vec2 pos = _min + _size * position;
 	gl_Position = vec4(2.0 * pos / viewportSize - 1.0, 0, 1);
