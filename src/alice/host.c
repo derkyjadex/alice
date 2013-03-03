@@ -170,9 +170,9 @@ static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 
 	if (widget) {
 		if (event.state == SDL_PRESSED) {
-			widget_send_down(widget);
+			widget_send_down(widget, hitLocation);
 		} else {
-			widget_send_up(widget);
+			widget_send_up(widget, hitLocation);
 		}
 	}
 }

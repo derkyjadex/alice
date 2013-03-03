@@ -222,14 +222,20 @@ static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 	PASS()
 }
 
-AlError widget_send_down(AlWidget *widget)
+AlError widget_send_down(AlWidget *widget, Vec2 location)
 {
-	return call_binding(widget, &widget->downBinding, 0);
+	lua_pushnumber(lua, location.x);
+	lua_pushnumber(lua, location.y);
+
+	return call_binding(widget, &widget->downBinding, 2);
 }
 
-AlError widget_send_up(AlWidget *widget)
+AlError widget_send_up(AlWidget *widget, Vec2 location)
 {
-	return call_binding(widget, &widget->upBinding, 0);
+	lua_pushnumber(lua, location.x);
+	lua_pushnumber(lua, location.y);
+
+	return call_binding(widget, &widget->upBinding, 2);
 }
 
 AlError widget_send_motion(AlWidget *widget, Vec2 motion)

@@ -71,8 +71,8 @@ void widget_add_sibling(AlWidget *widget, AlWidget *sibling);
 void widget_remove(AlWidget *widget);
 void widget_invalidate(AlWidget *widget);
 
-AlError widget_send_down(AlWidget *widget);
-AlError widget_send_up(AlWidget *widget);
+AlError widget_send_down(AlWidget *widget, Vec2 location);
+AlError widget_send_up(AlWidget *widget, Vec2 location);
 AlError widget_send_motion(AlWidget *widget, Vec2 motion);
 AlError widget_send_key(AlWidget *widget, SDLKey key);
 AlError widget_send_text(AlWidget *widget, const char *text);
