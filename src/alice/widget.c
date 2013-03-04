@@ -16,7 +16,7 @@ static lua_State *lua = NULL;
 static AlWrapper *wrapper = NULL;
 static AlLuaKey bindings;
 
-static void _widget_init(AlWidget *widget)
+static void _al_widget_init(AlWidget *widget)
 {
 	widget->next = NULL;
 	widget->prev = NULL;
@@ -49,18 +49,18 @@ static void _widget_init(AlWidget *widget)
 	widget->keyboardLostBinding = false;
 }
 
-static int widget_ctor(lua_State *L)
+static int al_widget_ctor(lua_State *L)
 {
 	lua_pushvalue(L, lua_upvalueindex(1));
 	lua_call(L, 0, 1);
 	AlWidget *widget = lua_touserdata(L, -1);
 
-	_widget_init(widget);
+	_al_widget_init(widget);
 
 	return 1;
 }
 
-AlError widget_init(AlWidget **result)
+AlError al_widget_init(AlWidget **result)
 {
 	BEGIN()
 
@@ -78,14 +78,14 @@ AlError widget_init(AlWidget **result)
 static void _set_relation(AlWidget *widget, AlWidget **member, AlWidget *value)
 {
 	if (*member) {
-		widget_push_userdata(widget);
-		widget_push_userdata(*member);
+		al_widget_push_userdata(widget);
+		al_widget_push_userdata(*member);
 		al_wrapper_unreference(wrapper);
 	}
 
 	if (value) {
-		widget_push_userdata(widget);
-		widget_push_userdata(value);
+		al_widget_push_userdata(widget);
+		al_widget_push_userdata(value);
 		al_wrapper_reference(wrapper);
 	}
 
@@ -117,12 +117,12 @@ static void _widget_free(AlWidget *widget)
 	}
 }
 
-void widget_free(AlWidget *widget)
+void al_widget_free(AlWidget *widget)
 {
 	al_wrapper_release(wrapper, widget);
 }
 
-void widget_add_child(AlWidget *widget, AlWidget *child)
+void al_widget_add_child(AlWidget *widget, AlWidget *child)
 {
 	assert(!child->next && !child->prev && !child->parent);
 
@@ -138,10 +138,10 @@ void widget_add_child(AlWidget *widget, AlWidget *child)
 	set_relation(child, parent, widget);
 
 	child->valid = true;
-	widget_invalidate(child);
+	al_widget_invalidate(child);
 }
 
-void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
+void al_widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 {
 	assert(!sibling->next && !sibling->prev && !sibling->parent);
 
@@ -158,10 +158,10 @@ void widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 	set_relation(sibling, parent, widget->parent);
 
 	sibling->valid = true;
-	widget_invalidate(sibling);
+	al_widget_invalidate(sibling);
 }
 
-void widget_remove(AlWidget *widget)
+void al_widget_remove(AlWidget *widget)
 {
 	if (widget->next) {
 		set_relation(widget->next, prev, widget->prev);
@@ -178,7 +178,7 @@ void widget_remove(AlWidget *widget)
 	}
 
 	if (widget->parent) {
-		widget_invalidate(widget->parent);
+		al_widget_invalidate(widget->parent);
 	}
 
 	set_relation(widget, prev, NULL);
@@ -186,13 +186,13 @@ void widget_remove(AlWidget *widget)
 	set_relation(widget, parent, NULL);
 }
 
-void widget_invalidate(AlWidget *widget)
+void al_widget_invalidate(AlWidget *widget)
 {
 	if (widget->valid) {
 		widget->valid = false;
 
 		if (widget->parent) {
-			widget_invalidate(widget->parent);
+			al_widget_invalidate(widget->parent);
 		}
 	}
 }
@@ -210,7 +210,7 @@ static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 		lua_insert(lua, -nargs - 2);
 		lua_pop(lua, 1);
 
-		widget_push_userdata(widget);
+		al_widget_push_userdata(widget);
 		lua_insert(lua, -nargs - 1);
 
 		TRY(al_script_call(lua, nargs + 1));
@@ -222,7 +222,7 @@ static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 	PASS()
 }
 
-AlError widget_send_down(AlWidget *widget, Vec2 location)
+AlError al_widget_send_down(AlWidget *widget, Vec2 location)
 {
 	lua_pushnumber(lua, location.x);
 	lua_pushnumber(lua, location.y);
@@ -230,7 +230,7 @@ AlError widget_send_down(AlWidget *widget, Vec2 location)
 	return call_binding(widget, &widget->downBinding, 2);
 }
 
-AlError widget_send_up(AlWidget *widget, Vec2 location)
+AlError al_widget_send_up(AlWidget *widget, Vec2 location)
 {
 	lua_pushnumber(lua, location.x);
 	lua_pushnumber(lua, location.y);
@@ -238,7 +238,7 @@ AlError widget_send_up(AlWidget *widget, Vec2 location)
 	return call_binding(widget, &widget->upBinding, 2);
 }
 
-AlError widget_send_motion(AlWidget *widget, Vec2 motion)
+AlError al_widget_send_motion(AlWidget *widget, Vec2 motion)
 {
 	lua_pushnumber(lua, motion.x);
 	lua_pushnumber(lua, motion.y);
@@ -246,26 +246,26 @@ AlError widget_send_motion(AlWidget *widget, Vec2 motion)
 	return call_binding(widget, &widget->motionBinding, 2);
 }
 
-AlError widget_send_key(AlWidget *widget, SDLKey key)
+AlError al_widget_send_key(AlWidget *widget, SDLKey key)
 {
 	lua_pushinteger(lua, key);
 
 	return call_binding(widget, &widget->keyBinding, 1);
 }
 
-AlError widget_send_text(AlWidget *widget, const char *text)
+AlError al_widget_send_text(AlWidget *widget, const char *text)
 {
 	lua_pushstring(lua, text);
 
 	return call_binding(widget, &widget->textBinding, 1);
 }
 
-AlError widget_send_keyboard_lost(AlWidget *widget)
+AlError al_widget_send_keyboard_lost(AlWidget *widget)
 {
 	return call_binding(widget, &widget->keyboardLostBinding, 0);
 }
 
-AlWidget *widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
+AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 {
 	AlWidget *result = NULL;
 
@@ -273,7 +273,7 @@ AlWidget *widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 		result = widget;
 
 		for (AlWidget *child = widget->lastChild; child; child = child->prev) {
-			AlWidget *childResult = widget_hit_test(
+			AlWidget *childResult = al_widget_hit_test(
 				child,
 				vec2_subtract(location, widget->location),
 				hitLocation);
@@ -292,7 +292,7 @@ AlWidget *widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 	return result;
 }
 
-void widget_push_userdata(AlWidget *widget)
+void al_widget_push_userdata(AlWidget *widget)
 {
 	al_wrapper_push_userdata(wrapper, widget);
 }
@@ -312,7 +312,7 @@ static int cmd_widget_get_relation(lua_State *L, const char *name, size_t offset
 	AlWidget **relation = (void *)widget + offset;
 
 	if (*relation) {
-		widget_push_userdata(*relation);
+		al_widget_push_userdata(*relation);
 	} else {
 		lua_pushnil(L);
 	}
@@ -399,7 +399,7 @@ static int cmd_widget_add_child(lua_State *L)
 	AlWidget *widget = cmd_accessor(L, "add_child", 2);
 	AlWidget *child = lua_touserdata(L, 2);
 
-	widget_add_child(widget, child);
+	al_widget_add_child(widget, child);
 
 	return 1;
 }
@@ -409,21 +409,21 @@ static int cmd_widget_add_sibling(lua_State *L)
 	AlWidget *widget = cmd_accessor(L, "add_sibling", 2);
 	AlWidget *sibling = lua_touserdata(L, 2);
 
-	widget_add_sibling(widget, sibling);
+	al_widget_add_sibling(widget, sibling);
 
 	return 1;
 }
 
 static int cmd_widget_remove(lua_State *L)
 {
-	widget_remove(cmd_accessor(L, "remove", 1));
+	al_widget_remove(cmd_accessor(L, "remove", 1));
 
 	return 1;
 }
 
 static int cmd_widget_invalidate(lua_State *L)
 {
-	widget_invalidate(cmd_accessor(L, "invalidate", 1));
+	al_widget_invalidate(cmd_accessor(L, "invalidate", 1));
 
 	return 1;
 }
@@ -480,7 +480,7 @@ static void wrapper_widget_free(lua_State *L, void *ptr)
 	_widget_free(ptr);
 }
 
-static AlError widget_system_init_lua(lua_State *L)
+static AlError al_widget_system_init_lua(lua_State *L)
 {
 	BEGIN()
 
@@ -500,7 +500,7 @@ static AlError widget_system_init_lua(lua_State *L)
 
 #define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
 
-static AlError widget_system_register_commands(AlCommands *commands)
+static AlError al_widget_system_register_commands(AlCommands *commands)
 {
 	BEGIN()
 
@@ -529,7 +529,7 @@ static AlError widget_system_register_commands(AlCommands *commands)
 
 #define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget_"#n, t, offsetof(AlWidget, x)))
 
-static AlError widget_system_register_vars(AlVars *vars)
+static AlError al_widget_system_register_vars(AlVars *vars)
 {
 	BEGIN()
 
@@ -552,23 +552,23 @@ static AlError widget_system_register_vars(AlVars *vars)
 	PASS()
 }
 
-AlError widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
+AlError al_widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 {
 	BEGIN()
 
 	lua = L;
 
-	TRY(widget_system_init_lua(L));
-	TRY(widget_system_register_commands(commands));
-	TRY(widget_system_register_vars(vars));
+	TRY(al_widget_system_init_lua(L));
+	TRY(al_widget_system_register_commands(commands));
+	TRY(al_widget_system_register_vars(vars));
 
-	TRY(al_wrapper_wrap_ctor(wrapper, widget_ctor, commands, NULL));
+	TRY(al_wrapper_wrap_ctor(wrapper, al_widget_ctor, commands, NULL));
 	TRY(al_wrapper_resgister_commands(wrapper, commands, "widget"));
 
 	PASS()
 }
 
-void widget_systems_free(void)
+void al_widget_systems_free(void)
 {
 	al_wrapper_free(wrapper);
 	wrapper = NULL;

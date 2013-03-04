@@ -98,7 +98,7 @@ AlError al_host_init(AlHost **result)
 	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
 
 	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
-	TRY(widget_systems_init(host->lua, host->commands, host->vars));
+	TRY(al_widget_systems_init(host->lua, host->commands, host->vars));
 	TRY(file_system_init(host->commands));
 	TRY(text_system_init(host->commands));
 
@@ -119,7 +119,7 @@ AlError al_host_init(AlHost **result)
 	TRY(al_script_run_base_scripts(host->lua));
 	TRY(al_script_run_scripts(host->lua, scripts));
 
-	TRY(widget_init(&host->root));
+	TRY(al_widget_init(&host->root));
 	host->root->bounds = (Box){{0, 0}, host->screenSize};
 	host->keyboardWidget = host->root;
 
@@ -134,14 +134,14 @@ AlError al_host_init(AlHost **result)
 void al_host_free(AlHost *host)
 {
 	if (host) {
-		widget_free(host->root);
+		al_widget_free(host->root);
 		al_commands_free(host->commands);
 		al_vars_free(host->vars);
 		lua_close(host->lua);
 		free(host);
 
 		al_model_systems_free();
-		widget_systems_free();
+		al_widget_systems_free();
 	}
 }
 
@@ -165,14 +165,14 @@ static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 
 	} else {
 		Vec2 location = {event.x, host->screenSize.y - event.y};
-		widget = widget_hit_test(host->root, location, &hitLocation);
+		widget = al_widget_hit_test(host->root, location, &hitLocation);
 	}
 
 	if (widget) {
 		if (event.state == SDL_PRESSED) {
-			widget_send_down(widget, hitLocation);
+			al_widget_send_down(widget, hitLocation);
 		} else {
-			widget_send_up(widget, hitLocation);
+			al_widget_send_up(widget, hitLocation);
 		}
 	}
 }
@@ -199,10 +199,10 @@ static void handle_key_down(AlHost *host, SDL_KeyboardEvent event)
 		int numBytes = wctomb(text, event.keysym.unicode);
 		text[numBytes] = '\0';
 
-		widget_send_text(host->keyboardWidget, text);
+		al_widget_send_text(host->keyboardWidget, text);
 
 	} else {
-		widget_send_key(host->keyboardWidget, event.keysym.sym);
+		al_widget_send_key(host->keyboardWidget, event.keysym.sym);
 	}
 }
 
@@ -230,7 +230,7 @@ void al_host_run(AlHost *host)
 
 					} else if (host->grabbingWidget) {
 						Vec2 motion = {event.motion.xrel, -event.motion.yrel};
-						widget_send_motion(host->grabbingWidget, motion);
+						al_widget_send_motion(host->grabbingWidget, motion);
 					}
 					break;
 
@@ -311,7 +311,7 @@ static int cmd_get_root_widget(lua_State *L)
 {
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
 
-	widget_push_userdata(host->root);
+	al_widget_push_userdata(host->root);
 
 	return 1;
 }
@@ -359,7 +359,7 @@ static int cmd_grab_keyboard(lua_State *L)
 	host->keyboardWidget = widget;
 
 	if (widget != oldWidget) {
-		widget_send_keyboard_lost(oldWidget);
+		al_widget_send_keyboard_lost(oldWidget);
 	}
 
 	return 0;
@@ -373,7 +373,7 @@ static int cmd_release_keyboard(lua_State *L)
 	host->keyboardWidget = host->root;
 
 	if (oldWidget != host->root) {
-		widget_send_keyboard_lost(oldWidget);
+		al_widget_send_keyboard_lost(oldWidget);
 	}
 
 	return 0;

@@ -61,25 +61,25 @@ typedef struct AlWidget {
 	AlLuaKey keyboardLostBinding;
 } AlWidget;
 
-AlError widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars);
-void widget_systems_free(void);
+AlError al_widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars);
+void al_widget_systems_free(void);
 
-AlError widget_init(AlWidget **widget);
-void widget_free(AlWidget *widget);
-void widget_add_child(AlWidget *widget, AlWidget *child);
-void widget_add_sibling(AlWidget *widget, AlWidget *sibling);
-void widget_remove(AlWidget *widget);
-void widget_invalidate(AlWidget *widget);
+AlError al_widget_init(AlWidget **widget);
+void al_widget_free(AlWidget *widget);
+void al_widget_add_child(AlWidget *widget, AlWidget *child);
+void al_widget_add_sibling(AlWidget *widget, AlWidget *sibling);
+void al_widget_remove(AlWidget *widget);
+void al_widget_invalidate(AlWidget *widget);
 
-AlError widget_send_down(AlWidget *widget, Vec2 location);
-AlError widget_send_up(AlWidget *widget, Vec2 location);
-AlError widget_send_motion(AlWidget *widget, Vec2 motion);
-AlError widget_send_key(AlWidget *widget, SDLKey key);
-AlError widget_send_text(AlWidget *widget, const char *text);
-AlError widget_send_keyboard_lost(AlWidget *widget);
+AlError al_widget_send_down(AlWidget *widget, Vec2 location);
+AlError al_widget_send_up(AlWidget *widget, Vec2 location);
+AlError al_widget_send_motion(AlWidget *widget, Vec2 motion);
+AlError al_widget_send_key(AlWidget *widget, SDLKey key);
+AlError al_widget_send_text(AlWidget *widget, const char *text);
+AlError al_widget_send_keyboard_lost(AlWidget *widget);
 
-AlWidget *widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation);
+AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation);
 
-void widget_push_userdata(AlWidget *widget);
+void al_widget_push_userdata(AlWidget *widget);
 
 #endif
