@@ -18,6 +18,7 @@
 #include "albase/lua.h"
 #include "file_system.h"
 #include "text.h"
+#include "widget_internal.h"
 
 struct AlHost {
 	lua_State *lua;

@@ -14,6 +14,7 @@
 #include "shaders.h"
 #include "images.h"
 #include "graphics_text.h"
+#include "widget_internal.h"
 
 static Vec2 viewportSize;
 

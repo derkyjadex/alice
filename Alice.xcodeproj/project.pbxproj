@@ -80,6 +80,7 @@
 		1A5D170E14E6C02900A79CBA /* commands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = commands.h; sourceTree = "<group>"; };
 		1A5D171514E6C02900A79CBA /* vars.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vars.h; sourceTree = "<group>"; };
 		1A65C5D216E55F9E00C40716 /* model_shape_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = model_shape_internal.h; sourceTree = "<group>"; };
+		1A65C5D316E5658500C40716 /* widget_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = widget_internal.h; sourceTree = "<group>"; };
 		1A70ED8416109B2D003123A1 /* lua.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lua.h; sourceTree = "<group>"; };
 		1A70ED861610B0F0003123A1 /* model.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = model.h; sourceTree = "<group>"; };
 		1A801F371616E697008F3A05 /* error.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
@@ -153,6 +154,8 @@
 			children = (
 				1AE55F8416298ACE00FA402E /* file_system.c */,
 				1AE55F8716298AEE00FA402E /* file_system.h */,
+				1A42FD69160DED7300807A51 /* graphics.c */,
+				1A42FD81160DEF8300807A51 /* graphics.h */,
 				1AE55F991634642F00FA402E /* graphics_text.c */,
 				1AE55F9B1634692000FA402E /* graphics_text.h */,
 				1A42FD63160DED0800807A51 /* host.c */,
@@ -168,8 +171,7 @@
 				1AE04D7A1641AC4400AE072E /* text.c */,
 				1AE04D791641ABEA00AE072E /* text.h */,
 				1A42FD64160DED0800807A51 /* widget.c */,
-				1A42FD69160DED7300807A51 /* graphics.c */,
-				1A42FD81160DEF8300807A51 /* graphics.h */,
+				1A65C5D316E5658500C40716 /* widget_internal.h */,
 			);
 			path = alice;
 			sourceTree = "<group>";
@@ -236,13 +238,13 @@
 				1ACE8B68167E9B9D006DECA1 /* model_commands.c */,
 				1ACE8B69167E9B9E006DECA1 /* model_commands.h */,
 				1A9B8263158FB71600F77B33 /* model_shape.c */,
+				1A65C5D216E55F9E00C40716 /* model_shape_internal.h */,
 				1AA00584160A66B1005195DF /* script.c */,
 				1AA00588160A71BC005195DF /* scripts */,
 				1AA0058D160A79DB005195DF /* scripts.derived.c */,
 				1AA00586160A6DF6005195DF /* scripts.h */,
 				1A5D16F514E6B6B100A79CBA /* vars.c */,
 				1AE04D7D1642E4F000AE072E /* wrapper.c */,
-				1A65C5D216E55F9E00C40716 /* model_shape_internal.h */,
 			);
 			path = albase;
 			sourceTree = "<group>";

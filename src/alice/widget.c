@@ -11,6 +11,7 @@
 #include "albase/lua.h"
 #include "albase/wrapper.h"
 #include "albase/script.h"
+#include "widget_internal.h"
 
 static lua_State *lua = NULL;
 static AlWrapper *wrapper = NULL;
