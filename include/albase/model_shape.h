@@ -28,9 +28,13 @@ void al_model_shape_free(AlModelShape *shape);
 AlError al_model_shape_load(AlModelShape *shape, const char *filename);
 AlError al_model_shape_save(AlModelShape *shape, const char *filename);
 
+AlModelPath *const *al_model_shape_get_paths(AlModelShape *shape, int *numPaths);
 AlError al_model_shape_add_path(AlModelShape *shape, int index, Vec2 start, Vec2 end);
 AlError al_model_shape_remove_path(AlModelShape *shape, int index);
 
+Vec3 al_model_path_get_colour(AlModelPath *path);
+void al_model_path_set_colour(AlModelPath *path, Vec3 colour);
+Vec2 *al_model_path_get_points(AlModelPath *path, int *numPoints);
 AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location);
 AlError al_model_path_remove_point(AlModelPath *path, int index);
 

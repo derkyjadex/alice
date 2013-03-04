@@ -206,6 +206,15 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 	)
 }
 
+AlModelPath *const *al_model_shape_get_paths(AlModelShape *shape, int *numPaths)
+{
+	if (numPaths) {
+		*numPaths = shape->numPaths;
+	}
+
+	return shape->paths;
+}
+
 AlError al_model_shape_save(AlModelShape *shape, const char *filename)
 {
 	BEGIN()
@@ -274,6 +283,25 @@ AlError al_model_shape_remove_path(AlModelShape *shape, int index)
 	shape->numPaths--;
 
 	return AL_NO_ERROR;
+}
+
+Vec3 al_model_path_get_colour(AlModelPath *path)
+{
+	return path->colour;
+}
+
+void al_model_path_set_colour(AlModelPath *path, Vec3 colour)
+{
+	path->colour = colour;
+}
+
+Vec2 *al_model_path_get_points(AlModelPath *path, int *numPoints)
+{
+	if (numPoints) {
+		*numPoints = path->numPoints;
+	}
+
+	return path->points;
 }
 
 AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
