@@ -13,18 +13,8 @@
 #include "albase/commands.h"
 #include "albase/vars.h"
 
-typedef struct {
-	Vec3 colour;
-	int numPoints;
-	size_t pointsLength;
-	Vec2 *points;
-} AlModelPath;
-
-typedef struct {
-	int numPaths;
-	size_t pathsLength;
-	AlModelPath **paths;
-} AlModelShape;
+typedef struct AlModelShape AlModelShape;
+typedef struct AlModelPath AlModelPath;
 
 AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars);
 void al_model_systems_free(void);

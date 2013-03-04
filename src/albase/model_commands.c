@@ -6,6 +6,7 @@
 
 #include "model_commands.h"
 #include "albase/model_shape.h"
+#include "model_shape_internal.h"
 #include "albase/lua.h"
 
 static AlModelShape *cmd_model_shape_accessor(lua_State *L, const char *name, int numArgs)

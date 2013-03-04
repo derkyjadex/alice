@@ -13,6 +13,7 @@
 #include "albase/gl/model.h"
 #include "albase/model_shape.h"
 #include "albase/file.h"
+#include "../model_shape_internal.h"
 
 static AlModel *firstModel = NULL;
 

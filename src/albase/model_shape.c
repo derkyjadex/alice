@@ -11,6 +11,7 @@
 #include "albase/file.h"
 #include "albase/wrapper.h"
 #include "albase/commands.h"
+#include "model_shape_internal.h"
 #include "model_commands.h"
 
 static AlWrapper *shapeWrapper = NULL;

@@ -79,6 +79,7 @@
 		1A5D170A14E6C02900A79CBA /* geometry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = geometry.h; sourceTree = "<group>"; };
 		1A5D170E14E6C02900A79CBA /* commands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = commands.h; sourceTree = "<group>"; };
 		1A5D171514E6C02900A79CBA /* vars.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vars.h; sourceTree = "<group>"; };
+		1A65C5D216E55F9E00C40716 /* model_shape_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = model_shape_internal.h; sourceTree = "<group>"; };
 		1A70ED8416109B2D003123A1 /* lua.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lua.h; sourceTree = "<group>"; };
 		1A70ED861610B0F0003123A1 /* model.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = model.h; sourceTree = "<group>"; };
 		1A801F371616E697008F3A05 /* error.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
@@ -241,6 +242,7 @@
 				1AA00586160A6DF6005195DF /* scripts.h */,
 				1A5D16F514E6B6B100A79CBA /* vars.c */,
 				1AE04D7D1642E4F000AE072E /* wrapper.c */,
+				1A65C5D216E55F9E00C40716 /* model_shape_internal.h */,
 			);
 			path = albase;
 			sourceTree = "<group>";
