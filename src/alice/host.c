@@ -12,7 +12,7 @@
 
 #include "alice/host.h"
 #include "albase/geometry.h"
-#include "widget_graphics.h"
+#include "graphics.h"
 #include "albase/script.h"
 #include "scripts.h"
 #include "albase/lua.h"
@@ -40,7 +40,7 @@ AlError al_host_systems_init()
 		THROW(AL_ERROR_GRAPHICS)
 	}
 
-	TRY(widget_graphics_system_init());
+	TRY(graphics_system_init());
 
 #if defined(__APPLE__)
 	const char *locale = "UTF-8";
@@ -64,7 +64,7 @@ AlError al_host_systems_init()
 
 void al_host_systems_free()
 {
-	widget_graphics_system_free();
+	graphics_system_free();
 	SDL_Quit();
 }
 
@@ -84,7 +84,7 @@ AlError al_host_init(AlHost **result)
 	host->grabbingWidget = NULL;
 	host->keyboardWidget = NULL;
 
-	host->screenSize = widget_graphics_screen_size();
+	host->screenSize = graphics_screen_size();
 
 	TRY(al_script_init(&host->lua));
 	TRY(al_commands_init(&host->commands, host->lua));
@@ -253,9 +253,9 @@ void al_host_run(AlHost *host)
 		al_commands_process_queue(host->commands);
 
 #ifdef RASPI
-		widget_graphics_render(host->root, showMouse, get_mouse_pos(host));
+		graphics_render(host->root, showMouse, get_mouse_pos(host));
 #else
-		widget_graphics_render(host->root, false, (Vec2){0, 0});
+		graphics_render(host->root, false, (Vec2){0, 0});
 #endif
 	}
 }

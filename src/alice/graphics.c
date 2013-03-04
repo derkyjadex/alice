@@ -4,7 +4,7 @@
  * See COPYING for details.
  */
 
-#include "widget_graphics.h"
+#include "graphics.h"
 #include "albase/model.h"
 #include "albase/gl/opengl.h"
 #include "albase/gl/shader.h"
@@ -259,7 +259,7 @@ static void update_viewport_size()
 	glUniform2f(cursorShader.viewportSize, viewportSize.x, viewportSize.y);
 }
 
-AlError widget_graphics_system_init()
+AlError graphics_system_init()
 {
 	BEGIN()
 
@@ -281,19 +281,19 @@ AlError widget_graphics_system_init()
 	update_viewport_size();
 
 	CATCH(
-		widget_graphics_system_free();
+		graphics_system_free();
 	)
 	FINALLY()
 }
 
-void widget_graphics_system_free()
+void graphics_system_free()
 {
 	glDeleteBuffers(1, &plainVertices);
 	free_shaders();
 	al_gl_system_free();
 }
 
-Vec2 widget_graphics_screen_size()
+Vec2 graphics_screen_size()
 {
 	return viewportSize;
 }
@@ -451,7 +451,7 @@ static void render_cursor(Vec2 location)
 	glEnable(GL_SCISSOR_TEST);
 }
 
-void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
+void graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
 {
 	if (!root->valid) {
 		render_widget(root, (Vec2){0, 0}, (Box){{0, 0}, viewportSize});

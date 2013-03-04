@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		1A42FD8B160DF10D00807A51 /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD63160DED0800807A51 /* host.c */; };
 		1A42FD8D160DF11300807A51 /* widget.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD64160DED0800807A51 /* widget.c */; };
-		1A42FD8E160DF11600807A51 /* widget_graphics.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD69160DED7300807A51 /* widget_graphics.c */; };
+		1A42FD8E160DF11600807A51 /* graphics.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD69160DED7300807A51 /* graphics.c */; };
 		1A42FD91160DF2F500807A51 /* shaders.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD90160DF2F500807A51 /* shaders.derived.c */; };
 		1A42FD94160DF3BF00807A51 /* scripts.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD93160DF3BF00807A51 /* scripts.derived.c */; };
 		1A42FD97160DF44100807A51 /* images.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD96160DF44100807A51 /* images.derived.c */; };
@@ -43,7 +43,7 @@
 		1A42FD66160DED1300807A51 /* widget.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = widget.h; sourceTree = "<group>"; };
 		1A42FD67160DED7300807A51 /* images.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = images.h; sourceTree = "<group>"; };
 		1A42FD68160DED7300807A51 /* shaders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
-		1A42FD69160DED7300807A51 /* widget_graphics.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = widget_graphics.c; sourceTree = "<group>"; };
+		1A42FD69160DED7300807A51 /* graphics.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = graphics.c; sourceTree = "<group>"; };
 		1A42FD6C160DEDB400807A51 /* cursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cursor.png; sourceTree = "<group>"; };
 		1A42FD6D160DEDB400807A51 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = font.png; sourceTree = "<group>"; };
 		1A42FD6F160DEDD000807A51 /* cursor.frag */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; path = cursor.frag; sourceTree = "<group>"; };
@@ -60,7 +60,7 @@
 		1A42FD7C160DEE2900807A51 /* toolbar.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = toolbar.lua; sourceTree = "<group>"; };
 		1A42FD7D160DEE2900807A51 /* widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = widget.lua; sourceTree = "<group>"; };
 		1A42FD7E160DEF2900807A51 /* model_widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = model_widget.lua; sourceTree = "<group>"; };
-		1A42FD81160DEF8300807A51 /* widget_graphics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = widget_graphics.h; sourceTree = "<group>"; };
+		1A42FD81160DEF8300807A51 /* graphics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = graphics.h; sourceTree = "<group>"; };
 		1A42FD82160DEFB500807A51 /* scripts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scripts.h; sourceTree = "<group>"; };
 		1A42FD87160DF06700807A51 /* libalice.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libalice.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A42FD90160DF2F500807A51 /* shaders.derived.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = shaders.derived.c; sourceTree = "<group>"; };
@@ -167,8 +167,8 @@
 				1AE04D7A1641AC4400AE072E /* text.c */,
 				1AE04D791641ABEA00AE072E /* text.h */,
 				1A42FD64160DED0800807A51 /* widget.c */,
-				1A42FD69160DED7300807A51 /* widget_graphics.c */,
-				1A42FD81160DEF8300807A51 /* widget_graphics.h */,
+				1A42FD69160DED7300807A51 /* graphics.c */,
+				1A42FD81160DEF8300807A51 /* graphics.h */,
 			);
 			path = alice;
 			sourceTree = "<group>";
@@ -523,7 +523,7 @@
 			files = (
 				1A42FD8B160DF10D00807A51 /* host.c in Sources */,
 				1A42FD8D160DF11300807A51 /* widget.c in Sources */,
-				1A42FD8E160DF11600807A51 /* widget_graphics.c in Sources */,
+				1A42FD8E160DF11600807A51 /* graphics.c in Sources */,
 				1A42FD91160DF2F500807A51 /* shaders.derived.c in Sources */,
 				1A42FD94160DF3BF00807A51 /* scripts.derived.c in Sources */,
 				1A42FD97160DF44100807A51 /* images.derived.c in Sources */,

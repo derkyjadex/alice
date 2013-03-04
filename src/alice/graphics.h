@@ -10,10 +10,10 @@
 #include "albase/common.h"
 #include "alice/widget.h"
 
-AlError widget_graphics_system_init(void);
-void widget_graphics_system_free(void);
-Vec2 widget_graphics_screen_size(void);
+AlError graphics_system_init(void);
+void graphics_system_free(void);
+Vec2 graphics_screen_size(void);
 
-void widget_graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation);
+void graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation);
 
 #endif

@@ -6,7 +6,7 @@ sources = Split('''
 	graphics_text.c
 	text.c
 	widget.c
-	widget_graphics.c
+	graphics.c
 ''')
 
 shaders = Split('''
