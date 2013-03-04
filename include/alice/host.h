@@ -16,18 +16,7 @@
 
 #include "widget.h"
 
-typedef struct {
-	lua_State *lua;
-	AlCommands *commands;
-	AlVars *vars;
-	bool finished;
-
-	Vec2 screenSize;
-
-	AlWidget *root;
-	AlWidget *grabbingWidget;
-	AlWidget *keyboardWidget;
-} AlHost;
+typedef struct AlHost AlHost;
 
 AlError al_host_systems_init(void);
 void al_host_systems_free(void);

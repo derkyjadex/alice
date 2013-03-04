@@ -19,6 +19,19 @@
 #include "file_system.h"
 #include "text.h"
 
+struct AlHost {
+	lua_State *lua;
+	AlCommands *commands;
+	AlVars *vars;
+	bool finished;
+
+	Vec2 screenSize;
+
+	AlWidget *root;
+	AlWidget *grabbingWidget;
+	AlWidget *keyboardWidget;
+};
+
 static const int IGNORE_NEXT_MOTION_EVENT = 1;
 static int cmd_exit(lua_State *L);
 static int cmd_get_root_widget(lua_State *L);
