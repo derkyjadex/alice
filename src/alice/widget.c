@@ -338,7 +338,7 @@ AlError al_widget_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(al_widget_system_register_vars(vars));
 
 	TRY(al_wrapper_wrap_ctor(wrapper, al_widget_ctor, commands, NULL));
-	TRY(al_wrapper_resgister_commands(wrapper, commands, "widget"));
+	TRY(al_wrapper_register_commands(wrapper, commands, "widget"));
 
 	PASS()
 }

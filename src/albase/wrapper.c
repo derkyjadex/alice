@@ -224,7 +224,7 @@ AlError al_wrapper_wrap_ctor(AlWrapper *wrapper, lua_CFunction function, ...)
 	PASS()
 }
 
-AlError al_wrapper_resgister_commands(AlWrapper *wrapper, AlCommands *commands, const char *typeName)
+AlError al_wrapper_register_commands(AlWrapper *wrapper, AlCommands *commands, const char *typeName)
 {
 	BEGIN()
 

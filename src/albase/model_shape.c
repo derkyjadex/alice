@@ -405,8 +405,8 @@ AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(al_wrapper_wrap_ctor(shapeWrapper, al_model_shape_ctor));
 	TRY(al_wrapper_wrap_ctor(pathWrapper, al_model_path_ctor));
 
-	TRY(al_wrapper_resgister_commands(shapeWrapper, commands, "model_shape"));
-	TRY(al_wrapper_resgister_commands(pathWrapper, commands, "model_path"));
+	TRY(al_wrapper_register_commands(shapeWrapper, commands, "model_shape"));
+	TRY(al_wrapper_register_commands(pathWrapper, commands, "model_path"));
 
 	TRY(al_model_commands_init(commands));
 	TRY(al_model_vars_init(vars));
