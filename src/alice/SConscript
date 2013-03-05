@@ -6,6 +6,7 @@ sources = Split('''
 	graphics_text.c
 	text.c
 	widget.c
+	widget_cmds.c
 	graphics.c
 ''')
 
