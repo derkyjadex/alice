@@ -4,7 +4,7 @@
  * See COPYING for details.
  */
 
-#include "model_commands.h"
+#include "model_shape_cmds.h"
 #include "albase/model_shape.h"
 #include "model_shape_internal.h"
 #include "albase/lua.h"

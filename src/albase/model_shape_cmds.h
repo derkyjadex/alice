@@ -4,8 +4,8 @@
  * See COPYING for details.
  */
 
-#ifndef MODEL_COMMANDS_H
-#define MODEL_COMMANDS_H
+#ifndef MODEL_SHAPE_CMDS_H
+#define MODEL_SHAPE_CMDS_H
 
 #include "albase/common.h"
 #include "albase/commands.h"

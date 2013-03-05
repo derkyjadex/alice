@@ -7,7 +7,7 @@ sources = Split('''
 	file.c
 	geometry.c
 	model_shape.c
-	model_commands.c
+	model_shape_cmds.c
 	vars.c
 	script.c
 	wrapper.c
