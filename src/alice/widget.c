@@ -271,29 +271,30 @@ AlError al_widget_send_keyboard_lost(AlWidget *widget)
 
 AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 {
-	AlWidget *result = NULL;
+	if (!widget->visible)
+		return NULL;
 
-	if (box_contains(box_add_vec2(widget->bounds, widget->location), location)) {
-		result = widget;
+	location = vec2_subtract(location, widget->location);
 
-		for (AlWidget *child = widget->lastChild; child; child = child->prev) {
-			AlWidget *childResult = al_widget_hit_test(
-				child,
-				vec2_subtract(location, widget->location),
-				hitLocation);
+	if (!box_contains(widget->bounds, location))
+		return NULL;
 
-			if (childResult) {
-				result = childResult;
-				break;
-			}
-		}
+	for (AlWidget *child = widget->lastChild; child; child = child->prev) {
+		AlWidget *result = al_widget_hit_test(child, location, hitLocation);
 
-		if (result == widget && hitLocation) {
-			*hitLocation = vec2_subtract(location, widget->location);
+		if (result) {
+			return result;
 		}
 	}
 
-	return result;
+	if (widget->passThrough)
+		return NULL;
+
+	if (hitLocation) {
+		*hitLocation = location;
+	}
+
+	return widget;
 }
 
 void al_widget_push_userdata(AlWidget *widget)
