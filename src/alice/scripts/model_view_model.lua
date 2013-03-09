@@ -237,6 +237,9 @@ function ModelContextViewModel(model)
 	end)
 
 	paths.inserted:add(function(i, path_vm)
+		path_vm.selected = Computed(selected_path,
+			function(selected) return path_vm == selected end)
+
 		function path_vm:select()
 			selected_path(path_vm)
 		end
