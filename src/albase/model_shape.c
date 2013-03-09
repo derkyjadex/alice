@@ -343,6 +343,80 @@ AlError al_model_path_remove_point(AlModelPath *path, int index)
 	return AL_NO_ERROR;
 }
 
+static bool inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
+{
+	return vec2_cross(a, b, p) * vec2_cross(a, b, c) >= 0 &&
+		   vec2_cross(b, c, p) * vec2_cross(b, c, a) >= 0 &&
+		   vec2_cross(c, a, p) * vec2_cross(c, a, b) >= 0;
+}
+
+static bool crosses_infront(Vec2 a, Vec2 c, Vec2 p)
+{
+	if ((a.y > p.y && c.y > p.y) ||
+		(a.y <= p.y && c.y <= p.y) ||
+		(a.x <= p.x && c.x <= p.x))
+		return false;
+
+	if (a.x >= p.x && c.x >= p.x) {
+		return !vec2_equals(a, p) && !vec2_equals(c, p);
+	}
+
+	double a1 = (c.y - a.y) / (c.x - a.x);
+	double a0 = c.y - (a1 * c.x);
+
+	return (p.y - a0) / a1 > p.x;
+}
+
+static bool inside_curve(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
+{
+	double det = vec2_cross(a, c, b);
+	double l3 = vec2_cross(a, p, b) / det;
+	double l2 = vec2_cross(a, c, p) / det;
+
+	double x = l2 * 0.5 + l3;
+	double y = l3;
+
+	return x * x - y <= 0;
+}
+
+bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
+{
+	bool result = false;
+
+	int n = path->numPoints;
+	Vec2 *points = path->points;
+
+	for (int i = 0; i < n - 1; i += 2) {
+		bool last = i == n - 2;
+
+		Vec2 a = points[i + 0];
+		Vec2 b = points[i + 1];
+		Vec2 c = points[last ? 0 : i + 2];
+
+		if ((a.y > point.y && b.y > point.y && c.y > point.y) ||
+			(a.y < point.y && b.y < point.y && c.y < point.y) ||
+			(a.x < point.x && b.x < point.x && c.x < point.x))
+			continue;
+
+		bool insideTriangle = inside_triangle(a, b, c, point);
+		bool crossesInfront = crosses_infront(a, c, point);
+
+		if (!insideTriangle) {
+			if (crossesInfront) {
+				result = !result;
+			}
+		} else {
+			bool insideCurve = inside_curve(a, b, c, point);
+
+			if (insideCurve != crossesInfront) {
+				result = !result;
+			}
+		}
+	}
+
+	return result;
+}
+
 void al_model_shape_push_userdata(AlModelShape *shape)
 {
 	al_wrapper_push_userdata(shapeWrapper, shape);
@@ -361,38 +435,6 @@ static void wrapper_model_shape_free(lua_State *L, void *ptr)
 static void wrapper_model_path_free(lua_State *L, void *ptr)
 {
 	_al_model_path_free(ptr);
-}
-
-bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
-{
-	// TODO: This is incorrect right now, doesn't do the curves properly
-	bool result = false;
-
-	for (int i = 0, j = path->numPoints - 1; i < path->numPoints; j = i++) {
-		Vec2 p1 = path->points[i];
-		Vec2 p2 = path->points[j];
-
-		if ((p1.y > point.y && p2.y > point.y) ||
-			(p1.y <= point.y && p2.y <= point.y) ||
-			(p1.x <= point.x && p2.x <= point.x))
-			continue;
-
-		if (p1.x >= point.x && p2.x >= point.x) {
-			if (!vec2_equals(p1, point) && !vec2_equals(p2, point)) {
-				result = !result;
-
-				continue;
-			}
-
-			double a = (p2.y - p1.y) / (p2.x - p1.x);
-			double b = p2.y - (a * p2.x);
-
-			if ((point.y - b) / a > point.x)
-				result = !result;
-		}
-	}
-
-	return result;
 }
 
 AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
