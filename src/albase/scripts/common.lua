@@ -159,3 +159,27 @@ function ObservableArray(...)
 			__pairs = build_iterator
 		})
 end
+
+function Computed(source, f)
+	local value = {f(source())}
+	local changed = Multicast()
+
+	source.changed:add(function(...)
+		value = {f(...)}
+		changed(table.unpack(value))
+	end)
+
+	return setmetatable(
+		{
+			changed = changed
+		},
+		{
+			__call = function(_, ...)
+				if select('#', ...) == 0 then
+					return table.unpack(value)
+				else
+					error('cannot set value of computed')
+				end
+			end
+		})
+end
