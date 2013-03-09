@@ -404,6 +404,12 @@ static void render_widget_main(AlWidget *widget, Box bounds)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+static void set_scissor(Box scissor)
+{
+	Vec2 size = box_size(scissor);
+	glScissor(scissor.min.x, scissor.min.y, size.x, size.y);
+}
+
 static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 {
 	widget->valid = true;
@@ -419,10 +425,14 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		return;
 
 	if (!widget->passThrough) {
-		Vec2 scissorSize = box_size(scissor);
-		glScissor(scissor.min.x, scissor.min.y, scissorSize.x, scissorSize.y);
+		set_scissor(scissor);
 
 		render_widget_main(widget, bounds);
+
+		if (widget->border.width > 0) {
+			scissor = box_expand(scissor, -widget->border.width);
+			set_scissor(scissor);
+		}
 
 		if (widget->model.model) {
 			render_model(widget->model.model, vec2_add(widget->model.location, location), widget->model.scale);
