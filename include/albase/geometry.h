@@ -49,5 +49,6 @@ bool box_is_valid(Box box);
 Box box_intersect(Box a, Box b);
 Vec2 box_size(Box box);
 Box box_round(Box box);
+Box box_expand(Box box, double a);
 
 #endif

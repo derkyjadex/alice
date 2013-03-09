@@ -185,3 +185,11 @@ Box box_round(Box box)
 {
 	return (Box){vec2_floor(box.min), vec2_ceil(box.max)};
 }
+
+Box box_expand(Box box, double a)
+{
+	return (Box){
+		{box.min.x - a, box.min.y - a},
+		{box.max.x + a, box.max.y + a}
+	};
+}
