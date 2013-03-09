@@ -254,6 +254,14 @@ function ModelContextViewModel(model)
 	self.selected_path = selected_path
 	self.current_colour = current_colour
 
+	local base_add_path = self.add_path
+	function self:add_path()
+		local path_vm = base_add_path()
+		path_vm.colour(current_colour())
+
+		return path_vm
+	end
+
 	local base_remove_path = self.remove_path
 	function self:remove_path(path_vm)
 		path_vm = path_vm or selected_path()
