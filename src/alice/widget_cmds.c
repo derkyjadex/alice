@@ -223,6 +223,8 @@ AlError al_widget_system_register_vars(AlVars *vars)
 {
 	BEGIN()
 
+	REG_VAR(VAR_BOOL, visible, visible);
+	REG_VAR(VAR_BOOL, pass_through, passThrough);
 	REG_VAR(VAR_VEC2, location, location);
 	REG_VAR(VAR_BOX, bounds, bounds);
 

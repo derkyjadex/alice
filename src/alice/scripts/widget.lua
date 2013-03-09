@@ -6,7 +6,7 @@
 Widget = wrap('widget')
 
 local vars = {
-	'location', 'bounds', 'fill_colour',
+	'visible', 'pass_through', 'location', 'bounds', 'fill_colour',
 	'border_colour', 'border_width',
 	'grid_size', 'grid_offset', 'grid_colour',
 	'model_location', 'model_scale',
