@@ -13,7 +13,9 @@ local function select_path(self, x, y)
 	local scale, pan_x, pan_y = get_transform(self)
 	x, y = (x / scale) - pan_x, (y / scale) - pan_y
 
-	for _, path_vm in ipairs(self._model:paths()) do
+	local path_vms = self._model:paths()
+	for i=#path_vms,1,-1 do
+		local path_vm = path_vms[i]
 		if path_vm:path():hit_test(x, y) then
 			path_vm:select()
 			return
