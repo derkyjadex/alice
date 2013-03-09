@@ -110,9 +110,7 @@ local function insert_handle(self, path, i, point_vm)
 		update_model(self)
 	end)
 
-	make_draggable(handle,
-		function() point_vm:path():select() end,
-		nil,
+	make_draggable(handle, nil, nil,
 		function(x, y) move_point(self, point_vm, x, y) end)
 
 	table.insert(path.handles, handle)
@@ -126,7 +124,6 @@ local function insert_mid_handle(self, path, i, point_vm)
 		:border_colour(0.9, 0.9, 0.9, 1.0)
 		:border_width(1)
 		:bind_down(function()
-			point_vm:path():select()
 			point_vm:subdivide()
 		end)
 
