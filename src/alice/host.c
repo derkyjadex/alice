@@ -78,6 +78,7 @@ AlError al_host_systems_init()
 
 void al_host_systems_free()
 {
+	al_widget_systems_free();
 	graphics_system_free();
 	SDL_Quit();
 }
