@@ -17,6 +17,7 @@
 #include "widget.h"
 
 typedef struct AlHost AlHost;
+struct AlWidget;
 
 AlError al_host_systems_init(void);
 void al_host_systems_free(void);
@@ -26,5 +27,11 @@ void al_host_free(AlHost *host);
 AlError al_host_run_script(AlHost *host, const char *filename);
 
 void al_host_run(AlHost *host);
+
+Vec2 al_host_grab_mouse(AlHost *host, struct AlWidget *widget);
+void al_host_release_mouse(AlHost *host, Vec2 location);
+AlError al_host_grab_keyboard(AlHost *host, struct AlWidget *widget);
+AlError al_host_release_keyboard(AlHost *host);
+struct AlWidget *al_host_get_keyboard_widget(AlHost *host);
 
 #endif
