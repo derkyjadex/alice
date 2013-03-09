@@ -119,6 +119,8 @@ static int cmd_model_path_get_points(lua_State *L)
 {
 	AlModelPath *path = cmd_path_accessor(L, "get_points", 1);
 
+	luaL_checkstack(L, path->numPoints * 2, "not enough stack space for points");
+
 	for (int i = 0; i < path->numPoints; i++) {
 		lua_pushnumber(L, path->points[i].x);
 		lua_pushnumber(L, path->points[i].y);
