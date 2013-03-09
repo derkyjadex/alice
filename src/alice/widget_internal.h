@@ -18,6 +18,8 @@ struct AlWidget {
 	struct AlWidget *lastChild;
 
 	bool valid;
+	bool visible;
+	bool passThrough;
 	Vec2 location;
 	Box bounds;
 

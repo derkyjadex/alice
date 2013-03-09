@@ -27,6 +27,8 @@ static void _al_widget_init(AlWidget *widget)
 	widget->lastChild = NULL;
 
 	widget->valid = false;
+	widget->visible = true;
+	widget->passThrough = false;
 	widget->location = (Vec2){0, 0};
 	widget->bounds = (Box){{0, 0}, {0, 0}};
 	widget->fillColour = (Vec4){1, 1, 1, 1};
