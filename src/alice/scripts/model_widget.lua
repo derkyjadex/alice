@@ -96,7 +96,7 @@ local function move_point(self, point_vm, x, y)
 end
 
 local function insert_handle(self, path, i, point_vm)
-	local handle = Widget():add_to(self)
+	local handle = Widget():add_to(path.group)
 		:bounds(-6, -6, 6, 6)
 		:fill_colour(1.0, 1.0, 1.0, 1.0)
 		:border_width(1)
@@ -120,7 +120,7 @@ local function insert_handle(self, path, i, point_vm)
 end
 
 local function insert_mid_handle(self, path, i, point_vm)
-	local handle = Widget():add_to(self)
+	local handle = Widget():add_to(path.group)
 		:bounds(-4, -4, 4, 4)
 		:fill_colour(0.2, 0.5, 0.9, 1.0)
 		:border_colour(0.9, 0.9, 0.9, 1.0)
@@ -177,9 +177,14 @@ local function insert_path(self, i, path_vm)
 	local mid_points = path_vm:mid_points()
 
 	local path = {
+		group = Widget():add_to(self)
+			:pass_through(true)
+			:bounds(self:bounds()),
 		handles = {},
 		mid_handles = {}
 	}
+
+	path.group:bind_property('visible', path_vm.selected)
 
 	path_vm.colour.changed:add(function() update_model(self) end)
 
@@ -215,6 +220,7 @@ local function remove_path(self, i, path_vm)
 	local path = self._paths[i]
 	clear_handles(self, path)
 	clear_mid_handles(self, path)
+	path.group:remove()
 
 	table.remove(self._paths, i)
 	update_model(self)
@@ -224,6 +230,7 @@ local function clear_paths(self)
 	for i, path in ipairs(self._paths) do
 		clear_handles(self, path)
 		clear_mid_handles(self, path)
+		path.group:remove()
 	end
 
 	self._paths = {}
