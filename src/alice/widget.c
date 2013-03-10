@@ -171,8 +171,25 @@ void al_widget_add_sibling(AlWidget *widget, AlWidget *sibling)
 	al_widget_invalidate(sibling);
 }
 
+static bool release_keyboard(AlWidget *widget, AlWidget *keyboardWidget)
+{
+	if (widget == keyboardWidget) {
+		al_host_release_keyboard(widgetSystem.host);
+		return true;
+	}
+
+	FOR_EACH_WIDGET(child, widget) {
+		if (release_keyboard(child, keyboardWidget))
+			return true;
+	}
+
+	return false;
+}
+
 void al_widget_remove(AlWidget *widget)
 {
+	release_keyboard(widget, al_host_get_keyboard_widget(widgetSystem.host));
+
 	if (widget->next) {
 		set_relation(widget->next, prev, widget->prev);
 
