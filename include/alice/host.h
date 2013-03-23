@@ -26,6 +26,11 @@ AlError al_host_init(AlHost **host);
 void al_host_free(AlHost *host);
 AlError al_host_run_script(AlHost *host, const char *filename);
 
+lua_State *al_host_get_lua(AlHost *host);
+AlCommands *al_host_get_commands(AlHost *host);
+AlVars *al_host_get_vars(AlHost *host);
+struct AlWidget *al_host_get_root(AlHost *host);
+
 void al_host_run(AlHost *host);
 
 Vec2 al_host_grab_mouse(AlHost *host, struct AlWidget *widget);

@@ -165,6 +165,26 @@ AlError al_host_run_script(AlHost *host, const char *filename)
 	return al_script_run_file(host->lua, filename);
 }
 
+lua_State *al_host_get_lua(AlHost *host)
+{
+	return host->lua;
+}
+
+AlCommands *al_host_get_commands(AlHost *host)
+{
+	return host->commands;
+}
+
+AlVars *al_host_get_vars(AlHost *host)
+{
+	return host->vars;
+}
+
+AlWidget *al_host_get_root(AlHost *host)
+{
+	return host->root;
+}
+
 static void handle_mouse_button(AlHost *host, SDL_MouseButtonEvent event)
 {
 	if (event.button != SDL_BUTTON_LEFT) {
