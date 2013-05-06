@@ -51,6 +51,22 @@ static AlError file_seek(AlStream *base, long offset, AlSeekPos whence)
 	PASS()
 }
 
+static AlError file_tell(AlStream *base, long *result)
+{
+	BEGIN()
+
+	FileStream *stream = (FileStream *)base;
+
+	long offset = ftell(stream->file);
+
+	if (offset < 0)
+		THROW(AL_ERROR_IO);
+
+	*result = offset;
+
+	PASS()
+}
+
 static void file_free(AlStream *base)
 {
 	FileStream *stream = (FileStream *)base;
@@ -76,6 +92,7 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 		.read = file_read,
 		.write = file_write,
 		.seek = file_seek,
+		.tell = file_tell,
 		.free = file_free
 	};
 

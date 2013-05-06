@@ -64,6 +64,17 @@ static AlError mem_seek(AlStream *base, long offset, AlSeekPos whence)
 	PASS()
 }
 
+static AlError mem_tell(AlStream *base, long *offset)
+{
+	BEGIN()
+
+	MemStream *stream = (MemStream *)base;
+
+	*offset = stream->cur - stream->ptr;
+
+	PASS()
+}
+
 static void mem_free(AlStream *base)
 {
 	MemStream *stream = (MemStream *)base;
@@ -89,6 +100,7 @@ AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freeP
 		.read = mem_read,
 		.write = NULL,
 		.seek = mem_seek,
+		.tell = mem_tell,
 		.free = mem_free
 	};
 
