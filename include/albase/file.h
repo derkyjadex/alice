@@ -8,11 +8,7 @@
 #define __ALBASE_FILE_H__
 
 #include "common.h"
-
-typedef enum {
-	OPEN_READ,
-	OPEN_WRITE
-} AlOpenMode;
+#include "stream.h"
 
 AlError al_file_open(FILE **file, const char *filename, AlOpenMode mode);
 void al_file_close(FILE *file);

@@ -167,7 +167,7 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 	int numPaths = 0;
 	AlModelPath **paths = NULL;
 
-	TRY(al_file_open(&file, filename, OPEN_READ));
+	TRY(al_file_open(&file, filename, AL_OPEN_READ));
 	TRY(al_file_read(file, &numPaths, sizeof(int), 1));
 	TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
 
@@ -221,7 +221,7 @@ AlError al_model_shape_save(AlModelShape *shape, const char *filename)
 
 	FILE *file = NULL;
 
-	TRY(al_file_open(&file, filename, OPEN_WRITE));
+	TRY(al_file_open(&file, filename, AL_OPEN_WRITE));
 	TRY(al_file_write(file, &shape->numPaths, sizeof(int), 1));
 
 	for (int i = 0; i < shape->numPaths; i++) {

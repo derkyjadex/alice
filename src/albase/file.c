@@ -15,7 +15,7 @@ AlError al_file_open(FILE **result, const char *filename, AlOpenMode mode)
 	BEGIN()
 
 	FILE *file = NULL;
-	file = fopen(filename, (mode == OPEN_READ) ? "rb" : "w");
+	file = fopen(filename, (mode == AL_OPEN_READ) ? "rb" : "w");
 	if (file == NULL) {
 		al_log_error("Could not open file: '%s'", filename);
 		THROW(AL_ERROR_IO)
@@ -123,7 +123,7 @@ AlError al_read_file_to_string(const char *filename, char **result)
 	FILE *file = NULL;
 	char *string = NULL;
 
-	TRY(al_file_open(&file, filename, OPEN_READ));
+	TRY(al_file_open(&file, filename, AL_OPEN_READ));
 
 	fseek(file, 0, SEEK_END);
 	size_t length = ftell(file);
