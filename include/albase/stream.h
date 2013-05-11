@@ -36,4 +36,6 @@ struct AlStream {
 AlError al_stream_init_file(AlStream **stream, const char *filename, AlOpenMode mode);
 AlError al_stream_init_mem(AlStream **stream, void *ptr, size_t size, bool freePtr);
 
+void al_stream_free(AlStream *stream);
+
 #endif
