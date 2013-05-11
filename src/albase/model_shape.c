@@ -9,10 +9,17 @@
 
 #include "albase/model_shape.h"
 #include "albase/file.h"
+#include "albase/stream.h"
+#include "albase/data.h"
 #include "albase/wrapper.h"
 #include "albase/commands.h"
 #include "model_shape_internal.h"
 #include "model_shape_cmds.h"
+
+const AlDataTag SHAPE_TAG = AL_DATA_TAG('S', 'H', 'A', 'P');
+const AlDataTag PATHS_TAG = AL_DATA_TAG('P', 'T', 'H', 'S');
+const AlDataTag COLOUR_TAG = AL_DATA_TAG('C', 'O', 'L', 'R');
+const AlDataTag POINTS_TAG = AL_DATA_TAG('P', 'N', 'T', 'S');
 
 static AlWrapper *shapeWrapper = NULL;
 static AlWrapper *pathWrapper = NULL;
@@ -74,12 +81,19 @@ static AlError al_model_path_load(AlModelPath *path, FILE *file)
 	FINALLY()
 }
 
-static AlError al_model_path_save(AlModelPath *path, FILE *file)
+static AlError al_model_path_save(AlModelPath *path, AlData *data)
 {
 	BEGIN()
 
-	TRY(al_file_write(file, &path->colour, sizeof(Vec3), 1));
-	TRY(al_file_write_array(file, path->points, path->numPoints, sizeof(Vec2)));
+	TRY(al_data_write_start(data));
+
+	TRY(al_data_write_simple_tag(data, COLOUR_TAG, VAR_VEC3, &path->colour));
+
+	TRY(al_data_write_start_tag(data, POINTS_TAG));
+	TRY(al_data_write_array(data, VAR_VEC2, path->points, path->numPoints));
+	TRY(al_data_write_end(data));
+
+	TRY(al_data_write_end(data));
 
 	PASS()
 }
@@ -219,17 +233,26 @@ AlError al_model_shape_save(AlModelShape *shape, const char *filename)
 {
 	BEGIN()
 
-	FILE *file = NULL;
+	AlStream *stream = NULL;
+	AlData *data = NULL;
 
-	TRY(al_file_open(&file, filename, AL_OPEN_WRITE));
-	TRY(al_file_write(file, &shape->numPaths, sizeof(int), 1));
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_WRITE));
+	TRY(al_data_init(&data, stream));
+
+	TRY(al_data_write_start_tag(data, SHAPE_TAG));
+	TRY(al_data_write_start_tag(data, PATHS_TAG));
+	TRY(al_data_write_value(data, VAR_INT, &shape->numPaths));
 
 	for (int i = 0; i < shape->numPaths; i++) {
-		TRY(al_model_path_save(shape->paths[i], file));
+		TRY(al_model_path_save(shape->paths[i], data));
 	}
 
+	TRY(al_data_write_end(data));
+	TRY(al_data_write_end(data));
+
 	PASS(
-		al_file_close(file);
+		al_data_free(data);
+		al_stream_free(stream);
 	)
 }
 
