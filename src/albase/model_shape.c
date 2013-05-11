@@ -57,21 +57,51 @@ static void _al_model_path_free(AlModelPath *path)
 	}
 }
 
-static AlError al_model_path_load(AlModelPath *path, FILE *file)
+static AlError al_model_path_load(AlModelPath *path, AlData *data)
 {
 	BEGIN()
 
 	Vec3 colour;
 	Vec2 *points = NULL;
-	int numPoints = 0;
+	uint32_t numPoints = 0;
 
-	TRY(al_file_read(file, &colour, sizeof(Vec3), 1));
-	TRY(al_file_read_array(file, &points, &numPoints, sizeof(Vec2)));
+	TRY(al_data_read_start(data));
+
+	bool atEnd = false;
+	do {
+		AlDataTag tag;
+		TRY(al_data_read_start_tag(data, AL_ANY_TAG, &tag));
+
+		switch (tag) {
+			case COLOUR_TAG:
+				TRY(al_data_read_value(data, VAR_VEC3, &colour));
+				TRY(al_data_skip_rest(data));
+				break;
+
+			case POINTS_TAG:
+				if (points)
+					THROW(AL_ERROR_INVALID_DATA);
+
+				TRY(al_data_read_array(data, VAR_VEC2, &points, &numPoints));
+				TRY(al_data_skip_rest(data));
+				break;
+
+			case AL_NO_TAG:
+				atEnd = true;
+				break;
+
+			default:
+				TRY(al_data_skip_rest(data));
+		}
+	} while (!atEnd);
+
+	if (!points)
+		THROW(AL_ERROR_INVALID_DATA);
 
 	free(path->points);
 
 	path->colour = colour;
-	path->pointsLength= numPoints;
+	path->pointsLength = numPoints;
 	path->numPoints = numPoints;
 	path->points = points;
 
@@ -177,20 +207,51 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 {
 	BEGIN()
 
-	FILE *file = NULL;
+	AlStream *stream = NULL;
+	AlData *data = NULL;
+
 	int numPaths = 0;
 	AlModelPath **paths = NULL;
 
-	TRY(al_file_open(&file, filename, AL_OPEN_READ));
-	TRY(al_file_read(file, &numPaths, sizeof(int), 1));
-	TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_data_init(&data, stream));
+	TRY(al_data_read_start_tag(data, SHAPE_TAG, NULL));
 
-	for (int i = 0; i < numPaths; i++) {
-		paths[i] = NULL;
-		TRY(al_wrapper_invoke_ctor(pathWrapper, &paths[i]));
-		reference(shape, paths[i]);
-		TRY(al_model_path_load(paths[i], file));
-	}
+	bool atEnd = false;
+	do {
+		AlDataTag tag;
+		TRY(al_data_read_start_tag(data, AL_ANY_TAG, &tag));
+
+		switch (tag) {
+			case PATHS_TAG:
+				if (paths)
+					THROW(AL_ERROR_INVALID_DATA)
+
+				TRY(al_data_read_value(data, VAR_INT, &numPaths));
+				TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
+
+				for (int i = 0; i < numPaths; i++) {
+					paths[i] = NULL;
+
+					TRY(al_wrapper_invoke_ctor(pathWrapper, &paths[i]));
+					reference(shape, paths[i]);
+					TRY(al_model_path_load(paths[i], data));
+				}
+
+				TRY(al_data_skip_rest(data));
+				break;
+
+			case AL_NO_TAG:
+				atEnd = true;
+				break;
+
+			default:
+				TRY(al_data_skip_rest(data));
+		}
+	} while (!atEnd);
+
+	if (!paths)
+		THROW(AL_ERROR_INVALID_DATA);
 
 	for (int i = 0; i < shape->numPaths; i++) {
 		unreference(shape, shape->paths[i]);
@@ -216,7 +277,8 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 		}
 	)
 	FINALLY(
-		al_file_close(file);
+		al_data_free(data);
+		al_stream_free(stream);
 	)
 }
 
