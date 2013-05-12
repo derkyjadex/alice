@@ -203,17 +203,15 @@ static void unreference(AlModelShape *shape, AlModelPath *path)
 	al_wrapper_unreference(pathWrapper);
 }
 
-AlError al_model_shape_load(AlModelShape *shape, const char *filename)
+AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 {
 	BEGIN()
 
-	AlStream *stream = NULL;
 	AlData *data = NULL;
 
 	int numPaths = 0;
 	AlModelPath **paths = NULL;
 
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
 	TRY(al_data_init(&data, stream));
 	TRY(al_data_read_start_tag(data, SHAPE_TAG, NULL));
 
@@ -278,7 +276,6 @@ AlError al_model_shape_load(AlModelShape *shape, const char *filename)
 	)
 	FINALLY(
 		al_data_free(data);
-		al_stream_free(stream);
 	)
 }
 
@@ -291,14 +288,12 @@ AlModelPath *const *al_model_shape_get_paths(AlModelShape *shape, int *numPaths)
 	return shape->paths;
 }
 
-AlError al_model_shape_save(AlModelShape *shape, const char *filename)
+AlError al_model_shape_save(AlModelShape *shape, AlStream *stream)
 {
 	BEGIN()
 
-	AlStream *stream = NULL;
 	AlData *data = NULL;
 
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_WRITE));
 	TRY(al_data_init(&data, stream));
 
 	TRY(al_data_write_start_tag(data, SHAPE_TAG));
@@ -314,7 +309,6 @@ AlError al_model_shape_save(AlModelShape *shape, const char *filename)
 
 	PASS(
 		al_data_free(data);
-		al_stream_free(stream);
 	)
 }
 

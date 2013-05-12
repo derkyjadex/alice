@@ -186,13 +186,15 @@ static AlError model_load(AlModel *model, const char *filename)
 	BEGIN()
 
 	char *filenameCopy = NULL;
+	AlStream *stream = NULL;
 	AlModelShape *shape = NULL;
 
 	TRY(al_malloc(&filenameCopy, sizeof(char), strlen(filename) + 1));
 	strcpy(filenameCopy, filename);
 
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
 	TRY(al_model_shape_init(&shape));
-	TRY(al_model_shape_load(shape, filename));
+	TRY(al_model_shape_load(shape, stream));
 	TRY(al_model_set_shape(model, shape));
 
 	model->filename = filenameCopy;
@@ -202,6 +204,7 @@ static AlError model_load(AlModel *model, const char *filename)
 		free(filenameCopy);
 	)
 	FINALLY(
+		al_stream_free(stream);
 		al_model_shape_free(shape);
 	)
 }

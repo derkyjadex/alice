@@ -25,10 +25,15 @@ static int cmd_model_shape_load(lua_State *L)
 	AlModelShape *model = cmd_model_shape_accessor(L, "load", 2);
 	const char *filename = luaL_checkstring(L, 2);
 
-	TRY(al_model_shape_load(model, filename));
+	AlStream *stream = NULL;
+
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_model_shape_load(model, stream));
 
 	CATCH_LUA(, "Error loading model")
-	FINALLY_LUA(, 0)
+	FINALLY_LUA(
+		al_stream_free(stream);
+	, 0)
 }
 
 static int cmd_model_shape_save(lua_State *L)
@@ -38,10 +43,15 @@ static int cmd_model_shape_save(lua_State *L)
 	AlModelShape *model = cmd_model_shape_accessor(L, "save", 2);
 	const char *filename = luaL_checkstring(L, 2);
 
-	TRY(al_model_shape_save(model, filename));
+	AlStream *stream = NULL;
+
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_WRITE));
+	TRY(al_model_shape_save(model, stream));
 
 	CATCH_LUA(, "Error saving model")
-	FINALLY_LUA(, 0)
+	FINALLY_LUA(
+		al_stream_free(stream);
+	, 0)
 }
 
 static int cmd_model_shape_get_paths(lua_State *L)

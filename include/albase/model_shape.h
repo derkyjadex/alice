@@ -12,6 +12,7 @@
 #include "albase/lua.h"
 #include "albase/commands.h"
 #include "albase/vars.h"
+#include "albase/stream.h"
 
 typedef struct AlModelShape AlModelShape;
 typedef struct AlModelPath AlModelPath;
@@ -25,8 +26,8 @@ AlError al_model_path_register_ctor(void);
 AlError al_model_shape_init(AlModelShape **shape);
 void al_model_shape_free(AlModelShape *shape);
 
-AlError al_model_shape_load(AlModelShape *shape, const char *filename);
-AlError al_model_shape_save(AlModelShape *shape, const char *filename);
+AlError al_model_shape_load(AlModelShape *shape, AlStream *stream);
+AlError al_model_shape_save(AlModelShape *shape, AlStream *stream);
 
 AlModelPath *const *al_model_shape_get_paths(AlModelShape *shape, int *numPaths);
 AlError al_model_shape_add_path(AlModelShape *shape, int index, Vec2 start, Vec2 end);
