@@ -64,9 +64,9 @@ AlError al_data_skip_rest(AlData *data);
 AlError al_data_write_start(AlData *data);
 AlError al_data_write_end(AlData *data);
 AlError al_data_write_start_tag(AlData *data, AlDataTag tag);
-AlError al_data_write_simple_tag(AlData *data, AlDataTag tag, AlVarType type, void *value);
-AlError al_data_write_value(AlData *data, AlVarType type, void *value);
+AlError al_data_write_simple_tag(AlData *data, AlDataTag tag, AlVarType type, const void *value);
+AlError al_data_write_value(AlData *data, AlVarType type, const void *value);
 AlError al_data_write_string(AlData *data, const char *value, uint32_t length);
-AlError al_data_write_array(AlData *data, AlVarType type, void *values, uint32_t count);
+AlError al_data_write_array(AlData *data, AlVarType type, const void *values, uint32_t count);
 
 #endif

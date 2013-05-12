@@ -61,7 +61,7 @@ static AlError read_bool(AlData *data, bool *result)
 	PASS()
 }
 
-static AlError write_bool(AlData *data, bool *value)
+static AlError write_bool(AlData *data, const bool *value)
 {
 	uint8_t val = *value;
 	return data_write(data, &val, 1);
@@ -72,7 +72,7 @@ static AlError read_int(AlData *data, int32_t *result)
 	return data_read(data, result, 4);
 }
 
-static AlError write_int(AlData *data, int32_t *value)
+static AlError write_int(AlData *data, const int32_t *value)
 {
 	return data_write(data, value, 4);
 }
@@ -82,7 +82,7 @@ static AlError read_double(AlData *data, double *result)
 	return data_read(data, result, 8);
 }
 
-static AlError write_double(AlData *data, double *value)
+static AlError write_double(AlData *data, const double *value)
 {
 	return data_write(data, value, 8);
 }
@@ -92,7 +92,7 @@ static AlError read_vec2(AlData *data, Vec2 *result)
 	return data_read(data, result, 16);
 }
 
-static AlError write_vec2(AlData *data, Vec2 *value)
+static AlError write_vec2(AlData *data, const Vec2 *value)
 {
 	return data_write(data, value, 16);
 }
@@ -102,7 +102,7 @@ static AlError read_vec3(AlData *data, Vec3 *result)
 	return data_read(data, result, 24);
 }
 
-static AlError write_vec3(AlData *data, Vec3 *value)
+static AlError write_vec3(AlData *data, const Vec3 *value)
 {
 	return data_write(data, value, 24);
 }
@@ -112,7 +112,7 @@ static AlError read_vec4(AlData *data, Vec4 *result)
 	return data_read(data, result, 32);
 }
 
-static AlError write_vec4(AlData *data, Vec4 *value)
+static AlError write_vec4(AlData *data, const Vec4 *value)
 {
 	return data_write(data, value, 32);
 }
@@ -122,7 +122,7 @@ static AlError read_box(AlData *data, Box *result)
 	return data_read(data, result, 32);
 }
 
-static AlError write_box(AlData *data, Box *value)
+static AlError write_box(AlData *data, const Box *value)
 {
 	return data_write(data, value, 32);
 }
@@ -224,7 +224,7 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint32_t *
 	FINALLY()
 }
 
-static AlError write_array(AlData *data, AlVarType type, void *values, uint32_t count)
+static AlError write_array(AlData *data, AlVarType type, const void *values, uint32_t count)
 {
 	BEGIN()
 
@@ -233,7 +233,7 @@ static AlError write_array(AlData *data, AlVarType type, void *values, uint32_t 
 	TRY(data_write(data, &count, 4));
 
 	for (int i = 0; i < count; i++) {
-		void *value = values + (i * itemSize);
+		const void *value = values + (i * itemSize);
 
 		switch (type) {
 			case VAR_BOOL: TRY(write_bool(data, value)); break;
@@ -456,7 +456,7 @@ AlError al_data_write_start_tag(AlData *data, AlDataTag tag)
 	PASS()
 }
 
-AlError al_data_write_simple_tag(AlData *data, AlDataTag tag, AlVarType type, void *value)
+AlError al_data_write_simple_tag(AlData *data, AlDataTag tag, AlVarType type, const void *value)
 {
 	BEGIN()
 
@@ -467,7 +467,7 @@ AlError al_data_write_simple_tag(AlData *data, AlDataTag tag, AlVarType type, vo
 	PASS()
 }
 
-AlError al_data_write_value(AlData *data, AlVarType type, void *value)
+AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 {
 	BEGIN()
 
@@ -497,7 +497,7 @@ AlError al_data_write_string(AlData *data, const char *value, uint32_t length)
 	PASS()
 }
 
-AlError al_data_write_array(AlData *data, AlVarType type, void *values, uint32_t count)
+AlError al_data_write_array(AlData *data, AlVarType type, const void *values, uint32_t count)
 {
 	BEGIN()
 
