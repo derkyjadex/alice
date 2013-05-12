@@ -117,7 +117,9 @@ AlError al_host_init(AlHost **result)
 	TRY(file_system_init(host->commands));
 	TRY(text_system_init(host->commands));
 
-	AlScript scripts[] = {
+	TRY(al_script_run_base_scripts(host->lua));
+
+	AlMemStream scripts[] = {
 		AL_SCRIPT(widget),
 		AL_SCRIPT(draggable),
 		AL_SCRIPT(toolbar),
@@ -127,12 +129,12 @@ AlError al_host_init(AlHost **result)
 		AL_SCRIPT(file_widget),
 		AL_SCRIPT(text_box),
 		AL_SCRIPT(panning_widget),
-		AL_SCRIPT(model_view_model),
-		AL_SCRIPT_END
+		AL_SCRIPT(model_view_model)
 	};
 
-	TRY(al_script_run_base_scripts(host->lua));
-	TRY(al_script_run_scripts(host->lua, scripts));
+	for (int i = 0; i < sizeof(scripts) / sizeof(scripts[0]); i++) {
+		TRY(al_script_run_stream(host->lua, &scripts[i].base));
+	}
 
 	TRY(al_widget_init(&host->root));
 	host->root->bounds = (Box){{0, 0}, host->screenSize};
@@ -162,7 +164,15 @@ void al_host_free(AlHost *host)
 
 AlError al_host_run_script(AlHost *host, const char *filename)
 {
-	return al_script_run_file(host->lua, filename);
+	BEGIN()
+
+	AlStream *stream = NULL;
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_script_run_stream(host->lua, stream));
+
+	PASS(
+		al_stream_free(stream);
+	)
 }
 
 lua_State *al_host_get_lua(AlHost *host)

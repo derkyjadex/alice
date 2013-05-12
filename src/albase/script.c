@@ -55,18 +55,18 @@ static AlError run_script(lua_State *L, int loadResult)
 {
 	BEGIN()
 
-	if (!loadResult) {
+	if (loadResult == LUA_OK) {
 		al_script_push_traceback(L);
 		lua_pushvalue(L, -2);
 
 		loadResult = lua_pcall(L, 0, 0, -2);
 	}
 
-	if (loadResult) {
+	if (loadResult != LUA_OK) {
 		const char *message = lua_tostring(L, -1);
 		al_log_error("Error running script: \n%s", message);
 		lua_pop(L, 1);
-		THROW(AL_ERROR_SCRIPT)
+		THROW(AL_ERROR_SCRIPT);
 	}
 
 	PASS(
@@ -78,37 +78,57 @@ AlError al_script_run_base_scripts(lua_State *L)
 {
 	BEGIN()
 
-	AlScript scripts[] = {
+	AlMemStream scripts[] = {
 		AL_SCRIPT(common),
 		AL_SCRIPT(class),
 		AL_SCRIPT(wrapper),
-		AL_SCRIPT(model),
-		AL_SCRIPT_END
+		AL_SCRIPT(model)
 	};
 
-	TRY(al_script_run_scripts(L, scripts));
-
-	PASS()
-}
-
-AlError al_script_run_scripts(lua_State *L, const AlScript *scripts)
-{
-	BEGIN()
-
-	int result;
-	for (const AlScript *script = scripts; script->source; script++) {
-		result = luaL_loadbuffer(L, script->source, script->length, script->name);
-		TRY(run_script(L, result));
+	for (int i = 0; i < sizeof(scripts) / sizeof(scripts[0]); i++) {
+		TRY(al_script_run_stream(L, &scripts[i].base));
 	}
 
 	PASS()
 }
 
-AlError al_script_run_file(lua_State *L, const char *filename)
+const size_t READ_BUFFER_SIZE = 1024;
+
+typedef struct {
+	AlStream *stream;
+	char buffer[READ_BUFFER_SIZE];
+	AlError error;
+} ReadData;
+
+static const char *stream_reader(lua_State *L, void *data, size_t *size)
+{
+	ReadData *readData = (ReadData *)data;
+	AlStream *stream = readData->stream;
+	char *buffer = readData->buffer;
+
+	readData->error = stream->read(stream, buffer, READ_BUFFER_SIZE, size);
+	if (readData->error)
+		return NULL;
+
+	return buffer;
+}
+
+AlError al_script_run_stream(lua_State *L, AlStream *stream)
 {
 	BEGIN()
 
-	int result = luaL_loadfile(L, filename);
+	ReadData data = {
+		.stream = stream,
+		.error = AL_NO_ERROR
+	};
+
+	int result = lua_load(L, stream_reader, &data, stream->name, NULL);
+
+	if (data.error) {
+		lua_pop(L, 1);
+		THROW(data.error);
+	}
+
 	TRY(run_script(L, result));
 
 	PASS()
