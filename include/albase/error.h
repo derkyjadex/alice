@@ -43,6 +43,19 @@ typedef enum {
 	return error; \
 }
 
+#define CATCH_LUA(x, err, ...) catch: {\
+	x \
+	goto finally; \
+} \
+catch_return: \
+	return luaL_error(L, err, ##__VA_ARGS__);
+
+#define FINALLY_LUA(x, result) finally: {\
+	x \
+	if (error) goto catch_return; \
+	return result; \
+}
+
 #define PASS(x) \
 	CATCH() \
 	FINALLY(x)

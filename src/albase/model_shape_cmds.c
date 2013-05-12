@@ -27,12 +27,8 @@ static int cmd_model_shape_load(lua_State *L)
 
 	TRY(al_model_shape_load(model, filename));
 
-	CATCH(
-		return luaL_error(L, "Error loading model");
-	)
-	FINALLY(
-		return 0;
-	)
+	CATCH_LUA(, "Error loading model")
+	FINALLY_LUA(, 0)
 }
 
 static int cmd_model_shape_save(lua_State *L)
@@ -44,12 +40,8 @@ static int cmd_model_shape_save(lua_State *L)
 
 	TRY(al_model_shape_save(model, filename));
 
-	CATCH(
-		return luaL_error(L, "Error saving model");
-	)
-	FINALLY(
-		return 0;
-	)
+	CATCH_LUA(, "Error saving model")
+	FINALLY_LUA(, 0)
 }
 
 static int cmd_model_shape_get_paths(lua_State *L)
@@ -81,12 +73,8 @@ static int cmd_model_shape_add_path(lua_State *L)
 
 	al_model_path_push_userdata(model->paths[index]);
 
-	return 1;
-
-	CATCH(
-		return luaL_error(L, "Error adding path:");
-	)
-	FINALLY()
+	CATCH_LUA(, "Error adding path")
+	FINALLY_LUA(, 0)
 }
 
 static int cmd_model_shape_remove_path(lua_State *L)
@@ -98,12 +86,8 @@ static int cmd_model_shape_remove_path(lua_State *L)
 
 	TRY(al_model_shape_remove_path(model, index));
 
-	CATCH(
-		return luaL_error(L, "Error removing path");
-	)
-	FINALLY(
-		return 0;
-	)
+	CATCH_LUA(, "Error removing path")
+	FINALLY_LUA(, 0)
 }
 
 static AlModelPath *cmd_path_accessor(lua_State *L, const char *name, int numArgs)
@@ -152,12 +136,8 @@ static int cmd_model_path_add_point(lua_State *L)
 
 	TRY(al_model_path_add_point(path, index, (Vec2){x, y}));
 
-	CATCH(
-		return luaL_error(L, "Error adding point to path");
-	)
-	FINALLY(
-		return 0;
-	)
+	CATCH_LUA(, "Error adding point to path")
+	FINALLY_LUA(, 0)
 }
 
 static int cmd_model_path_remove_point(lua_State *L)
@@ -169,12 +149,8 @@ static int cmd_model_path_remove_point(lua_State *L)
 
 	TRY(al_model_path_remove_point(path, index));
 
-	CATCH(
-		return luaL_error(L, "Error removing point from path");
-	)
-	FINALLY(
-		return 0;
-	)
+	CATCH_LUA(, "Error removing point from path")
+	FINALLY_LUA(, 0)
 }
 
 static int cmd_model_path_hit_test(lua_State *L)

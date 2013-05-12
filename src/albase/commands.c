@@ -156,10 +156,6 @@ static int cmd_enqueue(lua_State *L)
 	TRY(al_commands_enqueue(commands));
 	lua_pop(L, n);
 
-	CATCH (
-		return luaL_error(L, "Error queueing command");
-	)
-	FINALLY(
-		return 0;
-	)
+	CATCH_LUA(, "Error queueing command")
+	FINALLY_LUA(, 0)
 }
