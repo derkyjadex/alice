@@ -26,7 +26,7 @@ typedef enum {
 typedef struct AlStream AlStream;
 
 struct AlStream {
-	AlError (*read)(AlStream *stream, void *ptr, size_t size);
+	AlError (*read)(AlStream *stream, void *ptr, size_t size, size_t *bytesRead);
 	AlError (*write)(AlStream *stream, const void *ptr, size_t size);
 	AlError (*seek)(AlStream *stream, long offset, AlSeekPos whence);
 	AlError (*tell)(AlStream *stream, long *offset);

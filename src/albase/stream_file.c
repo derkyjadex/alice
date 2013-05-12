@@ -15,14 +15,20 @@ typedef struct {
 	FILE *file;
 } FileStream;
 
-static AlError file_read(AlStream *base, void *ptr, size_t size)
+static AlError file_read(AlStream *base, void *ptr, size_t size, size_t *bytesRead)
 {
 	BEGIN()
 
 	FileStream *stream = (FileStream *)base;
 
-	if (fread(ptr, size, 1, stream->file) != 1)
+	size_t result = fread(ptr, 1, size, stream->file);
+
+	if (result < size && (!feof(stream->file) || !bytesRead))
 		THROW(AL_ERROR_IO);
+
+	if (bytesRead) {
+		*bytesRead = result;
+	}
 
 	PASS()
 }

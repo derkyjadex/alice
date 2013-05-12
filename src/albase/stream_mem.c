@@ -18,18 +18,29 @@ typedef struct {
 	bool freePtr;
 } MemStream;
 
-static AlError mem_read(AlStream *base, void *ptr, size_t size)
+static AlError mem_read(AlStream *base, void *ptr, size_t size, size_t *bytesRead)
 {
 	BEGIN()
 
 	MemStream *stream = (MemStream *)base;
 
-	if (stream->cur + size > stream->end)
-		THROW(AL_ERROR_IO);
+	size_t available = stream->end - stream->cur;
+
+	if (available < size) {
+		if (bytesRead) {
+			size = available;
+		} else {
+			THROW(AL_ERROR_IO);
+		}
+	}
 
 	memcpy(ptr, stream->cur, size);
 
 	stream->cur	+= size;
+
+	if (bytesRead) {
+		*bytesRead = size;
+	}
 
 	PASS()
 }

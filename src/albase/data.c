@@ -11,7 +11,7 @@
 
 const uint32_t NO_LENGTH = UINT32_MAX;
 
-#define data_read(data, ptr, size) (data)->stream->read((data)->stream, (ptr), (size))
+#define data_read(data, ptr, size) (data)->stream->read((data)->stream, (ptr), (size), NULL)
 #define data_write(data, ptr, size) (data)->stream->write((data)->stream, (ptr), (size))
 #define data_seek(data, offset, whence) (data)->stream->seek((data)->stream, (offset), (whence))
 
