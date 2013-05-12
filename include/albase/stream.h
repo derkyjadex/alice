@@ -34,8 +34,16 @@ struct AlStream {
 	void (*free)(AlStream *stream);
 };
 
+typedef struct {
+	AlStream base;
+	const void *ptr;
+	const void *cur;
+	const void *end;
+} AlMemStream;
+
 AlError al_stream_init_file(AlStream **stream, const char *filename, AlOpenMode mode);
 AlError al_stream_init_mem(AlStream **stream, void *ptr, size_t size, bool freePtr, const char *name);
+AlMemStream al_stream_init_mem_stack(const void *ptr, size_t size, const char *name);
 
 void al_stream_free(AlStream *stream);
 

@@ -11,18 +11,15 @@
 #include "albase/stream.h"
 
 typedef struct {
-	AlStream base;
-	void *ptr;
-	void *cur;
-	void *end;
+	AlMemStream base;
 	bool freePtr;
-} MemStream;
+} HeapMemStream;
 
 static AlError mem_read(AlStream *base, void *ptr, size_t size, size_t *bytesRead)
 {
 	BEGIN()
 
-	MemStream *stream = (MemStream *)base;
+	AlMemStream *stream = (AlMemStream *)base;
 
 	size_t available = stream->end - stream->cur;
 
@@ -49,9 +46,9 @@ static AlError mem_seek(AlStream *base, long offset, AlSeekPos whence)
 {
 	BEGIN()
 
-	MemStream *stream = (MemStream *)base;
+	AlMemStream *stream = (AlMemStream *)base;
 
-	void *cur = stream->cur;
+	const void *cur = stream->cur;
 
 	switch (whence) {
 		case AL_SEEK_SET:
@@ -79,7 +76,7 @@ static AlError mem_tell(AlStream *base, long *offset)
 {
 	BEGIN()
 
-	MemStream *stream = (MemStream *)base;
+	AlMemStream *stream = (AlMemStream *)base;
 
 	*offset = stream->cur - stream->ptr;
 
@@ -88,13 +85,13 @@ static AlError mem_tell(AlStream *base, long *offset)
 
 static void mem_free(AlStream *base)
 {
-	MemStream *stream = (MemStream *)base;
+	HeapMemStream *stream = (HeapMemStream *)base;
 
 	if (stream) {
 		free((char *)base->name);
 
-		if (stream->ptr && stream->freePtr) {
-			free(stream->ptr);
+		if (stream->base.ptr && stream->freePtr) {
+			free((void *)stream->base.ptr);
 		}
 
 		free(stream);
@@ -105,34 +102,53 @@ AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freeP
 {
 	BEGIN()
 
-	MemStream *stream = NULL;
+	HeapMemStream *stream = NULL;
 	char *nameCopy = NULL;
 
-	TRY(al_malloc(&stream, sizeof(MemStream), 1));
+	TRY(al_malloc(&stream, sizeof(HeapMemStream), 1));
 
 	if (name) {
 		TRY(al_malloc(&nameCopy, sizeof(char), strlen(name) + 1));
 		strcpy(nameCopy, name);
 	}
 
-	stream->base = (AlStream){
-		.name = nameCopy,
-		.read = mem_read,
-		.write = NULL,
-		.seek = mem_seek,
-		.tell = mem_tell,
-		.free = mem_free
+	stream->base = (AlMemStream){
+		.base = {
+			.name = nameCopy,
+			.read = mem_read,
+			.write = NULL,
+			.seek = mem_seek,
+			.tell = mem_tell,
+			.free = mem_free
+		},
+		.ptr = ptr,
+		.cur = ptr,
+		.end = ptr + size
 	};
 
-	stream->ptr = ptr;
-	stream->cur = ptr;
-	stream->end = ptr + size;
 	stream->freePtr = freePtr;
 
-	*result = &stream->base;
+	*result = &stream->base.base;
 
 	CATCH(
 		free(nameCopy);
 	)
 	FINALLY()
+}
+
+AlMemStream al_stream_init_mem_stack(const void *ptr, size_t size, const char *name)
+{
+	return (AlMemStream){
+		.base = {
+			.name = name,
+			.read = mem_read,
+			.write = NULL,
+			.seek = mem_seek,
+			.tell = mem_tell,
+			.free = NULL
+		},
+		.ptr = ptr,
+		.cur = ptr,
+		.end = ptr + size
+	};
 }
