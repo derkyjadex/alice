@@ -91,6 +91,8 @@ static void mem_free(AlStream *base)
 	MemStream *stream = (MemStream *)base;
 
 	if (stream) {
+		free((char *)base->name);
+
 		if (stream->ptr && stream->freePtr) {
 			free(stream->ptr);
 		}
@@ -99,15 +101,22 @@ static void mem_free(AlStream *base)
 	}
 }
 
-AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freePtr)
+AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freePtr, const char *name)
 {
 	BEGIN()
 
 	MemStream *stream = NULL;
+	char *nameCopy = NULL;
 
 	TRY(al_malloc(&stream, sizeof(MemStream), 1));
 
+	if (name) {
+		TRY(al_malloc(&nameCopy, sizeof(char), strlen(name) + 1));
+		strcpy(nameCopy, name);
+	}
+
 	stream->base = (AlStream){
+		.name = nameCopy,
 		.read = mem_read,
 		.write = NULL,
 		.seek = mem_seek,
@@ -122,5 +131,8 @@ AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freeP
 
 	*result = &stream->base;
 
-	PASS()
+	CATCH(
+		free(nameCopy);
+	)
+	FINALLY()
 }

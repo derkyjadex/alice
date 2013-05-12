@@ -78,6 +78,8 @@ static void file_free(AlStream *base)
 	FileStream *stream = (FileStream *)base;
 
 	if (stream) {
+		free((char *)base->name);
+
 		if (stream->file) {
 			fclose(stream->file);
 		}
@@ -91,10 +93,15 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 	BEGIN()
 
 	FileStream *stream = NULL;
+	char *filenameCopy = NULL;
 
 	TRY(al_malloc(&stream, sizeof(FileStream), 1));
 
+	TRY(al_malloc(&filenameCopy, sizeof(char), strlen(filename) + 1));
+	strcpy(filenameCopy, filename);
+
 	stream->base = (AlStream){
+		.name = filenameCopy,
 		.read = file_read,
 		.write = file_write,
 		.seek = file_seek,
@@ -113,6 +120,7 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 
 	CATCH(
 		file_free(&stream->base);
+		free(filenameCopy);
 	)
 	FINALLY()
 }
