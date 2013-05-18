@@ -124,10 +124,3 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 	)
 	FINALLY()
 }
-
-void al_stream_free(AlStream *stream)
-{
-	if (stream && stream->free) {
-		stream->free(stream);
-	}
-}

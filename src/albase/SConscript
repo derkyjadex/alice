@@ -10,6 +10,7 @@ sources = Split('''
 	model_shape.c
 	model_shape_cmds.c
 	script.c
+	stream.c
 	stream_file.c
 	stream_mem.c
 	vars.c

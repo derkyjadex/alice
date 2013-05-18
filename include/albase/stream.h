@@ -46,5 +46,6 @@ AlError al_stream_init_mem(AlStream **stream, void *ptr, size_t size, bool freeP
 AlMemStream al_stream_init_mem_stack(const void *ptr, size_t size, const char *name);
 
 void al_stream_free(AlStream *stream);
+AlError al_stream_read_to_string(AlStream *stream, char **string, size_t *size);
 
 #endif
