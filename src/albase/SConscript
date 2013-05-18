@@ -3,13 +3,16 @@ Import('env')
 sources = Split('''
 	commands.c
 	common.c
+	data.c
 	error.c
 	file.c
 	geometry.c
 	model_shape.c
 	model_shape_cmds.c
-	vars.c
 	script.c
+	stream_file.c
+	stream_mem.c
+	vars.c
 	wrapper.c
 	gl/framebuffer.c
 	gl/model.c
