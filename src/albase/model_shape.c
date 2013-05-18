@@ -8,7 +8,6 @@
 #include <assert.h>
 
 #include "albase/model_shape.h"
-#include "albase/file.h"
 #include "albase/stream.h"
 #include "albase/data.h"
 #include "albase/wrapper.h"
