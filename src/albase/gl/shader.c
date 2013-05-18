@@ -8,7 +8,7 @@
 
 #include "albase/gl/opengl.h"
 #include "albase/gl/shader.h"
-#include "albase/file.h"
+#include "albase/stream.h"
 
 static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines);
 static AlError compile_shader(GLenum type, AlGLShaderSource source, const char *defines, GLuint *shader);

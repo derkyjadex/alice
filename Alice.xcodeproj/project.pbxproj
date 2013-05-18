@@ -15,7 +15,6 @@
 		1A42FD94160DF3BF00807A51 /* scripts.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD93160DF3BF00807A51 /* scripts.derived.c */; };
 		1A42FD97160DF44100807A51 /* images.derived.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A42FD96160DF44100807A51 /* images.derived.c */; };
 		1A5D166114E6B23800A79CBA /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D165E14E6B23800A79CBA /* common.c */; };
-		1A5D166214E6B23800A79CBA /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D165F14E6B23800A79CBA /* file.c */; };
 		1A5D166314E6B23800A79CBA /* geometry.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A5D166014E6B23800A79CBA /* geometry.c */; };
 		1A65C5D516E6A5B900C40716 /* widget_cmds.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A65C5D416E6A5B900C40716 /* widget_cmds.c */; };
 		1A801F3A1616E7C9008F3A05 /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A801F391616E7C9008F3A05 /* error.c */; };
@@ -73,7 +72,6 @@
 		1A42FD93160DF3BF00807A51 /* scripts.derived.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = scripts.derived.c; sourceTree = "<group>"; };
 		1A42FD96160DF44100807A51 /* images.derived.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = images.derived.c; sourceTree = "<group>"; };
 		1A5D165E14E6B23800A79CBA /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = common.c; sourceTree = "<group>"; };
-		1A5D165F14E6B23800A79CBA /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file.c; sourceTree = "<group>"; };
 		1A5D166014E6B23800A79CBA /* geometry.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = geometry.c; sourceTree = "<group>"; };
 		1A5D16EE14E6B6B100A79CBA /* commands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = commands.c; sourceTree = "<group>"; };
 		1A5D16F514E6B6B100A79CBA /* vars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vars.c; sourceTree = "<group>"; };
@@ -81,7 +79,6 @@
 		1A5D170114E6B8D500A79CBA /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = "<group>"; };
 		1A5D170214E6B8D500A79CBA /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = "<group>"; };
 		1A5D170814E6C02900A79CBA /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
-		1A5D170914E6C02900A79CBA /* file.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = file.h; sourceTree = "<group>"; };
 		1A5D170A14E6C02900A79CBA /* geometry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = geometry.h; sourceTree = "<group>"; };
 		1A5D170E14E6C02900A79CBA /* commands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = commands.h; sourceTree = "<group>"; };
 		1A5D171514E6C02900A79CBA /* vars.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vars.h; sourceTree = "<group>"; };
@@ -251,7 +248,6 @@
 				1A5D165E14E6B23800A79CBA /* common.c */,
 				1A909DCB17380915002D8BF7 /* data.c */,
 				1A801F391616E7C9008F3A05 /* error.c */,
-				1A5D165F14E6B23800A79CBA /* file.c */,
 				1A5D166014E6B23800A79CBA /* geometry.c */,
 				1AF523AD1608FCFB00B3DDE1 /* gl */,
 				1A9B8263158FB71600F77B33 /* model_shape.c */,
@@ -288,7 +284,6 @@
 				1A5D170814E6C02900A79CBA /* common.h */,
 				1A909DCA173808CD002D8BF7 /* data.h */,
 				1A801F371616E697008F3A05 /* error.h */,
-				1A5D170914E6C02900A79CBA /* file.h */,
 				1A5D170A14E6C02900A79CBA /* geometry.h */,
 				1AF523B71608FD8900B3DDE1 /* gl */,
 				1A70ED8416109B2D003123A1 /* lua.h */,
@@ -578,7 +573,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A5D166114E6B23800A79CBA /* common.c in Sources */,
-				1A5D166214E6B23800A79CBA /* file.c in Sources */,
 				1A5D166314E6B23800A79CBA /* geometry.c in Sources */,
 				1AC9C70A14FA98AE005D7671 /* commands.c in Sources */,
 				1AC9C70B14FA9D35005D7671 /* vars.c in Sources */,

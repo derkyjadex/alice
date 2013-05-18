@@ -5,7 +5,6 @@ sources = Split('''
 	common.c
 	data.c
 	error.c
-	file.c
 	geometry.c
 	model_shape.c
 	model_shape_cmds.c
