@@ -92,7 +92,7 @@ AlError al_script_run_base_scripts(lua_State *L)
 	PASS()
 }
 
-const size_t READ_BUFFER_SIZE = 1024;
+#define READ_BUFFER_SIZE 1024
 
 typedef struct {
 	AlStream *stream;

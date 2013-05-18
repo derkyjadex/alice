@@ -15,12 +15,11 @@
 #include "geometry.h"
 #include "vars.h"
 
-#define AL_DATA_TAG(a, b, c, d) ((((d) << 24) | ((c) << 16) | ((b) << 8) | (a)))
-
 typedef int32_t AlDataTag;
 
-static const AlDataTag AL_NO_TAG = 0;
-static const AlDataTag AL_ANY_TAG = 0;
+#define AL_NO_TAG ((AlDataTag)0)
+#define AL_ANY_TAG ((AlDataTag)0)
+#define AL_DATA_TAG(a, b, c, d) ((AlDataTag)((((d) << 24) | ((c) << 16) | ((b) << 8) | (a))))
 
 typedef enum {
 	AL_TOKEN_START = 0xFE,

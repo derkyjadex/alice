@@ -16,10 +16,10 @@
 #include "model_shape_internal.h"
 #include "model_shape_cmds.h"
 
-const AlDataTag SHAPE_TAG = AL_DATA_TAG('S', 'H', 'A', 'P');
-const AlDataTag PATHS_TAG = AL_DATA_TAG('P', 'T', 'H', 'S');
-const AlDataTag COLOUR_TAG = AL_DATA_TAG('C', 'O', 'L', 'R');
-const AlDataTag POINTS_TAG = AL_DATA_TAG('P', 'N', 'T', 'S');
+#define SHAPE_TAG AL_DATA_TAG('S', 'H', 'A', 'P')
+#define PATHS_TAG AL_DATA_TAG('P', 'T', 'H', 'S')
+#define COLOUR_TAG AL_DATA_TAG('C', 'O', 'L', 'R')
+#define POINTS_TAG AL_DATA_TAG('P', 'N', 'T', 'S')
 
 static AlWrapper *shapeWrapper = NULL;
 static AlWrapper *pathWrapper = NULL;
