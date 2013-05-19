@@ -3,6 +3,8 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
+local host = require 'host'
+
 Widget = wrap('widget')
 
 local vars = {
@@ -31,10 +33,10 @@ Widget.prototype.bind_motion = commands.widget_bind_motion
 Widget.prototype.bind_key = commands.widget_bind_key
 Widget.prototype.bind_text = commands.widget_bind_text
 Widget.prototype.bind_keyboard_lost = commands.widget_bind_keyboard_lost
-Widget.prototype.grab_mouse = commands.grab_mouse
-Widget.prototype.release_mouse = function(_, x, y) return commands.release_mouse(x, y) end
-Widget.prototype.grab_keyboard = commands.grab_keyboard
-Widget.prototype.release_keyboard = commands.release_keyboard
+Widget.prototype.grab_mouse = host.grab_mouse
+Widget.prototype.release_mouse = function(_, x, y) return host.release_mouse(x, y) end
+Widget.prototype.grab_keyboard = host.grab_keyboard
+Widget.prototype.release_keyboard = host.release_keyboard
 
 function Widget.prototype:layout(left, width, right, bottom, height, top, offset_x, offset_y)
 	local parent = self:parent()
@@ -82,4 +84,4 @@ function Widget.prototype:bind_property(name, observable)
 	return self
 end
 
-Widget.root = commands.get_root_widget
+Widget.root = host.get_root_widget

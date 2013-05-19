@@ -32,12 +32,9 @@ struct AlHost {
 };
 
 static const int IGNORE_NEXT_MOTION_EVENT = 1;
-static int cmd_exit(lua_State *L);
-static int cmd_get_root_widget(lua_State *L);
-static int cmd_grab_mouse(lua_State *L);
-static int cmd_release_mouse(lua_State *L);
-static int cmd_grab_keyboard(lua_State *L);
-static int cmd_release_keyboard(lua_State *L);
+
+static AlLuaKey hostKey;
+static int luaopen_host(lua_State *L);
 
 #ifdef RASPI
 static bool showMouse = true;
@@ -100,15 +97,15 @@ AlError al_host_init(AlHost **result)
 	host->screenSize = graphics_screen_size();
 
 	TRY(al_script_init(&host->lua));
+
+	lua_pushlightuserdata(host->lua, &hostKey);
+	lua_pushlightuserdata(host->lua, host);
+	lua_settable(host->lua, LUA_REGISTRYINDEX);
+
+	luaL_requiref(host->lua, "host", luaopen_host, false);
+
 	TRY(al_commands_init(&host->commands, host->lua));
 	TRY(al_vars_init(&host->vars, host->lua, host->commands));
-
-	TRY(al_commands_register(host->commands, "exit", cmd_exit, host, NULL));
-	TRY(al_commands_register(host->commands, "get_root_widget", cmd_get_root_widget, host, NULL));
-	TRY(al_commands_register(host->commands, "grab_mouse", cmd_grab_mouse, host, NULL));
-	TRY(al_commands_register(host->commands, "release_mouse", cmd_release_mouse, host, NULL));
-	TRY(al_commands_register(host->commands, "grab_keyboard", cmd_grab_keyboard, host, NULL));
-	TRY(al_commands_register(host->commands, "release_keyboard", cmd_release_keyboard, host, NULL));
 
 	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
 	TRY(al_widget_systems_init(host, host->lua, host->commands, host->vars));
@@ -441,4 +438,24 @@ static int cmd_release_keyboard(lua_State *L)
 	al_host_release_keyboard(host);
 
 	return 0;
+}
+
+static const luaL_Reg lib[] = {
+	{"exit", cmd_exit},
+	{"get_root_widget", cmd_get_root_widget},
+	{"grab_mouse", cmd_grab_mouse},
+	{"release_mouse", cmd_release_mouse},
+	{"grab_keyboard", cmd_grab_keyboard},
+	{"release_keyboard", cmd_release_keyboard},
+	{NULL, NULL}
+};
+
+static int luaopen_host(lua_State *L)
+{
+	luaL_newlibtable(L, lib);
+	lua_pushlightuserdata(L, &hostKey);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	luaL_setfuncs(L, lib, 1);
+
+	return 1;
 }
