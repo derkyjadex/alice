@@ -78,14 +78,65 @@ static AlError texture_load_from_surface(AlGlTexture *texture, SDL_Surface *surf
 	)
 }
 
-AlError al_gl_texture_load_from_file(AlGlTexture *texture, const char *filename)
+static int rwops_seek(SDL_RWops *rw, int offset, int whence)
+{
+	AlStream *stream = rw->hidden.unknown.data1;
+
+	AlError error = stream->seek(stream, offset, whence);
+	if (error)
+		return -1;
+
+	long position;
+	stream->tell(stream, &position);
+
+	return (int)position;
+}
+
+static int rwops_read(SDL_RWops *rw, void *ptr, int size, int maxnum)
+{
+	AlStream *stream = rw->hidden.unknown.data1;
+
+	size_t read;
+	AlError error = AL_NO_ERROR;
+
+	if (size == 1) {
+		error = stream->read(stream, ptr, maxnum, &read);
+		if (error)
+			return -1;
+
+		return (int)read;
+
+	} else {
+		for (int i = 0; i < maxnum; i++) {
+			error = stream->read(stream, ptr, size, &read);
+			if (error || read != size)
+				return -1;
+
+			if (read == 0)
+				return i;
+		}
+
+		return maxnum;
+	}
+}
+
+AlError al_gl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream)
 {
 	BEGIN()
 
-	SDL_Surface *surface = IMG_Load(filename);
+	SDL_RWops ops = (SDL_RWops){
+		.seek = rwops_seek,
+		.read = rwops_read,
+		.write = NULL,
+		.close = NULL,
+		.hidden.unknown.data1 = stream
+	};
+
+	SDL_Surface *surface = NULL;
+	surface = IMG_Load_RW(&ops, 0);
 	if (!surface) {
-		al_log_error("Could not open image file: '%s'", filename);
-		THROW(AL_ERROR_IO)
+		al_log_error("Could not load image");
+		THROW(AL_ERROR_IO);
 	}
 
 	TRY(texture_load_from_surface(texture, surface));
@@ -95,28 +146,25 @@ AlError al_gl_texture_load_from_file(AlGlTexture *texture, const char *filename)
 	)
 }
 
+AlError al_gl_texture_load_from_file(AlGlTexture *texture, const char *filename)
+{
+	BEGIN()
+
+	AlStream *stream = NULL;
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_gl_texture_load_from_stream(texture, stream));
+
+	PASS(
+		al_stream_free(stream);
+	)
+}
+
 AlError al_gl_texture_load_from_buffer(AlGlTexture *texture, const char *buffer, size_t size)
 {
 	BEGIN()
 
-	SDL_RWops *ops = NULL;
-	SDL_Surface *surface = NULL;
+	AlMemStream stream = al_stream_init_mem_stack(buffer, size, "[buffer]");
+	TRY(al_gl_texture_load_from_stream(texture, &stream.base));
 
-	ops = SDL_RWFromConstMem(buffer, (int)size);
-	if (!ops) {
-		al_log_error("Could not set up SDL_RWops");
-		THROW(AL_ERROR_IO)
-	}
-
-	surface = IMG_Load_RW(ops, 1);
-	if (!surface) {
-		al_log_error("Could not open image data");
-		THROW(AL_ERROR_IO)
-	}
-
-	TRY(texture_load_from_surface(texture, surface));
-
-	PASS(
-		SDL_FreeSurface(surface);
-	)
+	PASS()
 }

@@ -9,6 +9,7 @@
 
 #include "albase/common.h"
 #include "albase/gl/opengl.h"
+#include "albase/stream.h"
 
 typedef struct {
 	GLuint id;
@@ -16,6 +17,7 @@ typedef struct {
 
 AlError al_gl_texture_init(AlGlTexture **texture);
 void al_gl_texture_free(AlGlTexture *texture);
+AlError al_gl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream);
 AlError al_gl_texture_load_from_file(AlGlTexture *texture, const char *filename);
 AlError al_gl_texture_load_from_buffer(AlGlTexture *texture, const char *buffer, size_t size);
 
