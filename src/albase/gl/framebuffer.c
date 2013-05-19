@@ -8,7 +8,7 @@
 
 #include "albase/gl/framebuffer.h"
 
-AlError al_gl_framebuffer_init(AlGlFramebuffer **result)
+AlError algl_framebuffer_init(AlGlFramebuffer **result)
 {
 	BEGIN()
 
@@ -42,7 +42,7 @@ AlError al_gl_framebuffer_init(AlGlFramebuffer **result)
 	*result = framebuffer;
 
 	CATCH(
-		al_gl_framebuffer_free(framebuffer);
+		algl_framebuffer_free(framebuffer);
 	)
 	FINALLY(
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -50,7 +50,7 @@ AlError al_gl_framebuffer_init(AlGlFramebuffer **result)
 	)
 }
 
-void al_gl_framebuffer_free(AlGlFramebuffer *framebuffer)
+void algl_framebuffer_free(AlGlFramebuffer *framebuffer)
 {
 	if (framebuffer != NULL) {
 		glDeleteFramebuffers(1, &framebuffer->id);
@@ -59,7 +59,7 @@ void al_gl_framebuffer_free(AlGlFramebuffer *framebuffer)
 	}
 }
 
-AlError al_gl_framebuffer_resize(AlGlFramebuffer *framebuffer, int width, int height)
+AlError algl_framebuffer_resize(AlGlFramebuffer *framebuffer, int width, int height)
 {
 	glBindTexture(GL_TEXTURE_2D, framebuffer->colourTex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);

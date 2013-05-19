@@ -80,7 +80,7 @@ static AlError build_program(AlGlShader *shader, AlGLShaderSource vertexSource, 
 	PASS()
 }
 
-AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines)
+AlError algl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines)
 {
 	BEGIN()
 
@@ -96,12 +96,12 @@ AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource ver
 	*result = shader;
 
 	CATCH(
-		al_gl_shader_free(shader);
+		algl_shader_free(shader);
 	)
 	FINALLY()
 }
 
-AlError al_gl_shader_init_with_streams(AlGlShader **result, AlStream *vertexStream, AlStream *fragmentStream, const char *defines)
+AlError algl_shader_init_with_streams(AlGlShader **result, AlStream *vertexStream, AlStream *fragmentStream, const char *defines)
 {
 	BEGIN()
 
@@ -112,7 +112,7 @@ AlError al_gl_shader_init_with_streams(AlGlShader **result, AlStream *vertexStre
 	TRY(al_stream_read_to_string(vertexStream, &vertexSource, NULL));
 	TRY(al_stream_read_to_string(fragmentStream, &fragmentSource, NULL));
 
-	TRY(al_gl_shader_init_with_sources(&shader,
+	TRY(algl_shader_init_with_sources(&shader,
 		(AlGLShaderSource){vertexStream->name, vertexSource},
 		(AlGLShaderSource){fragmentStream->name, fragmentSource},
 		defines));
@@ -120,7 +120,7 @@ AlError al_gl_shader_init_with_streams(AlGlShader **result, AlStream *vertexStre
 	*result = shader;
 
 	CATCH(
-		al_gl_shader_free(shader);
+		algl_shader_free(shader);
 	)
 	FINALLY(
 		free(vertexSource);
@@ -128,7 +128,7 @@ AlError al_gl_shader_init_with_streams(AlGlShader **result, AlStream *vertexStre
 	)
 }
 
-AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFilename, const char *fragmentFilename, const char *defines)
+AlError algl_shader_init_with_files(AlGlShader **result, const char *vertexFilename, const char *fragmentFilename, const char *defines)
 {
 	BEGIN()
 
@@ -139,12 +139,12 @@ AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFile
 	TRY(al_stream_init_file(&vertexStream, vertexFilename, AL_OPEN_READ));
 	TRY(al_stream_init_file(&fragmentStream, fragmentFilename, AL_OPEN_READ));
 
-	TRY(al_gl_shader_init_with_streams(&shader, vertexStream, fragmentStream, defines));
+	TRY(algl_shader_init_with_streams(&shader, vertexStream, fragmentStream, defines));
 
 	*result = shader;
 
 	CATCH(
-		al_gl_shader_free(shader);
+		algl_shader_free(shader);
 	)
 	FINALLY(
 		al_stream_free(vertexStream);
@@ -152,7 +152,7 @@ AlError al_gl_shader_init_with_files(AlGlShader **result, const char *vertexFile
 	)
 }
 
-void al_gl_shader_free(AlGlShader *shader)
+void algl_shader_free(AlGlShader *shader)
 {
 	if (shader != NULL) {
 		glDeleteShader(shader->vertexShader);
@@ -162,17 +162,17 @@ void al_gl_shader_free(AlGlShader *shader)
 	}
 }
 
-void al_gl_uniform_vec2(GLuint uniform, Vec2 v)
+void algl_uniform_vec2(GLuint uniform, Vec2 v)
 {
 	glUniform2f(uniform, v.x, v.y);
 }
 
-void al_gl_uniform_vec3(GLuint uniform, Vec3 v)
+void algl_uniform_vec3(GLuint uniform, Vec3 v)
 {
 	glUniform3f(uniform, v.x, v.y, v.z);
 }
 
-void al_gl_uniform_vec4(GLuint uniform, Vec4 v)
+void algl_uniform_vec4(GLuint uniform, Vec4 v)
 {
 	glUniform4f(uniform, v.x, v.y, v.z, v.w);
 }

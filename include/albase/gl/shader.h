@@ -32,9 +32,8 @@ typedef struct {
 } AlGLShaderSource;
 
 
-#define AL_GET_GL_UNIFORM(shaderVar, name) shaderVar.name = glGetUniformLocation(shaderVar.shader->id, #name)
-
-#define AL_GET_GL_ATTRIB(shaderVar, name) shaderVar.name = glGetAttribLocation(shaderVar.shader->id, #name)
+#define ALGL_GET_UNIFORM(shaderVar, name) shaderVar.name = glGetUniformLocation(shaderVar.shader->id, #name)
+#define ALGL_GET_ATTRIB(shaderVar, name) shaderVar.name = glGetAttribLocation(shaderVar.shader->id, #name)
 
 typedef struct AlGlShader {
 	GLuint id;
@@ -42,13 +41,13 @@ typedef struct AlGlShader {
 	GLuint fragmentShader;
 } AlGlShader;
 
-AlError al_gl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines);
-AlError al_gl_shader_init_with_streams(AlGlShader **shader, AlStream *vertexStream, AlStream *fragmentStream, const char *defines);
-AlError al_gl_shader_init_with_files(AlGlShader **shader, const char *vertexFilename, const char *fragmentFilename, const char *defines);
-void al_gl_shader_free(AlGlShader *shader);
+AlError algl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vertexSource, AlGLShaderSource fragmentSource, const char *defines);
+AlError algl_shader_init_with_streams(AlGlShader **shader, AlStream *vertexStream, AlStream *fragmentStream, const char *defines);
+AlError algl_shader_init_with_files(AlGlShader **shader, const char *vertexFilename, const char *fragmentFilename, const char *defines);
+void algl_shader_free(AlGlShader *shader);
 
-void al_gl_uniform_vec2(GLuint uniform, Vec2 v);
-void al_gl_uniform_vec3(GLuint uniform, Vec3 v);
-void al_gl_uniform_vec4(GLuint uniform, Vec4 v);
+void algl_uniform_vec2(GLuint uniform, Vec2 v);
+void algl_uniform_vec3(GLuint uniform, Vec3 v);
+void algl_uniform_vec4(GLuint uniform, Vec4 v);
 
 #endif

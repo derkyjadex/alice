@@ -10,9 +10,9 @@
 #include "albase/common.h"
 #include "albase/geometry.h"
 
-AlError al_gl_system_init(void);
-void al_gl_system_free(void);
-Vec2 al_gl_system_screen_size(void);
-void al_gl_system_swap_buffers(void);
+AlError algl_system_init(void);
+void algl_system_free(void);
+Vec2 algl_system_screen_size(void);
+void algl_system_swap_buffers(void);
 
 #endif

@@ -11,7 +11,7 @@
 
 static SDL_Surface *screen = NULL;
 
-AlError al_gl_system_init()
+AlError algl_system_init()
 {
 	BEGIN()
 
@@ -30,17 +30,17 @@ AlError al_gl_system_init()
 	PASS()
 }
 
-void al_gl_system_free()
+void algl_system_free()
 {
 	screen = NULL;
 }
 
-Vec2 al_gl_system_screen_size()
+Vec2 algl_system_screen_size()
 {
 	return (Vec2){screen->w, screen->h};
 }
 
-void al_gl_system_swap_buffers()
+void algl_system_swap_buffers()
 {
 	SDL_GL_SwapBuffers();
 }

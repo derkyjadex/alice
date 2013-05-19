@@ -106,24 +106,24 @@ static GLuint plainVertices;
 
 static void free_shaders()
 {
-	al_gl_shader_free(plainWidgetShader.shader);
+	algl_shader_free(plainWidgetShader.shader);
 	plainWidgetShader.shader = NULL;
-	al_gl_shader_free(borderWidgetShader.shader);
+	algl_shader_free(borderWidgetShader.shader);
 	borderWidgetShader.shader = NULL;
-	al_gl_shader_free(gridBorderWidgetShader.shader);
+	algl_shader_free(gridBorderWidgetShader.shader);
 	gridBorderWidgetShader.shader = NULL;
 
-	al_gl_shader_free(modelShader.shader);
+	algl_shader_free(modelShader.shader);
 	modelShader.shader = NULL;
 
-	al_gl_shader_free(textShader.shader);
+	algl_shader_free(textShader.shader);
 	textShader.shader = NULL;
-	al_gl_texture_free(textShader.texture);
+	algl_texture_free(textShader.texture);
 	textShader.texture = NULL;
 
-	al_gl_shader_free(cursorShader.shader);
+	algl_shader_free(cursorShader.shader);
 	cursorShader.shader = NULL;
-	al_gl_texture_free(cursorShader.texture);
+	algl_texture_free(cursorShader.texture);
 	cursorShader.texture = NULL;
 }
 
@@ -140,71 +140,71 @@ static AlError init_shaders()
 	cursorShader.shader = NULL;
 	cursorShader.texture = NULL;
 
-	TRY(al_gl_shader_init_with_sources(&plainWidgetShader.shader,
+	TRY(algl_shader_init_with_sources(&plainWidgetShader.shader,
 		AL_VERT_SHADER(widget),
 		AL_FRAG_SHADER(widget),
 		NULL));
-	AL_GET_GL_UNIFORM(plainWidgetShader, viewportSize);
-	AL_GET_GL_UNIFORM(plainWidgetShader, min);
-	AL_GET_GL_UNIFORM(plainWidgetShader, size);
-	AL_GET_GL_UNIFORM(plainWidgetShader, fillColour);
-	AL_GET_GL_ATTRIB(plainWidgetShader, position);
+	ALGL_GET_UNIFORM(plainWidgetShader, viewportSize);
+	ALGL_GET_UNIFORM(plainWidgetShader, min);
+	ALGL_GET_UNIFORM(plainWidgetShader, size);
+	ALGL_GET_UNIFORM(plainWidgetShader, fillColour);
+	ALGL_GET_ATTRIB(plainWidgetShader, position);
 
-	TRY(al_gl_shader_init_with_sources(&borderWidgetShader.shader,
+	TRY(algl_shader_init_with_sources(&borderWidgetShader.shader,
 		AL_VERT_SHADER(widget),
 		AL_FRAG_SHADER(widget),
 		"#define WITH_BORDER\n"));
-	AL_GET_GL_UNIFORM(borderWidgetShader, viewportSize);
-	AL_GET_GL_UNIFORM(borderWidgetShader, min);
-	AL_GET_GL_UNIFORM(borderWidgetShader, size);
-	AL_GET_GL_UNIFORM(borderWidgetShader, borderWidth);
-	AL_GET_GL_UNIFORM(borderWidgetShader, fillColour);
-	AL_GET_GL_UNIFORM(borderWidgetShader, borderColour);
-	AL_GET_GL_ATTRIB(borderWidgetShader, position);
+	ALGL_GET_UNIFORM(borderWidgetShader, viewportSize);
+	ALGL_GET_UNIFORM(borderWidgetShader, min);
+	ALGL_GET_UNIFORM(borderWidgetShader, size);
+	ALGL_GET_UNIFORM(borderWidgetShader, borderWidth);
+	ALGL_GET_UNIFORM(borderWidgetShader, fillColour);
+	ALGL_GET_UNIFORM(borderWidgetShader, borderColour);
+	ALGL_GET_ATTRIB(borderWidgetShader, position);
 
-	TRY(al_gl_shader_init_with_sources(&gridBorderWidgetShader.shader,
+	TRY(algl_shader_init_with_sources(&gridBorderWidgetShader.shader,
 		AL_VERT_SHADER(widget),
 		AL_FRAG_SHADER(widget),
 		"#define WITH_BORDER\n"
 		"#define WITH_GRID"));
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, viewportSize);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, min);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, size);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, borderWidth);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, gridSize);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, gridOffset);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, fillColour);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, borderColour);
-	AL_GET_GL_UNIFORM(gridBorderWidgetShader, gridColour);
-	AL_GET_GL_ATTRIB(gridBorderWidgetShader, position);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, viewportSize);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, min);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, size);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, borderWidth);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, gridSize);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, gridOffset);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, fillColour);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, borderColour);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, gridColour);
+	ALGL_GET_ATTRIB(gridBorderWidgetShader, position);
 
-	TRY(al_gl_shader_init_with_sources(&modelShader.shader,
+	TRY(algl_shader_init_with_sources(&modelShader.shader,
 		AL_VERT_SHADER(model),
 		AL_FRAG_SHADER(model),
 		NULL));
-	AL_GET_GL_UNIFORM(modelShader, viewportSize);
-	AL_GET_GL_UNIFORM(modelShader, translate);
-	AL_GET_GL_UNIFORM(modelShader, scale);
-	AL_GET_GL_UNIFORM(modelShader, colour);
-	AL_GET_GL_ATTRIB(modelShader, position);
-	AL_GET_GL_ATTRIB(modelShader, param);
+	ALGL_GET_UNIFORM(modelShader, viewportSize);
+	ALGL_GET_UNIFORM(modelShader, translate);
+	ALGL_GET_UNIFORM(modelShader, scale);
+	ALGL_GET_UNIFORM(modelShader, colour);
+	ALGL_GET_ATTRIB(modelShader, position);
+	ALGL_GET_ATTRIB(modelShader, param);
 
-	TRY(al_gl_shader_init_with_sources(&textShader.shader,
+	TRY(algl_shader_init_with_sources(&textShader.shader,
 		AL_VERT_SHADER(text),
 		AL_FRAG_SHADER(text),
 		NULL));
-	AL_GET_GL_UNIFORM(textShader, viewportSize);
-	AL_GET_GL_UNIFORM(textShader, min);
-	AL_GET_GL_UNIFORM(textShader, size);
-	AL_GET_GL_UNIFORM(textShader, charMin);
-	AL_GET_GL_UNIFORM(textShader, charSize);
-	AL_GET_GL_UNIFORM(textShader, font);
-	AL_GET_GL_UNIFORM(textShader, colour);
-	AL_GET_GL_UNIFORM(textShader, edge);
-	AL_GET_GL_ATTRIB(textShader, position);
+	ALGL_GET_UNIFORM(textShader, viewportSize);
+	ALGL_GET_UNIFORM(textShader, min);
+	ALGL_GET_UNIFORM(textShader, size);
+	ALGL_GET_UNIFORM(textShader, charMin);
+	ALGL_GET_UNIFORM(textShader, charSize);
+	ALGL_GET_UNIFORM(textShader, font);
+	ALGL_GET_UNIFORM(textShader, colour);
+	ALGL_GET_UNIFORM(textShader, edge);
+	ALGL_GET_ATTRIB(textShader, position);
 
-	TRY(al_gl_texture_init(&textShader.texture));
-	TRY(al_gl_texture_load_from_buffer(textShader.texture, images_font_png, images_font_png_size));
+	TRY(algl_texture_init(&textShader.texture));
+	TRY(algl_texture_load_from_buffer(textShader.texture, images_font_png, images_font_png_size));
 
 	fontInfo.numCharsW = 16;
 	fontInfo.numCharsH = 16;
@@ -213,18 +213,18 @@ static AlError init_shaders()
 	fontInfo.edgeCenter = 0.38;
 	fontInfo.edgeSpread = 4.0;
 
-	TRY(al_gl_shader_init_with_sources(&cursorShader.shader,
+	TRY(algl_shader_init_with_sources(&cursorShader.shader,
 		AL_VERT_SHADER(cursor),
 		AL_FRAG_SHADER(cursor),
 		NULL));
-	AL_GET_GL_UNIFORM(cursorShader, viewportSize);
-	AL_GET_GL_UNIFORM(cursorShader, location);
-	AL_GET_GL_UNIFORM(cursorShader, size);
-	AL_GET_GL_UNIFORM(cursorShader, image);
-	AL_GET_GL_ATTRIB(cursorShader, position);
+	ALGL_GET_UNIFORM(cursorShader, viewportSize);
+	ALGL_GET_UNIFORM(cursorShader, location);
+	ALGL_GET_UNIFORM(cursorShader, size);
+	ALGL_GET_UNIFORM(cursorShader, image);
+	ALGL_GET_ATTRIB(cursorShader, position);
 
-	TRY(al_gl_texture_init(&cursorShader.texture));
-	TRY(al_gl_texture_load_from_buffer(cursorShader.texture, images_cursor_png, images_cursor_png_size));
+	TRY(algl_texture_init(&cursorShader.texture));
+	TRY(algl_texture_load_from_buffer(cursorShader.texture, images_cursor_png, images_cursor_png_size));
 
 	cursorInfo.textureSize = (Vec2){32, 32};
 	cursorInfo.midPoint = (Vec2){16, 16};
@@ -237,7 +237,7 @@ static AlError init_shaders()
 
 static void update_viewport_size()
 {
-	viewportSize = al_gl_system_screen_size();
+	viewportSize = algl_system_screen_size();
 
 	glViewport(0, 0, viewportSize.x, viewportSize.y);
 
@@ -264,7 +264,7 @@ AlError graphics_system_init()
 {
 	BEGIN()
 
-	TRY(al_gl_system_init());
+	TRY(algl_system_init());
 
 	glEnable(GL_SCISSOR_TEST);
 
@@ -291,7 +291,7 @@ void graphics_system_free()
 {
 	glDeleteBuffers(1, &plainVertices);
 	free_shaders();
-	al_gl_system_free();
+	algl_system_free();
 }
 
 Vec2 graphics_screen_size()
@@ -302,7 +302,7 @@ Vec2 graphics_screen_size()
 static void render_model(AlModel *model, Vec2 location, double scale)
 {
 	glUseProgram(modelShader.shader->id);
-	al_gl_uniform_vec2(modelShader.translate, location);
+	algl_uniform_vec2(modelShader.translate, location);
 	glUniform1f(modelShader.scale, scale);
 
 	glEnableVertexAttribArray(modelShader.position);
@@ -314,7 +314,7 @@ static void render_model(AlModel *model, Vec2 location, double scale)
 
 	int start = 0;
 	for (int i = 0; i < model->numPaths; i++) {
-		al_gl_uniform_vec3(modelShader.colour, model->colours[i]);
+		algl_uniform_vec3(modelShader.colour, model->colours[i]);
 		glDrawArrays(GL_TRIANGLES, start, model->vertexCounts[i]);
 		start += model->vertexCounts[i];
 	}
@@ -332,7 +332,7 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	glUseProgram(textShader.shader->id);
 	glUniform2f(textShader.size, charWidth, size);
 	glUniform2f(textShader.charSize, 1.0 / fontInfo.numCharsW, 1.0 / fontInfo.numCharsH);
-	al_gl_uniform_vec3(textShader.colour, colour);
+	algl_uniform_vec3(textShader.colour, colour);
 	glUniform2f(textShader.edge, fontInfo.edgeCenter - edgeSpread, fontInfo.edgeCenter + edgeSpread);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -351,7 +351,7 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 		float x = (float)(c % fontInfo.numCharsW) / fontInfo.numCharsW;
 		float y = (float)(c / fontInfo.numCharsW) / fontInfo.numCharsH;
 
-		al_gl_uniform_vec2(textShader.min, location);
+		algl_uniform_vec2(textShader.min, location);
 		glUniform2f(textShader.charMin, x, y);
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -368,31 +368,31 @@ static void render_widget_main(AlWidget *widget, Box bounds)
 		if (!widget->border.width) {
 			position = plainWidgetShader.position;
 			glUseProgram(plainWidgetShader.shader->id);
-			al_gl_uniform_vec2(plainWidgetShader.min, bounds.min);
-			al_gl_uniform_vec2(plainWidgetShader.size, box_size(bounds));
-			al_gl_uniform_vec4(plainWidgetShader.fillColour, widget->fillColour);
+			algl_uniform_vec2(plainWidgetShader.min, bounds.min);
+			algl_uniform_vec2(plainWidgetShader.size, box_size(bounds));
+			algl_uniform_vec4(plainWidgetShader.fillColour, widget->fillColour);
 
 		} else {
 			position = borderWidgetShader.position;
 			glUseProgram(borderWidgetShader.shader->id);
-			al_gl_uniform_vec2(borderWidgetShader.min, bounds.min);
-			al_gl_uniform_vec2(borderWidgetShader.size, box_size(bounds));
+			algl_uniform_vec2(borderWidgetShader.min, bounds.min);
+			algl_uniform_vec2(borderWidgetShader.size, box_size(bounds));
 			glUniform1f(borderWidgetShader.borderWidth, widget->border.width);
-			al_gl_uniform_vec4(borderWidgetShader.fillColour, widget->fillColour);
-			al_gl_uniform_vec4(borderWidgetShader.borderColour, widget->border.colour);
+			algl_uniform_vec4(borderWidgetShader.fillColour, widget->fillColour);
+			algl_uniform_vec4(borderWidgetShader.borderColour, widget->border.colour);
 		}
 	} else {
 		position = gridBorderWidgetShader.position;
 		glUseProgram(gridBorderWidgetShader.shader->id);
-		al_gl_uniform_vec2(gridBorderWidgetShader.min, bounds.min);
-		al_gl_uniform_vec2(gridBorderWidgetShader.size, box_size(bounds));
+		algl_uniform_vec2(gridBorderWidgetShader.min, bounds.min);
+		algl_uniform_vec2(gridBorderWidgetShader.size, box_size(bounds));
 		glUniform1f(gridBorderWidgetShader.borderWidth, widget->border.width);
-		al_gl_uniform_vec2(gridBorderWidgetShader.gridSize, widget->grid.size);
-		al_gl_uniform_vec2(gridBorderWidgetShader.gridOffset, widget->grid.offset);
-		al_gl_uniform_vec4(gridBorderWidgetShader.fillColour, widget->fillColour);
-		al_gl_uniform_vec4(gridBorderWidgetShader.borderColour, widget->border.colour);
+		algl_uniform_vec2(gridBorderWidgetShader.gridSize, widget->grid.size);
+		algl_uniform_vec2(gridBorderWidgetShader.gridOffset, widget->grid.offset);
+		algl_uniform_vec4(gridBorderWidgetShader.fillColour, widget->fillColour);
+		algl_uniform_vec4(gridBorderWidgetShader.borderColour, widget->border.colour);
 		Vec3 gridColour = widget->grid.colour;
-		al_gl_uniform_vec4(gridBorderWidgetShader.gridColour, (Vec4){
+		algl_uniform_vec4(gridBorderWidgetShader.gridColour, (Vec4){
 			gridColour.x, gridColour.y, gridColour.z, 1
 		});
 	}
@@ -481,6 +481,6 @@ void graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
 			render_cursor(cursorLocation);
 		}
 
-		al_gl_system_swap_buffers();
+		algl_system_swap_buffers();
 	}
 }

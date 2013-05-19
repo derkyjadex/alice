@@ -15,10 +15,10 @@ typedef struct {
 	GLuint id;
 } AlGlTexture;
 
-AlError al_gl_texture_init(AlGlTexture **texture);
-void al_gl_texture_free(AlGlTexture *texture);
-AlError al_gl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream);
-AlError al_gl_texture_load_from_file(AlGlTexture *texture, const char *filename);
-AlError al_gl_texture_load_from_buffer(AlGlTexture *texture, const char *buffer, size_t size);
+AlError algl_texture_init(AlGlTexture **texture);
+void algl_texture_free(AlGlTexture *texture);
+AlError algl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream);
+AlError algl_texture_load_from_file(AlGlTexture *texture, const char *filename);
+AlError algl_texture_load_from_buffer(AlGlTexture *texture, const char *buffer, size_t size);
 
 #endif

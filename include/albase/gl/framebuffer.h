@@ -15,8 +15,8 @@ typedef struct AlGlFramebuffer {
 	GLuint colourTex;
 } AlGlFramebuffer;
 
-AlError al_gl_framebuffer_init(AlGlFramebuffer **framebuffer);
-void al_gl_framebuffer_free(AlGlFramebuffer *framebuffer);
-AlError al_gl_framebuffer_resize(AlGlFramebuffer *framebuffer, int width, int height);
+AlError algl_framebuffer_init(AlGlFramebuffer **framebuffer);
+void algl_framebuffer_free(AlGlFramebuffer *framebuffer);
+AlError algl_framebuffer_resize(AlGlFramebuffer *framebuffer, int width, int height);
 
 #endif

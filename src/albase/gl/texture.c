@@ -14,7 +14,7 @@
 
 #include "albase/gl/texture.h"
 
-AlError al_gl_texture_init(AlGlTexture **result)
+AlError algl_texture_init(AlGlTexture **result)
 {
 	BEGIN()
 
@@ -30,12 +30,12 @@ AlError al_gl_texture_init(AlGlTexture **result)
 	*result = texture;
 
 	CATCH(
-		al_gl_texture_free(texture);
+		algl_texture_free(texture);
 	)
 	FINALLY()
 }
 
-void al_gl_texture_free(AlGlTexture *texture)
+void algl_texture_free(AlGlTexture *texture)
 {
 	if (texture != NULL) {
 		glDeleteTextures(1, &texture->id);
@@ -120,7 +120,7 @@ static int rwops_read(SDL_RWops *rw, void *ptr, int size, int maxnum)
 	}
 }
 
-AlError al_gl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream)
+AlError algl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream)
 {
 	BEGIN()
 
@@ -146,25 +146,25 @@ AlError al_gl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream)
 	)
 }
 
-AlError al_gl_texture_load_from_file(AlGlTexture *texture, const char *filename)
+AlError algl_texture_load_from_file(AlGlTexture *texture, const char *filename)
 {
 	BEGIN()
 
 	AlStream *stream = NULL;
 	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
-	TRY(al_gl_texture_load_from_stream(texture, stream));
+	TRY(algl_texture_load_from_stream(texture, stream));
 
 	PASS(
 		al_stream_free(stream);
 	)
 }
 
-AlError al_gl_texture_load_from_buffer(AlGlTexture *texture, const char *buffer, size_t size)
+AlError algl_texture_load_from_buffer(AlGlTexture *texture, const char *buffer, size_t size)
 {
 	BEGIN()
 
 	AlMemStream stream = al_stream_init_mem_stack(buffer, size, "[buffer]");
-	TRY(al_gl_texture_load_from_stream(texture, &stream.base));
+	TRY(algl_texture_load_from_stream(texture, &stream.base));
 
 	PASS()
 }
