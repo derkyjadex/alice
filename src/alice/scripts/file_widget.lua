@@ -56,7 +56,7 @@ FileWidget = Widget:derive(function(self, mode)
 		end
 		file_widgets = {}
 
-		for i, file in ipairs{commands.fs_list_dir(path)} do
+		for i, file in ipairs{fs.list_dir(path)} do
 			local widget = Widget():add_to(list_widget)
 				:fill_colour(0, 0, 0, 1)
 				:text(file.name)
@@ -121,13 +121,13 @@ FileWidget = Widget:derive(function(self, mode)
 
 	if can_save then
 		save_widget:bind_down(function()
-			callback(commands.fs_path_append_filename(path, filename_widget:text()))
+			callback(fs.path_append_filename(path, filename_widget:text()))
 		end)
 
 		filename_widget:grab_keyboard()
 	end
 
-	set_path(commands.fs_get_home_dir())
+	set_path(fs.get_home_dir())
 end)
 
 local function show_file(mode, callback)

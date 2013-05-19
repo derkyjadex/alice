@@ -12,8 +12,8 @@
 #include <pwd.h>
 
 #include "albase/common.h"
-#include "file_system.h"
 #include "albase/lua.h"
+#include "libs.h"
 
 static int cmd_get_cwd(lua_State *L)
 {
@@ -111,7 +111,7 @@ static int cmd_get_home_dir(lua_State *L)
 	return 1;
 }
 
-static int cmd_fs_path_append_filename(lua_State *L)
+static int cmd_path_append_filename(lua_State *L)
 {
 	luaL_checkstring(L, 1);
 	luaL_checkstring(L, 2);
@@ -123,14 +123,16 @@ static int cmd_fs_path_append_filename(lua_State *L)
 	return 1;
 }
 
-AlError file_system_init(AlCommands *commands)
+static const luaL_Reg lib[] = {
+	{"get_cwd", cmd_get_cwd},
+	{"list_dir", cmd_list_dir},
+	{"get_home_dir", cmd_get_home_dir},
+	{"path_append_filename", cmd_path_append_filename},
+	{NULL, NULL}
+};
+
+int luaopen_fs(lua_State *L)
 {
-	BEGIN()
-
-	TRY(al_commands_register(commands, "fs_get_cwd", cmd_get_cwd, NULL));
-	TRY(al_commands_register(commands, "fs_list_dir", cmd_list_dir, NULL));
-	TRY(al_commands_register(commands, "fs_get_home_dir", cmd_get_home_dir, NULL));
-	TRY(al_commands_register(commands, "fs_path_append_filename", cmd_fs_path_append_filename, NULL));
-
-	PASS()
+	luaL_newlib(L, lib);
+	return 1;
 }

@@ -9,8 +9,8 @@
 #include <stdlib.h>
 
 #include "albase/common.h"
-#include "text.h"
 #include "albase/lua.h"
+#include "libs.h"
 
 static bool is_start_byte(uint8_t b)
 {
@@ -145,13 +145,15 @@ static int cmd_text_remove(lua_State *L)
 	return 1;
 }
 
-AlError text_system_init(AlCommands *commands)
+static const luaL_Reg lib[] = {
+	{"length", cmd_text_length},
+	{"insert", cmd_text_insert},
+	{"remove", cmd_text_remove},
+	{NULL, NULL}
+};
+
+int luaopen_text(lua_State *L)
 {
-	BEGIN()
-
-	TRY(al_commands_register(commands, "text_length", cmd_text_length, NULL));
-	TRY(al_commands_register(commands, "text_insert", cmd_text_insert, NULL));
-	TRY(al_commands_register(commands, "text_remove", cmd_text_remove, NULL));
-
-	PASS()
+	luaL_newlib(L, lib);
+	return 1;
 }

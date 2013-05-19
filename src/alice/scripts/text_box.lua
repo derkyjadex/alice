@@ -31,9 +31,9 @@ TextBox = Widget:derive(function(self, callback)
 
 	update()
 
-	function self.insert_text(_, text)
+	function self.insert_text(_, new_text)
 		local inserted_length
-		value, inserted_length = commands.text_insert(value, text, cursor_pos + 1)
+		value, inserted_length = text.insert(value, new_text, cursor_pos + 1)
 		value_length = value_length + inserted_length
 		cursor_pos = cursor_pos + inserted_length
 		update()
@@ -41,7 +41,7 @@ TextBox = Widget:derive(function(self, callback)
 
 	function self.back_delete()
 		if cursor_pos > 0 then
-			value = commands.text_remove(value, cursor_pos, 1)
+			value = text.remove(value, cursor_pos, 1)
 			value_length = value_length - 1
 			cursor_pos = cursor_pos - 1
 			update()
@@ -50,7 +50,7 @@ TextBox = Widget:derive(function(self, callback)
 
 	function self.forward_delete()
 		if cursor_pos < value_length then
-			value = commands.text_remove(value, cursor_pos + 1, 1)
+			value = text.remove(value, cursor_pos + 1, 1)
 			value_length = value_length - 1
 			update()
 		end
