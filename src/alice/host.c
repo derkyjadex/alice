@@ -16,7 +16,6 @@
 #include "albase/script.h"
 #include "scripts.h"
 #include "albase/lua.h"
-#include "libs.h"
 #include "widget_internal.h"
 
 struct AlHost {
@@ -113,17 +112,6 @@ AlError al_host_init(AlHost **result)
 
 	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
 	TRY(al_widget_systems_init(host, host->lua, host->commands, host->vars));
-
-	luaL_Reg luaLibs[] = {
-		{"fs", luaopen_fs},
-		{"text", luaopen_text},
-		{NULL, NULL}
-	};
-
-	for (luaL_Reg *lib = luaLibs; lib->func; lib++) {
-		luaL_requiref(host->lua, lib->name, lib->func, true);
-		lua_pop(host->lua, 1);
-	}
 
 	TRY(al_script_run_base_scripts(host->lua));
 

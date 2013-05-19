@@ -7,6 +7,7 @@
 #include "albase/script.h"
 #include "scripts.h"
 #include "albase/lua.h"
+#include "libs.h"
 
 static AlLuaKey tracebackKey;
 
@@ -34,6 +35,17 @@ AlError al_script_init(lua_State **result)
 		THROW(AL_ERROR_MEMORY)
 
 	luaL_openlibs(L);
+
+	luaL_Reg luaLibs[] = {
+		{"fs", luaopen_fs},
+		{"text", luaopen_text},
+		{NULL, NULL}
+	};
+
+	for (luaL_Reg *lib = luaLibs; lib->func; lib++) {
+		luaL_requiref(L, lib->name, lib->func, true);
+		lua_pop(L, 1);
+	}
 
 	lua_getglobal(L, "debug");
 	lua_getfield(L, -1, "traceback");
