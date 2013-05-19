@@ -84,7 +84,7 @@ static int cmd_model_shape_add_path(lua_State *L)
 	al_model_path_push_userdata(model->paths[index]);
 
 	CATCH_LUA(, "Error adding path")
-	FINALLY_LUA(, 0)
+	FINALLY_LUA(, 1)
 }
 
 static int cmd_model_shape_remove_path(lua_State *L)
