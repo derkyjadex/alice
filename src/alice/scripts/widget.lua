@@ -4,6 +4,7 @@
 -- See COPYING for details.
 
 local host = require 'host'
+local widget = require 'widget'
 
 Widget = wrap('widget')
 
@@ -18,21 +19,21 @@ for i,var in ipairs(vars) do
 	Widget.prototype[var] = make_var_accessor('widget.' .. var)
 end
 
-Widget.prototype.next = commands.widget_get_next
-Widget.prototype.prev = commands.widget_get_prev
-Widget.prototype.parent = commands.widget_get_parent
-Widget.prototype.first_child = commands.widget_get_first_child
-Widget.prototype.model = commands.widget_set_model
-Widget.prototype.add_child = commands.widget_add_child
-Widget.prototype.add_sibling = commands.widget_add_sibling
-Widget.prototype.remove = commands.widget_remove
-Widget.prototype.invalidate = commands.widget_invalidate
-Widget.prototype.bind_up = commands.widget_bind_up
-Widget.prototype.bind_down = commands.widget_bind_down
-Widget.prototype.bind_motion = commands.widget_bind_motion
-Widget.prototype.bind_key = commands.widget_bind_key
-Widget.prototype.bind_text = commands.widget_bind_text
-Widget.prototype.bind_keyboard_lost = commands.widget_bind_keyboard_lost
+Widget.prototype.next = widget.get_next
+Widget.prototype.prev = widget.get_prev
+Widget.prototype.parent = widget.get_parent
+Widget.prototype.first_child = widget.get_first_child
+Widget.prototype.model = widget.set_model
+Widget.prototype.add_child = widget.add_child
+Widget.prototype.add_sibling = widget.add_sibling
+Widget.prototype.remove = widget.remove
+Widget.prototype.invalidate = widget.invalidate
+Widget.prototype.bind_up = widget.bind_up
+Widget.prototype.bind_down = widget.bind_down
+Widget.prototype.bind_motion = widget.bind_motion
+Widget.prototype.bind_key = widget.bind_key
+Widget.prototype.bind_text = widget.bind_text
+Widget.prototype.bind_keyboard_lost = widget.bind_keyboard_lost
 Widget.prototype.grab_mouse = host.grab_mouse
 Widget.prototype.release_mouse = function(_, x, y) return host.release_mouse(x, y) end
 Widget.prototype.grab_keyboard = host.grab_keyboard

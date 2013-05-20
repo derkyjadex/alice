@@ -188,35 +188,6 @@ BINDING(key, key);
 BINDING(text, text);
 BINDING(keyboard_lost, keyboardLost);
 
-#define REG_CMD(x) TRY(al_commands_register(commands, "widget_"#x, cmd_widget_ ## x, NULL))
-
-AlError al_widget_system_register_commands(AlCommands *commands)
-{
-	BEGIN()
-
-	REG_CMD(get_next);
-	REG_CMD(get_prev);
-	REG_CMD(get_parent);
-	REG_CMD(get_first_child);
-
-	REG_CMD(add_child);
-	REG_CMD(add_sibling);
-	REG_CMD(remove);
-
-	REG_CMD(invalidate);
-
-	REG_CMD(set_model);
-
-	REG_CMD(bind_up);
-	REG_CMD(bind_down);
-	REG_CMD(bind_motion);
-	REG_CMD(bind_key);
-	REG_CMD(bind_text);
-	REG_CMD(bind_keyboard_lost);
-
-	PASS()
-}
-
 #define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget."#n, t, offsetof(AlWidget, x)))
 
 AlError al_widget_system_register_vars(AlVars *vars)
@@ -242,4 +213,30 @@ AlError al_widget_system_register_vars(AlVars *vars)
 	REG_VAR(VAR_VEC2, text_location, text.location);
 
 	PASS()
+}
+
+static const luaL_Reg lib[] = {
+	{"get_next", cmd_widget_get_next},
+	{"get_prev", cmd_widget_get_prev},
+	{"get_parent", cmd_widget_get_parent},
+	{"get_first_child", cmd_widget_get_first_child},
+	{"add_child", cmd_widget_add_child},
+	{"add_sibling", cmd_widget_add_sibling},
+	{"remove", cmd_widget_remove},
+	{"invalidate", cmd_widget_invalidate},
+	{"set_model", cmd_widget_set_model},
+	{"bind_up", cmd_widget_bind_up},
+	{"bind_down", cmd_widget_bind_down},
+	{"bind_motion", cmd_widget_bind_motion},
+	{"bind_key", cmd_widget_bind_key},
+	{"bind_text", cmd_widget_bind_text},
+	{"bind_keyboard_lost", cmd_widget_bind_keyboard_lost},
+	{NULL, NULL}
+};
+
+int luaopen_widget(lua_State *L)
+{
+	luaL_newlib(L, lib);
+
+	return 1;
 }

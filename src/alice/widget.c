@@ -363,7 +363,7 @@ AlError al_widget_systems_init(AlHost *host, lua_State *L, AlCommands *commands,
 	widgetSystem.host = host;
 
 	TRY(al_widget_system_init_lua(L));
-	TRY(al_widget_system_register_commands(commands));
+	luaL_requiref(L, "widget", luaopen_widget, false);
 	TRY(al_widget_system_register_vars(vars));
 
 	TRY(al_wrapper_wrap_ctor(widgetSystem.wrapper, al_widget_ctor, commands, NULL));
