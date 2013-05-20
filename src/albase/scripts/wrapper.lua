@@ -3,6 +3,8 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
+local vars = require 'vars'
+
 local _ctors = setmetatable({}, {__mode = 'k'})
 
 local function derive(base, init)
@@ -81,5 +83,5 @@ function make_accessor(getter, setter)
 end
 
 function make_var_accessor(var)
-	return make_accessor(commands.getter(var), commands.setter(var))
+	return make_accessor(vars.getter(var), vars.setter(var))
 end

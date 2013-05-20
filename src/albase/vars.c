@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 #include "albase/vars.h"
-#include "albase/commands.h"
 #include "albase/geometry.h"
 #include "albase/lua.h"
 
@@ -33,12 +32,10 @@ struct AlVars {
 
 typedef char * String;
 
-static int cmd_get(lua_State *L);
-static int cmd_getter(lua_State *L);
-static int cmd_set(lua_State *L);
-static int cmd_setter(lua_State *L);
+static AlLuaKey varsKey;
+static int luaopen_vars(lua_State *L);
 
-AlError al_vars_init(AlVars **result, lua_State *lua, AlCommands *commands)
+AlError al_vars_init(AlVars **result, lua_State *lua)
 {
 	BEGIN()
 
@@ -51,10 +48,11 @@ AlError al_vars_init(AlVars **result, lua_State *lua, AlCommands *commands)
 	lua_newtable(lua);
 	lua_settable(lua, LUA_REGISTRYINDEX);
 
-	TRY(al_commands_register(commands, "get", cmd_get, vars, NULL));
-	TRY(al_commands_register(commands, "getter", cmd_getter, vars, NULL));
-	TRY(al_commands_register(commands, "set", cmd_set, vars, NULL));
-	TRY(al_commands_register(commands, "setter", cmd_setter, vars, NULL));
+	lua_pushlightuserdata(lua, &varsKey);
+	lua_pushlightuserdata(lua, vars);
+	lua_settable(lua, LUA_REGISTRYINDEX);
+
+	luaL_requiref(lua, "vars", luaopen_vars, false);
 
 	*result = vars;
 
@@ -442,6 +440,24 @@ static int cmd_setter(lua_State *L)
 		lua_pushlightuserdata(L, entry);
 		lua_pushcclosure(L, setInstance, 1);
 	}
+
+	return 1;
+}
+
+static const luaL_Reg lib[] = {
+	{"get", cmd_get},
+	{"getter", cmd_getter},
+	{"set", cmd_set},
+	{"setter", cmd_setter},
+	{NULL, NULL}
+};
+
+static int luaopen_vars(lua_State *L)
+{
+	luaL_newlibtable(L, lib);
+	lua_pushlightuserdata(L, &varsKey);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	luaL_setfuncs(L, lib, 1);
 
 	return 1;
 }

@@ -105,7 +105,7 @@ AlError al_host_init(AlHost **result)
 	luaL_requiref(host->lua, "host", luaopen_host, false);
 
 	TRY(al_commands_init(&host->commands, host->lua));
-	TRY(al_vars_init(&host->vars, host->lua, host->commands));
+	TRY(al_vars_init(&host->vars, host->lua));
 
 	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
 	TRY(al_widget_systems_init(host, host->lua, host->commands, host->vars));
