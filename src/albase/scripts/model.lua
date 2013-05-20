@@ -4,7 +4,7 @@
 -- See COPYING for details.
 
 ModelPath = wrap('model_path')
-ModelPath.prototype.colour = make_var_accessor('model_path_colour')
+ModelPath.prototype.colour = make_var_accessor('model_path.colour')
 
 function ModelPath.prototype:points()
 	local values = {commands.model_path_get_points(self)}

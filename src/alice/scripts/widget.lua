@@ -15,7 +15,7 @@ local vars = {
 	'text', 'text_colour', 'text_size', 'text_location'}
 
 for i,var in ipairs(vars) do
-	Widget.prototype[var] = make_var_accessor('widget_' .. var)
+	Widget.prototype[var] = make_var_accessor('widget.' .. var)
 end
 
 Widget.prototype.next = commands.widget_get_next

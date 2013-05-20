@@ -202,7 +202,7 @@ AlError al_model_vars_init(AlVars *vars)
 {
 	BEGIN()
 
-	TRY(al_vars_register_instance(vars, "model_path_colour", VAR_VEC3, offsetof(AlModelPath, colour)));
+	TRY(al_vars_register_instance(vars, "model_path.colour", VAR_VEC3, offsetof(AlModelPath, colour)));
 
 	PASS()
 }

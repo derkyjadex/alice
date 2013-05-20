@@ -217,7 +217,7 @@ AlError al_widget_system_register_commands(AlCommands *commands)
 	PASS()
 }
 
-#define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget_"#n, t, offsetof(AlWidget, x)))
+#define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget."#n, t, offsetof(AlWidget, x)))
 
 AlError al_widget_system_register_vars(AlVars *vars)
 {
