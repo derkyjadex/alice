@@ -528,7 +528,7 @@ AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
 	TRY(al_wrapper_register_commands(shapeWrapper, commands, "model_shape"));
 	TRY(al_wrapper_register_commands(pathWrapper, commands, "model_path"));
 
-	TRY(al_model_commands_init(commands));
+	luaL_requiref(L, "model", luaopen_model, false);
 	TRY(al_model_vars_init(vars));
 
 	PASS()

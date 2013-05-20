@@ -175,29 +175,6 @@ static int cmd_model_path_hit_test(lua_State *L)
 	return 1;
 }
 
-#define REG_SHAPE_CMD(x) TRY(al_commands_register(commands, "model_shape_"#x, cmd_model_shape_ ## x, NULL))
-#define REG_PATH_CMD(x) TRY(al_commands_register(commands, "model_path_"#x, cmd_model_path_ ## x, NULL))
-
-AlError al_model_commands_init(AlCommands *commands)
-{
-	BEGIN()
-
-	REG_SHAPE_CMD(load);
-	REG_SHAPE_CMD(save);
-
-	REG_SHAPE_CMD(get_paths);
-	REG_SHAPE_CMD(add_path);
-	REG_SHAPE_CMD(remove_path);
-
-	REG_PATH_CMD(get_points);
-	REG_PATH_CMD(set_point);
-	REG_PATH_CMD(add_point);
-	REG_PATH_CMD(remove_point);
-	REG_PATH_CMD(hit_test);
-
-	PASS()
-}
-
 AlError al_model_vars_init(AlVars *vars)
 {
 	BEGIN()
@@ -205,4 +182,25 @@ AlError al_model_vars_init(AlVars *vars)
 	TRY(al_vars_register_instance(vars, "model_path.colour", VAR_VEC3, offsetof(AlModelPath, colour)));
 
 	PASS()
+}
+
+static const luaL_Reg lib[] = {
+	{"shape_load", cmd_model_shape_load},
+	{"shape_save", cmd_model_shape_save},
+	{"shape_get_paths", cmd_model_shape_get_paths},
+	{"shape_add_path", cmd_model_shape_add_path},
+	{"shape_remove_path", cmd_model_shape_remove_path},
+	{"path_get_points", cmd_model_path_get_points},
+	{"path_set_point", cmd_model_path_set_point},
+	{"path_add_point", cmd_model_path_add_point},
+	{"path_remove_point", cmd_model_path_remove_point},
+	{"path_hit_test", cmd_model_path_hit_test},
+	{NULL, NULL}
+};
+
+int luaopen_model(lua_State *L)
+{
+	luaL_newlib(L, lib);
+
+	return 1;
 }

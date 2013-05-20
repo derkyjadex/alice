@@ -3,11 +3,13 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
+local model = require 'model'
+
 ModelPath = wrap('model_path')
 ModelPath.prototype.colour = make_var_accessor('model_path.colour')
 
 function ModelPath.prototype:points()
-	local values = {commands.model_path_get_points(self)}
+	local values = {model.path_get_points(self)}
 	local points = {}
 	for i = 1, #values, 2 do
 		local point = {values[i], values[i + 1]}
@@ -17,10 +19,10 @@ function ModelPath.prototype:points()
 	return points
 end
 
-ModelPath.prototype.set_point = commands.model_path_set_point
-ModelPath.prototype.add_point = commands.model_path_add_point
-ModelPath.prototype.remove_point = commands.model_path_remove_point
-ModelPath.prototype.hit_test = commands.model_path_hit_test
+ModelPath.prototype.set_point = model.path_set_point
+ModelPath.prototype.add_point = model.path_add_point
+ModelPath.prototype.remove_point = model.path_remove_point
+ModelPath.prototype.hit_test = model.path_hit_test
 
 local function build_path(self, data)
 	local path = self:add_path(0, data[1], data[2], data[3], data[4])
@@ -41,11 +43,11 @@ Model = wrap('model_shape', function(self, ...)
 		build_path(self, data)
 	end
 end)
-Model.prototype.load = commands.model_shape_load
-Model.prototype.save = commands.model_shape_save
+Model.prototype.load = model.shape_load
+Model.prototype.save = model.shape_save
 
 function Model.prototype:paths()
-	return {commands.model_shape_get_paths(self)}
+	return {model.shape_get_paths(self)}
 end
-Model.prototype.add_path = commands.model_shape_add_path
-Model.prototype.remove_path = commands.model_shape_remove_path
+Model.prototype.add_path = model.shape_add_path
+Model.prototype.remove_path = model.shape_remove_path

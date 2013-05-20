@@ -8,10 +8,9 @@
 #define MODEL_SHAPE_CMDS_H
 
 #include "albase/common.h"
-#include "albase/commands.h"
 #include "albase/vars.h"
 
-AlError al_model_commands_init(AlCommands *commands);
+int luaopen_model(lua_State *L);
 AlError al_model_vars_init(AlVars *vars);
 
 #endif
