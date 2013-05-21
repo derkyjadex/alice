@@ -77,6 +77,9 @@ void al_vars_free(AlVars *vars)
 			lua_pop(L, 1);
 		}
 
+		lua_pop(L, 1);
+
+		lua_pushlightuserdata(L, &vars->entries);
 		lua_pushnil(L);
 		lua_settable(L, LUA_REGISTRYINDEX);
 
