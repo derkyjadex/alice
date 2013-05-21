@@ -17,6 +17,7 @@
 #include "scripts.h"
 #include "albase/lua.h"
 #include "widget_internal.h"
+#include "albase/wrapper.h"
 
 struct AlHost {
 	lua_State *lua;
@@ -73,7 +74,6 @@ AlError al_host_systems_init()
 
 void al_host_systems_free()
 {
-	al_widget_systems_free();
 	graphics_system_free();
 	SDL_Quit();
 }
@@ -106,9 +106,10 @@ AlError al_host_init(AlHost **result)
 
 	TRY(al_commands_init(&host->commands, host->lua));
 	TRY(al_vars_init(&host->vars, host->lua));
+	TRY(al_wrapper_system_init(host->lua));
 
-	TRY(al_model_systems_init(host->lua, host->commands, host->vars));
-	TRY(al_widget_systems_init(host, host->lua, host->commands, host->vars));
+	TRY(al_model_systems_init(host->lua, host->vars));
+	TRY(al_widget_systems_init(host, host->lua, host->vars));
 
 	TRY(al_script_run_base_scripts(host->lua));
 
@@ -145,13 +146,17 @@ void al_host_free(AlHost *host)
 {
 	if (host) {
 		al_widget_free(host->root);
-		al_commands_free(host->commands);
-		al_vars_free(host->vars);
-		lua_close(host->lua);
-		free(host);
 
-		al_model_systems_free();
 		al_widget_systems_free();
+		al_model_systems_free();
+
+		al_wrapper_system_free();
+		al_vars_free(host->vars);
+		al_commands_free(host->commands);
+
+		lua_close(host->lua);
+
+		free(host);
 	}
 }
 

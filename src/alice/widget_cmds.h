@@ -9,7 +9,6 @@
 #define WIDGET_CMDS_H
 
 #include "albase/wrapper.h"
-#include "albase/commands.h"
 
 extern AlLuaKey widgetBindings;
 

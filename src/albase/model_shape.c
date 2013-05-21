@@ -11,7 +11,6 @@
 #include "albase/stream.h"
 #include "albase/data.h"
 #include "albase/wrapper.h"
-#include "albase/commands.h"
 #include "model_shape_internal.h"
 #include "model_shape_cmds.h"
 
@@ -515,18 +514,15 @@ static void wrapper_model_path_free(lua_State *L, void *ptr)
 	_al_model_path_free(ptr);
 }
 
-AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars)
+AlError al_model_systems_init(lua_State *L, AlVars *vars)
 {
 	BEGIN()
 
-	TRY(al_wrapper_init(&shapeWrapper, L, sizeof(AlModelShape), wrapper_model_shape_free));
-	TRY(al_wrapper_init(&pathWrapper, L, sizeof(AlModelPath), wrapper_model_path_free));
+	TRY(al_wrapper_init(&shapeWrapper, "model_shape", sizeof(AlModelShape), wrapper_model_shape_free));
+	TRY(al_wrapper_init(&pathWrapper, "model_path", sizeof(AlModelPath), wrapper_model_path_free));
 
 	TRY(al_wrapper_wrap_ctor(shapeWrapper, al_model_shape_ctor));
 	TRY(al_wrapper_wrap_ctor(pathWrapper, al_model_path_ctor));
-
-	TRY(al_wrapper_register_commands(shapeWrapper, commands, "model_shape"));
-	TRY(al_wrapper_register_commands(pathWrapper, commands, "model_path"));
 
 	luaL_requiref(L, "model", luaopen_model, false);
 	TRY(al_model_vars_init(vars));

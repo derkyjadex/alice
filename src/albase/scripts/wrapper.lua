@@ -4,6 +4,7 @@
 -- See COPYING for details.
 
 local vars = require 'vars'
+local wrapper = require 'wrapper'
 
 local _ctors = setmetatable({}, {__mode = 'k'})
 
@@ -36,17 +37,15 @@ local function derive(base, init)
 end
 
 function wrap(type_name, init)
-	local wrap_ctor = commands[type_name .. '_wrap_ctor']
-	local set_prototype = commands[type_name .. '_set_prototype']
-
 	init = init or function() end
 	local prototype = {}
 	prototype.__index = prototype
 
-	local base_ctor
-	local class = wrap_ctor(function(ctor)
-		base_ctor = function(prototype)
-			return set_prototype(ctor(), prototype)
+	local ctor
+	local class = wrapper.wrap_ctor(type_name, function(base_ctor)
+		ctor = function(prototype)
+			local obj = base_ctor()
+			return wrapper.set_prototype(type_name, obj, prototype)
 		end
 
 		return setmetatable(
@@ -57,7 +56,7 @@ function wrap(type_name, init)
 			},
 			{
 				__call = function(self, ...)
-					local obj = base_ctor(prototype)
+					local obj = ctor(prototype)
 
 					init(obj, ...)
 
@@ -66,7 +65,7 @@ function wrap(type_name, init)
 			})
 	end)
 
-	_ctors[class] = base_ctor
+	_ctors[class] = ctor
 
 	return class
 end

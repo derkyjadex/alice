@@ -10,14 +10,13 @@
 #include "albase/common.h"
 #include "albase/geometry.h"
 #include "albase/lua.h"
-#include "albase/commands.h"
 #include "albase/vars.h"
 #include "albase/stream.h"
 
 typedef struct AlModelShape AlModelShape;
 typedef struct AlModelPath AlModelPath;
 
-AlError al_model_systems_init(lua_State *L, AlCommands *commands, AlVars *vars);
+AlError al_model_systems_init(lua_State *L, AlVars *vars);
 void al_model_systems_free(void);
 
 AlError al_model_shape_register_ctor(void);

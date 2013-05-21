@@ -337,11 +337,18 @@ static void wrapper_widget_free(lua_State *L, void *ptr)
 	_al_widget_free(ptr);
 }
 
-static AlError al_widget_system_init_lua(lua_State *L)
+AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
 {
 	BEGIN()
 
-	TRY(al_wrapper_init(&widgetSystem.wrapper, L, sizeof(AlWidget), wrapper_widget_free));
+	widgetSystem.lua = L;
+	widgetSystem.host = host;
+
+	TRY(al_wrapper_init(&widgetSystem.wrapper, "widget", sizeof(AlWidget), wrapper_widget_free));
+	TRY(al_wrapper_wrap_ctor(widgetSystem.wrapper, al_widget_ctor, NULL));
+
+	luaL_requiref(L, "widget", luaopen_widget, false);
+	TRY(al_widget_system_register_vars(vars));
 
 	lua_pushlightuserdata(L, &widgetBindings);
 	lua_newtable(L);
@@ -351,23 +358,6 @@ static AlError al_widget_system_init_lua(lua_State *L)
 	lua_settable(L, -3);
 	lua_setmetatable(L, -2);
 	lua_settable(L, LUA_REGISTRYINDEX);
-
-	PASS()
-}
-
-AlError al_widget_systems_init(AlHost *host, lua_State *L, AlCommands *commands, AlVars *vars)
-{
-	BEGIN()
-
-	widgetSystem.lua = L;
-	widgetSystem.host = host;
-
-	TRY(al_widget_system_init_lua(L));
-	luaL_requiref(L, "widget", luaopen_widget, false);
-	TRY(al_widget_system_register_vars(vars));
-
-	TRY(al_wrapper_wrap_ctor(widgetSystem.wrapper, al_widget_ctor, commands, NULL));
-	TRY(al_wrapper_register_commands(widgetSystem.wrapper, commands, "widget"));
 
 	CATCH(
 		al_widget_systems_free();

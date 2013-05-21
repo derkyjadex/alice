@@ -12,7 +12,6 @@
 
 #include "albase/common.h"
 #include "albase/geometry.h"
-#include "albase/commands.h"
 #include "albase/vars.h"
 #include "albase/model.h"
 #include "albase/lua.h"
@@ -21,7 +20,7 @@
 typedef struct AlWidget AlWidget;
 struct AlHost;
 
-AlError al_widget_systems_init(struct AlHost *host, lua_State *L, AlCommands *commands, AlVars *vars);
+AlError al_widget_systems_init(struct AlHost *host, lua_State *L, AlVars *vars);
 void al_widget_systems_free(void);
 
 AlError al_widget_init(AlWidget **widget);
