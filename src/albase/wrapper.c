@@ -65,9 +65,11 @@ void al_wrapper_system_free()
 static int mt_gc(lua_State *L)
 {
 	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
-	void *ptr = lua_touserdata(L, 1);
 
-	wrapper->free(L, ptr);
+	if (wrapper->free) {
+		void *ptr = lua_touserdata(L, 1);
+		wrapper->free(L, ptr);
+	}
 
 	return 0;
 }
@@ -102,7 +104,7 @@ static void build_mt(AlWrapper *wrapper)
 	lua_newtable(L);
 
 	lua_pushliteral(L, "__gc");
-	lua_pushlightuserdata(L, wrapper);
+	lua_pushvalue(L, -3);
 	lua_pushcclosure(L, mt_gc, 1);
 	lua_settable(L, -3);
 
@@ -117,6 +119,8 @@ static void build_mt(AlWrapper *wrapper)
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushcclosure(L, mt_newindex, 1);
 	lua_settable(L, -3);
+
+	lua_replace(L, -2);
 }
 
 static int base_ctor(lua_State *L)
@@ -165,11 +169,12 @@ static void init_type_tables(AlWrapper *wrapper)
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &wrapper->mt);
+	lua_pushvalue(L, -2);
 	build_mt(wrapper);
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &wrapper->ctor);
-	lua_pushlightuserdata(L, wrapper);
+	lua_pushvalue(L, -2);
 	lua_pushcclosure(L, base_ctor, 1);
 	lua_settable(L, LUA_REGISTRYINDEX);
 
@@ -192,9 +197,34 @@ static void register_type(AlWrapper *wrapper, const char *typeName)
 
 	lua_pushlightuserdata(L, &wrappers);
 	lua_gettable(L, LUA_REGISTRYINDEX);
+
 	lua_pushstring(L, typeName);
-	lua_pushlightuserdata(L, wrapper);
+	lua_pushvalue(L, -3);
 	lua_settable(L, -3);
+
+	lua_pushlightuserdata(L, wrapper);
+	lua_pushstring(L, typeName);
+	lua_settable(L, -3);
+
+	lua_pop(L, 1);
+}
+
+static void unregister_type(AlWrapper *wrapper)
+{
+	lua_State *L = wrapperSystem.lua;
+
+	lua_pushlightuserdata(L, &wrappers);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+
+	lua_pushlightuserdata(L, wrapper);
+	lua_gettable(L, -2);
+	lua_pushnil(L);
+	lua_settable(L, -3);
+
+	lua_pushlightuserdata(L, wrapper);
+	lua_pushnil(L);
+	lua_settable(L, -3);
+
 	lua_pop(L, 1);
 }
 
@@ -202,14 +232,17 @@ AlError al_wrapper_init(AlWrapper **result, const char *typeName, size_t objSize
 {
 	BEGIN()
 
-	AlWrapper *wrapper = NULL;
-	TRY(al_malloc(&wrapper, sizeof(AlWrapper), 1));
+	lua_State *L = wrapperSystem.lua;
+
+	AlWrapper *wrapper = lua_newuserdata(L, sizeof(AlWrapper));
 
 	wrapper->objSize = objSize;
 	wrapper->free = free;
 
 	init_type_tables(wrapper);
 	register_type(wrapper, typeName);
+
+	lua_pop(L, 1);
 
 	*result = wrapper;
 
@@ -221,13 +254,16 @@ void al_wrapper_free(AlWrapper *wrapper)
 	if (wrapper) {
 		lua_State *L = wrapperSystem.lua;
 
+		AlWrapperFree free = wrapper->free;
+		wrapper->free = NULL;
+
 		lua_pushlightuserdata(L, &wrapper->ptrs);
 		lua_gettable(L, LUA_REGISTRYINDEX);
 
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
 			void *ptr = lua_touserdata(L, -2);
-			wrapper->free(L, ptr);
+			free(L, ptr);
 			lua_pushnil(L);
 			lua_setmetatable(L, -2);
 			lua_pop(L, 1);
@@ -242,7 +278,7 @@ void al_wrapper_free(AlWrapper *wrapper)
 		remove_table(L, &wrapper->retained);
 		remove_table(L, &wrapper->references);
 
-		free(wrapper);
+		unregister_type(wrapper);
 	}
 }
 
