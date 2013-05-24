@@ -5,6 +5,7 @@ sources = Split('''
 	common.c
 	data.c
 	error.c
+	file_system.c
 	geometry.c
 	model_shape.c
 	model_shape_cmds.c
@@ -12,6 +13,7 @@ sources = Split('''
 	stream.c
 	stream_file.c
 	stream_mem.c
+	text.c
 	vars.c
 	wrapper.c
 	gl/framebuffer.c

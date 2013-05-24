@@ -1,13 +1,11 @@
 Import('env')
 
 sources = Split('''
-	host.c
-	file_system.c
+	graphics.c
 	graphics_text.c
-	text.c
+	host.c
 	widget.c
 	widget_cmds.c
-	graphics.c
 ''')
 
 shaders = Split('''
