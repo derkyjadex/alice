@@ -3,6 +3,8 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
+local text = require 'text'
+
 TextBox = Widget:derive(function(self, callback)
 	Widget.init(self)
 

@@ -3,6 +3,8 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
+local fs = require 'fs'
+
 FileWidget = Widget:derive(function(self, mode)
 	Widget.init(self)
 

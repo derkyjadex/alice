@@ -43,7 +43,7 @@ AlError al_script_init(lua_State **result)
 	};
 
 	for (luaL_Reg *lib = luaLibs; lib->func; lib++) {
-		luaL_requiref(L, lib->name, lib->func, true);
+		luaL_requiref(L, lib->name, lib->func, false);
 		lua_pop(L, 1);
 	}
 
