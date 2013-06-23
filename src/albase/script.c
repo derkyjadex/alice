@@ -86,6 +86,19 @@ static AlError run_script(lua_State *L, int loadResult)
 	)
 }
 
+AlError al_script_run_file(lua_State *L, const char *filename)
+{
+	BEGIN()
+
+	AlStream *stream = NULL;
+	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_script_run_stream(L, stream));
+
+	PASS(
+		al_stream_free(stream);
+	)
+}
+
 AlError al_script_run_base_scripts(lua_State *L)
 {
 	BEGIN()

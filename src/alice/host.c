@@ -162,15 +162,7 @@ void al_host_free(AlHost *host)
 
 AlError al_host_run_script(AlHost *host, const char *filename)
 {
-	BEGIN()
-
-	AlStream *stream = NULL;
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
-	TRY(al_script_run_stream(host->lua, stream));
-
-	PASS(
-		al_stream_free(stream);
-	)
+	return al_script_run_file(host->lua, filename);
 }
 
 lua_State *al_host_get_lua(AlHost *host)
