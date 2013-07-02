@@ -93,25 +93,23 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 	BEGIN()
 
 	FileStream *stream = NULL;
-	char *filenameCopy = NULL;
-
 	TRY(al_malloc(&stream, sizeof(FileStream), 1));
 
-	TRY(al_malloc(&filenameCopy, sizeof(char), strlen(filename) + 1));
-	strcpy(filenameCopy, filename);
-
 	stream->base = (AlStream){
-		.name = filenameCopy,
+		.name = NULL,
 		.read = file_read,
 		.write = file_write,
 		.seek = file_seek,
 		.tell = file_tell,
 		.free = file_free
 	};
-
 	stream->file = NULL;
+
+	TRY(al_malloc(&stream->base.name, sizeof(char), strlen(filename) + 1));
+	strcpy((char *)stream->base.name, filename);
+
 	stream->file = fopen(filename, (mode == AL_OPEN_READ) ? "rb" : "w");
-	if (stream->file == NULL) {
+	if (!stream->file) {
 		al_log_error("Could not open file: %s", filename);
 		THROW(AL_ERROR_IO);
 	}
@@ -120,7 +118,6 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 
 	CATCH(
 		file_free(&stream->base);
-		free(filenameCopy);
 	)
 	FINALLY()
 }
