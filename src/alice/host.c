@@ -78,6 +78,30 @@ void al_host_systems_free()
 	SDL_Quit();
 }
 
+static AlError run_alice_scripts(lua_State *L)
+{
+	BEGIN()
+
+	AlMemStream scripts[] = {
+		AL_SCRIPT(widget),
+		AL_SCRIPT(draggable),
+		AL_SCRIPT(toolbar),
+		AL_SCRIPT(slider_widget),
+		AL_SCRIPT(colour_widget),
+		AL_SCRIPT(model_widget),
+		AL_SCRIPT(file_widget),
+		AL_SCRIPT(text_box),
+		AL_SCRIPT(panning_widget),
+		AL_SCRIPT(model_view_model)
+	};
+
+	for (int i = 0; i < sizeof(scripts) / sizeof(scripts[0]); i++) {
+		TRY(al_script_run_stream(L, &scripts[i].base));
+	}
+
+	PASS()
+}
+
 AlError al_host_init(AlHost **result)
 {
 	BEGIN()
@@ -112,23 +136,7 @@ AlError al_host_init(AlHost **result)
 	TRY(al_widget_systems_init(host, host->lua, host->vars));
 
 	TRY(al_script_run_base_scripts(host->lua));
-
-	AlMemStream scripts[] = {
-		AL_SCRIPT(widget),
-		AL_SCRIPT(draggable),
-		AL_SCRIPT(toolbar),
-		AL_SCRIPT(slider_widget),
-		AL_SCRIPT(colour_widget),
-		AL_SCRIPT(model_widget),
-		AL_SCRIPT(file_widget),
-		AL_SCRIPT(text_box),
-		AL_SCRIPT(panning_widget),
-		AL_SCRIPT(model_view_model)
-	};
-
-	for (int i = 0; i < sizeof(scripts) / sizeof(scripts[0]); i++) {
-		TRY(al_script_run_stream(host->lua, &scripts[i].base));
-	}
+	TRY(run_alice_scripts(host->lua));
 
 	TRY(al_widget_init(&host->root));
 	host->root->bounds = (Box){{0, 0}, host->screenSize};
