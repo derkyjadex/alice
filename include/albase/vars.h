@@ -32,8 +32,6 @@ typedef struct {
 
 AlError al_vars_init(AlVars **result, lua_State *lua);
 void al_vars_free(AlVars *vars);
-AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr);
-AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset);
 
 AlError al_vars_register(AlVars *vars, AlVarReg reg);
 

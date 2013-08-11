@@ -72,30 +72,6 @@ void al_vars_free(AlVars *vars)
 	}
 }
 
-AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr)
-{
-	return al_vars_register(vars, (AlVarReg){
-		.name = name,
-		.type = type,
-		.scope = AL_VAR_GLOBAL,
-		.access = {
-			.globalPtr = ptr
-		}
-	});
-}
-
-AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset)
-{
-	return al_vars_register(vars, (AlVarReg){
-		.name = name,
-		.type = type,
-		.scope = AL_VAR_INSTANCE,
-		.access = {
-			.instanceOffset = offset
-		}
-	});
-}
-
 AlError al_vars_register(AlVars *vars, AlVarReg reg)
 {
 	BEGIN()
