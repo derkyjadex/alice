@@ -179,7 +179,14 @@ AlError al_model_vars_init(AlVars *vars)
 {
 	BEGIN()
 
-	TRY(al_vars_register_instance(vars, "model_path.colour", VAR_VEC3, offsetof(AlModelPath, colour)));
+	TRY(al_vars_register(vars, (AlVarReg){
+		.name = "model_path.colour",
+		.type = VAR_VEC3,
+		.scope = AL_VAR_INSTANCE,
+		.access = {
+			.instanceOffset = offsetof(AlModelPath, colour)
+		}
+	}));
 
 	PASS()
 }

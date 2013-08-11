@@ -188,7 +188,14 @@ BINDING(key, key);
 BINDING(text, text);
 BINDING(keyboard_lost, keyboardLost);
 
-#define REG_VAR(t, n, x) TRY(al_vars_register_instance(vars, "widget."#n, t, offsetof(AlWidget, x)))
+#define REG_VAR(t, n, x) TRY(al_vars_register(vars, (AlVarReg){ \
+	.name = "widget."#n, \
+	.type = t, \
+	.scope = AL_VAR_INSTANCE, \
+	.access = { \
+		.instanceOffset = offsetof(AlWidget, x) \
+	} \
+}));
 
 AlError al_widget_system_register_vars(AlVars *vars)
 {
