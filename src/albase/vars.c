@@ -11,20 +11,6 @@
 #include "albase/geometry.h"
 #include "albase/lua.h"
 
-typedef struct AlVarEntry {
-	char *name;
-	AlVarType type;
-	bool global;
-	union {
-		struct {
-			void *ptr;
-		} global;
-		struct {
-			size_t offset;
-		} instance;
-	} data;
-} AlVarEntry;
-
 struct AlVars {
 	lua_State *lua;
 	AlLuaKey entries;
@@ -71,8 +57,7 @@ void al_vars_free(AlVars *vars)
 
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
-			AlVarEntry *entry = lua_touserdata(L, -1);
-			free(entry->name);
+			AlVarReg *entry = lua_touserdata(L, -1);
 			free(entry);
 			lua_pop(L, 1);
 		}
@@ -87,47 +72,48 @@ void al_vars_free(AlVars *vars)
 	}
 }
 
-static AlError vars_register(AlVars *vars, const char *name, AlVarType type, bool global, void *ptr, size_t offset)
-{
-	BEGIN()
-
-	AlVarEntry *entry = NULL;
-	TRY(al_malloc(&entry, sizeof(AlVarEntry), 1));
-
-	entry->name = NULL;
-	TRY(al_malloc(&entry->name, sizeof(char), strlen(name) + 1));
-	strcpy(entry->name, name);
-
-	entry->type = type;
-	entry->global = global;
-	if (global) {
-		entry->data.global.ptr = ptr;
-	} else {
-		entry->data.instance.offset = offset;
-	}
-
-	lua_State *L = vars->lua;
-	lua_pushlightuserdata(L, &vars->entries);
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	lua_pushstring(L, name);
-	lua_pushlightuserdata(L, entry);
-	lua_settable(L, -3);
-	lua_pop(L, 1);
-
-	CATCH(
-		free(entry);
-	)
-	FINALLY()
-}
-
 AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr)
 {
-	return vars_register(vars, name, type, true, ptr, 0);
+	return al_vars_register(vars, (AlVarReg){
+		.name = name,
+		.type = type,
+		.scope = AL_VAR_GLOBAL,
+		.access = {
+			.globalPtr = ptr
+		}
+	});
 }
 
 AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset)
 {
-	return vars_register(vars, name, type, false, NULL, offset);
+	return al_vars_register(vars, (AlVarReg){
+		.name = name,
+		.type = type,
+		.scope = AL_VAR_INSTANCE,
+		.access = {
+			.instanceOffset = offset
+		}
+	});
+}
+
+AlError al_vars_register(AlVars *vars, AlVarReg reg)
+{
+	BEGIN()
+
+	AlVarReg *entry = NULL;
+	TRY(al_malloc(&entry, sizeof(AlVarReg), 1));
+
+	*entry = reg;
+	entry->name = NULL;
+
+	lua_State *L = vars->lua;
+	lua_pushlightuserdata(L, &vars->entries);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushstring(L, reg.name);
+	lua_pushlightuserdata(L, entry);
+	lua_settable(L, -3);
+
+	PASS()
 }
 
 static bool tobool(lua_State *L, int n)
@@ -215,13 +201,13 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	return newValue;
 }
 
-static void *get_instance_ptr(lua_State *L, AlVarEntry *entry, int n)
+static void *get_instance_ptr(lua_State *L, AlVarReg *entry, int n)
 {
 	luaL_checkany(L, n);
 	switch (lua_type(L, n)) {
 		case LUA_TLIGHTUSERDATA:
 		case LUA_TUSERDATA:
-			return lua_touserdata(L, n) + entry->data.instance.offset;
+			return lua_touserdata(L, n) + entry->access.instanceOffset;
 
 		default:
 			luaL_error(L, "must supply userdata for this var, %s", entry->name);
@@ -238,7 +224,7 @@ static void *get_instance_ptr(lua_State *L, AlVarEntry *entry, int n)
 	} \
 	static int get_##type##_instance(lua_State *L) \
 	{ \
-		AlVarEntry *entry = lua_touserdata(L, lua_upvalueindex(1)); \
+		AlVarReg *entry = lua_touserdata(L, lua_upvalueindex(1)); \
 		type *ptr = get_instance_ptr(L, entry, 1); \
 		get(L, *ptr); \
 		return n; \
@@ -252,7 +238,7 @@ static void *get_instance_ptr(lua_State *L, AlVarEntry *entry, int n)
 	} \
 	static int set_##type##_instance(lua_State *L) \
 	{ \
-		AlVarEntry *entry = lua_touserdata(L, lua_upvalueindex(1)); \
+		AlVarReg *entry = lua_touserdata(L, lua_upvalueindex(1)); \
 		type *ptr = get_instance_ptr(L, entry, 1); \
 		const int arg = 2; \
 		*ptr = set; \
@@ -269,7 +255,7 @@ ACCESSOR(Vec4, pushVec4, 4, toVec4(L, arg))
 ACCESSOR(Box, pushBox, 4, toBox(L, arg))
 ACCESSOR(String, lua_pushstring, 1, tonewString(L, arg, *ptr))
 
-static AlVarEntry *get_entry(lua_State *L)
+static AlVarReg *get_entry(lua_State *L)
 {
 	AlVars *vars = lua_touserdata(L, lua_upvalueindex(1));
 	const char *name = luaL_checkstring(L, 1);
@@ -278,7 +264,7 @@ static AlVarEntry *get_entry(lua_State *L)
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushvalue(L, 1);
 	lua_gettable(L, -2);
-	AlVarEntry *entry = lua_touserdata(L, -1);
+	AlVarReg *entry = lua_touserdata(L, -1);
 	lua_pop(L, 2);
 
 	if (!entry) {
@@ -290,11 +276,11 @@ static AlVarEntry *get_entry(lua_State *L)
 
 static int cmd_get(lua_State *L)
 {
-	AlVarEntry *entry = get_entry(L);
+	AlVarReg *entry = get_entry(L);
 	void *ptr;
 
-	if (entry->global) {
-		ptr = entry->data.global.ptr;
+	if (entry->scope == AL_VAR_GLOBAL) {
+		ptr = entry->access.globalPtr;
 
 	} else {
 		ptr = get_instance_ptr(L, entry, 2);
@@ -315,7 +301,7 @@ static int cmd_get(lua_State *L)
 
 static int cmd_getter(lua_State *L)
 {
-	AlVarEntry *entry = get_entry(L);
+	AlVarReg *entry = get_entry(L);
 	lua_CFunction getGlobal, getInstance;
 
 #define USE(type) \
@@ -336,8 +322,8 @@ static int cmd_getter(lua_State *L)
 	}
 #undef USE
 
-	if (entry->global) {
-		lua_pushlightuserdata(L, entry->data.global.ptr);
+	if (entry->scope == AL_VAR_GLOBAL) {
+		lua_pushlightuserdata(L, entry->access.globalPtr);
 		lua_pushcclosure(L, getGlobal, 1);
 
 	} else if (lua_gettop(L) >= 2) {
@@ -355,12 +341,12 @@ static int cmd_getter(lua_State *L)
 
 static int cmd_set(lua_State *L)
 {
-	AlVarEntry *entry = get_entry(L);
+	AlVarReg *entry = get_entry(L);
 	void *value;
 	int valueArg;
 
-	if (entry->global) {
-		value = entry->data.global.ptr;
+	if (entry->scope == AL_VAR_GLOBAL) {
+		value = entry->access.globalPtr;
 		valueArg = 2;
 
 	} else {
@@ -408,7 +394,7 @@ static int cmd_set(lua_State *L)
 
 static int cmd_setter(lua_State *L)
 {
-	AlVarEntry *entry = get_entry(L);
+	AlVarReg *entry = get_entry(L);
 	lua_CFunction setGlobal, setInstance;
 
 #define USE(type) \
@@ -430,8 +416,8 @@ static int cmd_setter(lua_State *L)
 	}
 #undef USE
 
-	if (entry->global) {
-		lua_pushlightuserdata(L, entry->data.global.ptr);
+	if (entry->scope == AL_VAR_GLOBAL) {
+		lua_pushlightuserdata(L, entry->access.globalPtr);
 		lua_pushcclosure(L, setGlobal, 1);
 
 	} else if (lua_gettop(L) >= 2) {

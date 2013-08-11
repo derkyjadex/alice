@@ -20,9 +20,21 @@ typedef enum {
 
 typedef struct AlVars AlVars;
 
+typedef struct {
+	const char *name;
+	AlVarType type;
+	enum { AL_VAR_GLOBAL, AL_VAR_INSTANCE } scope;
+	union {
+		void *globalPtr;
+		size_t instanceOffset;
+	} access;
+} AlVarReg;
+
 AlError al_vars_init(AlVars **result, lua_State *lua);
 void al_vars_free(AlVars *vars);
 AlError al_vars_register_global(AlVars *vars, const char *name, AlVarType type, void *ptr);
 AlError al_vars_register_instance(AlVars *vars, const char *name, AlVarType type, size_t offset);
+
+AlError al_vars_register(AlVars *vars, AlVarReg reg);
 
 #endif
