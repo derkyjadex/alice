@@ -5,7 +5,7 @@
  */
 
 #include <stdlib.h>
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include <wchar.h>
 #include <locale.h>
 #include <wctype.h>
@@ -62,9 +62,6 @@ AlError al_host_systems_init()
 		al_log_error("Could not set locale to %s", locale);
 		THROW(AL_ERROR_GENERIC);
 	}
-
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	SDL_EnableUNICODE(1);
 
 	CATCH(
 		al_host_systems_free();
@@ -236,17 +233,12 @@ static bool is_char(wchar_t c)
 
 static void handle_key_down(AlHost *host, SDL_KeyboardEvent event)
 {
-	static char text[MB_LEN_MAX + 1] = "";
+	al_widget_send_key(host->keyboardWidget, event.keysym.sym);
+}
 
-	if (is_char(event.keysym.unicode)) {
-		int numBytes = wctomb(text, event.keysym.unicode);
-		text[numBytes] = '\0';
-
-		al_widget_send_text(host->keyboardWidget, text);
-
-	} else {
-		al_widget_send_key(host->keyboardWidget, event.keysym.sym);
-	}
+static void handle_text(AlHost *host, SDL_TextInputEvent event)
+{
+	al_widget_send_text(host->keyboardWidget, event.text);
 }
 
 void al_host_run(AlHost *host)
@@ -281,6 +273,10 @@ void al_host_run(AlHost *host)
 					handle_key_down(host, event.key);
 					break;
 
+				case SDL_TEXTINPUT:
+					handle_text(host, event.text);
+					break;
+
 				case SDL_USEREVENT:
 					if (event.user.code == IGNORE_NEXT_MOTION_EVENT)
 						ignoreNextMotion = true;
@@ -312,8 +308,7 @@ Vec2 al_host_grab_mouse(AlHost *host, AlWidget *widget)
 	ignoreEvent.user.code = IGNORE_NEXT_MOTION_EVENT;
 	SDL_PushEvent(&ignoreEvent);
 
-	SDL_ShowCursor(SDL_DISABLE);
-	SDL_WM_GrabInput(SDL_GRAB_ON);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 #ifdef RASPI
 	showMouse = false;
@@ -333,9 +328,9 @@ void al_host_release_mouse(AlHost *host, Vec2 location)
 	location.y = clamp(location.y, 0, host->screenSize.y);
 
 	host->grabbingWidget = NULL;
-	SDL_WM_GrabInput(SDL_GRAB_OFF);
-	SDL_ShowCursor(SDL_ENABLE);
-	SDL_WarpMouse(location.x, host->screenSize.y - location.y);
+
+	SDL_SetRelativeMouseMode(SDL_FALSE);
+	SDL_WarpMouseInWindow(NULL, location.x, host->screenSize.y - location.y);
 
 #ifdef RASPI
 	showMouse = true;

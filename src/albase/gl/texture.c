@@ -7,9 +7,9 @@
 #include <stdlib.h>
 
 #if defined(__APPLE__)
-	#include <SDL_image/SDL_image.h>
+	#include <SDL2_image/SDL_image.h>
 #else
-	#include <SDL/SDL_image.h>
+	#include <SDL2/SDL_image.h>
 #endif
 
 #include "albase/gl/texture.h"
@@ -78,21 +78,21 @@ static AlError texture_load_from_surface(AlGlTexture *texture, SDL_Surface *surf
 	)
 }
 
-static int rwops_seek(SDL_RWops *rw, int offset, int whence)
+static Sint64 rwops_seek(SDL_RWops *rw, Sint64 offset, int whence)
 {
 	AlStream *stream = rw->hidden.unknown.data1;
 
 	AlError error = stream->seek(stream, offset, whence);
 	if (error)
-		return -1;
+		return 0;
 
 	long position;
 	stream->tell(stream, &position);
 
-	return (int)position;
+	return position;
 }
 
-static int rwops_read(SDL_RWops *rw, void *ptr, int size, int maxnum)
+static size_t rwops_read(SDL_RWops *rw, void *ptr, size_t size, size_t maxnum)
 {
 	AlStream *stream = rw->hidden.unknown.data1;
 
@@ -102,15 +102,15 @@ static int rwops_read(SDL_RWops *rw, void *ptr, int size, int maxnum)
 	if (size == 1) {
 		error = stream->read(stream, ptr, maxnum, &read);
 		if (error)
-			return -1;
+			return 0;
 
-		return (int)read;
+		return read;
 
 	} else {
-		for (int i = 0; i < maxnum; i++) {
+		for (size_t i = 0; i < maxnum; i++) {
 			error = stream->read(stream, ptr, size, &read);
 			if (error || read != size)
-				return -1;
+				return 0;
 
 			if (read == 0)
 				return i;
@@ -132,8 +132,7 @@ AlError algl_texture_load_from_stream(AlGlTexture *texture, AlStream *stream)
 		.hidden.unknown.data1 = stream
 	};
 
-	SDL_Surface *surface = NULL;
-	surface = IMG_Load_RW(&ops, 0);
+	SDL_Surface *surface = IMG_Load_RW(&ops, 0);
 	if (!surface) {
 		al_log_error("Could not load image");
 		THROW(AL_ERROR_IO);

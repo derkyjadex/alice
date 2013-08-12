@@ -8,7 +8,7 @@
 #define __ALICE_WIDGET_H__
 
 #include <stdbool.h>
-#include <SDL/SDL_keysym.h>
+#include <SDL2/SDL_keycode.h>
 
 #include "albase/common.h"
 #include "albase/geometry.h"
@@ -33,7 +33,7 @@ void al_widget_invalidate(AlWidget *widget);
 AlError al_widget_send_down(AlWidget *widget, Vec2 location);
 AlError al_widget_send_up(AlWidget *widget, Vec2 location);
 AlError al_widget_send_motion(AlWidget *widget, Vec2 motion);
-AlError al_widget_send_key(AlWidget *widget, SDLKey key);
+AlError al_widget_send_key(AlWidget *widget, SDL_Keycode key);
 AlError al_widget_send_text(AlWidget *widget, const char *text);
 AlError al_widget_send_keyboard_lost(AlWidget *widget);
 

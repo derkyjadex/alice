@@ -9,7 +9,7 @@
 
 #if defined(__APPLE__)
 	#define NO_SDL_GLEXT
-	#include <SDL/SDL_opengl.h>
+	#include <SDL2/SDL_opengl.h>
 #endif
 
 #if defined(RASPI)

@@ -275,7 +275,7 @@ AlError al_widget_send_motion(AlWidget *widget, Vec2 motion)
 	return call_binding(widget, &widget->motionBinding, 2);
 }
 
-AlError al_widget_send_key(AlWidget *widget, SDLKey key)
+AlError al_widget_send_key(AlWidget *widget, SDL_Keycode key)
 {
 	lua_pushinteger(widgetSystem.lua, key);
 
