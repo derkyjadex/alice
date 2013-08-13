@@ -290,6 +290,7 @@ void al_host_run(AlHost *host)
 Vec2 al_host_grab_mouse(AlHost *host, AlWidget *widget)
 {
 	host->grabbingWidget = widget;
+	Vec2 position = get_mouse_pos(host);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -297,7 +298,7 @@ Vec2 al_host_grab_mouse(AlHost *host, AlWidget *widget)
 	showMouse = false;
 #endif
 
-	return get_mouse_pos(host);
+	return position;
 }
 
 static double clamp(double value, double min, double max)
