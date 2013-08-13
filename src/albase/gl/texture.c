@@ -47,22 +47,22 @@ static AlError texture_load_from_surface(AlGlTexture *texture, SDL_Surface *surf
 {
 	BEGIN()
 
-	SDL_PixelFormat format = {
-		NULL, 32, 4,
-		0, 0, 0, 0,
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-		0, 8, 16, 24,
-		0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF,
-#else
-		24, 16, 8, 0,
-		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000,
-#endif
-		0, 0
-	};
+	SDL_PixelFormat *format = NULL;
+	SDL_Surface *converted = NULL;
 
-	SDL_Surface *converted = SDL_ConvertSurface(surface, &format, SDL_SWSURFACE);
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
+#else
+	format = SDL_AllocFormat(SDL_PIXELFORMAT_ABGR8888);
+#endif
+	if (!format) {
+		al_log_error("Error creating pixel format: %s", SDL_GetError());
+		THROW(AL_ERROR_IO)
+	}
+
+	converted = SDL_ConvertSurface(surface, format, SDL_SWSURFACE);
 	if (!converted) {
-		al_log_error("Error converting image");
+		al_log_error("Error converting image: %s", SDL_GetError());
 		THROW(AL_ERROR_IO)
 	}
 
@@ -74,6 +74,7 @@ static AlError texture_load_from_surface(AlGlTexture *texture, SDL_Surface *surf
 
 	PASS(
 		SDL_FreeSurface(converted);
+		SDL_FreeFormat(format);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	)
 }
