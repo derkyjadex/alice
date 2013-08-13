@@ -79,9 +79,6 @@
 		1A5D166014E6B23800A79CBA /* geometry.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = geometry.c; sourceTree = "<group>"; };
 		1A5D16EE14E6B6B100A79CBA /* commands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = commands.c; sourceTree = "<group>"; };
 		1A5D16F514E6B6B100A79CBA /* vars.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vars.c; sourceTree = "<group>"; };
-		1A5D170014E6B8D500A79CBA /* Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Prefix.pch; sourceTree = "<group>"; };
-		1A5D170114E6B8D500A79CBA /* SDLMain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SDLMain.h; sourceTree = "<group>"; };
-		1A5D170214E6B8D500A79CBA /* SDLMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SDLMain.m; sourceTree = "<group>"; };
 		1A5D170814E6C02900A79CBA /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
 		1A5D170A14E6C02900A79CBA /* geometry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = geometry.h; sourceTree = "<group>"; };
 		1A5D170E14E6C02900A79CBA /* commands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = commands.h; sourceTree = "<group>"; };
@@ -266,16 +263,6 @@
 			path = albase;
 			sourceTree = "<group>";
 		};
-		1A5D16FF14E6B8BF00A79CBA /* osx */ = {
-			isa = PBXGroup;
-			children = (
-				1A5D170014E6B8D500A79CBA /* Prefix.pch */,
-				1A5D170114E6B8D500A79CBA /* SDLMain.h */,
-				1A5D170214E6B8D500A79CBA /* SDLMain.m */,
-			);
-			path = osx;
-			sourceTree = "<group>";
-		};
 		1A5D170714E6C02900A79CBA /* albase */ = {
 			isa = PBXGroup;
 			children = (
@@ -368,7 +355,6 @@
 			children = (
 				1A5D165D14E6B22600A79CBA /* albase */,
 				1A42FD60160DEC9000807A51 /* alice */,
-				1A5D16FF14E6B8BF00A79CBA /* osx */,
 			);
 			name = Source;
 			path = src;
