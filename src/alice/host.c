@@ -32,8 +32,6 @@ struct AlHost {
 	AlWidget *keyboardWidget;
 };
 
-static const int IGNORE_NEXT_MOTION_EVENT = 1;
-
 static AlLuaKey hostKey;
 static int luaopen_host(lua_State *L);
 
@@ -244,7 +242,6 @@ static void handle_text(AlHost *host, SDL_TextInputEvent event)
 void al_host_run(AlHost *host)
 {
 	SDL_Event event;
-	bool ignoreNextMotion = false;
 
 	while (!host->finished) {
 
@@ -260,10 +257,7 @@ void al_host_run(AlHost *host)
 #ifdef RASPI
 					widget_invalidate(host->root);
 #endif
-					if (ignoreNextMotion) {
-						ignoreNextMotion = false;
-
-					} else if (host->grabbingWidget) {
+					if (host->grabbingWidget) {
 						Vec2 motion = {event.motion.xrel, -event.motion.yrel};
 						al_widget_send_motion(host->grabbingWidget, motion);
 					}
@@ -275,12 +269,6 @@ void al_host_run(AlHost *host)
 
 				case SDL_TEXTINPUT:
 					handle_text(host, event.text);
-					break;
-
-				case SDL_USEREVENT:
-					if (event.user.code == IGNORE_NEXT_MOTION_EVENT)
-						ignoreNextMotion = true;
-
 					break;
 
 				case SDL_QUIT:
@@ -302,11 +290,6 @@ void al_host_run(AlHost *host)
 Vec2 al_host_grab_mouse(AlHost *host, AlWidget *widget)
 {
 	host->grabbingWidget = widget;
-
-	SDL_Event ignoreEvent;
-	ignoreEvent.type = SDL_USEREVENT;
-	ignoreEvent.user.code = IGNORE_NEXT_MOTION_EVENT;
-	SDL_PushEvent(&ignoreEvent);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
