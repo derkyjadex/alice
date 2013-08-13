@@ -18,7 +18,7 @@ AlError algl_system_init()
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	window = SDL_CreateWindow("Albase", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_OPENGL);
+	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_OPENGL);
 	if (!window) {
 		al_log_error("Error creating window: %s", SDL_GetError());
 		THROW(AL_ERROR_GRAPHICS)
