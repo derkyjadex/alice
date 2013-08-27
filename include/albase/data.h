@@ -53,6 +53,7 @@ typedef int32_t AlDataTag;
 typedef enum {
 	AL_TOKEN_START = 0xFE,
 	AL_TOKEN_END = 0xEF,
+	AL_TOKEN_TAG = 0xEE
 } AlToken;
 
 typedef struct {

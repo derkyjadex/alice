@@ -43,6 +43,12 @@ void al_data_free(AlData *data)
 	}
 }
 
+static AlError write_token(AlData *data, AlToken token)
+{
+	uint8_t t = token;
+	return data_write(data, &t, 1);
+}
+
 static AlError write_type(AlData *data, AlVarType type)
 {
 	uint8_t t = type;
@@ -435,14 +441,12 @@ AlError al_data_skip_rest(AlData *data)
 
 AlError al_data_write_start(AlData *data)
 {
-	uint8_t start = AL_TOKEN_START;
-	return data_write(data, &start, 1);
+	return write_token(data, AL_TOKEN_START);
 }
 
 AlError al_data_write_end(AlData *data)
 {
-	uint8_t end = AL_TOKEN_END;
-	return data_write(data, &end, 1);
+	return write_token(data, AL_TOKEN_END);
 }
 
 AlError al_data_write_start_tag(AlData *data, AlDataTag tag)
@@ -450,7 +454,7 @@ AlError al_data_write_start_tag(AlData *data, AlDataTag tag)
 	BEGIN()
 
 	TRY(al_data_write_start(data));
-	TRY(write_type(data, AL_VAR_INT));
+	TRY(write_token(data, AL_TOKEN_TAG));
 	TRY(write_int(data, &tag));
 
 	PASS()
