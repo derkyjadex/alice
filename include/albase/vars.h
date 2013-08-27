@@ -13,9 +13,14 @@
 #include "albase/lua.h"
 
 typedef enum {
-	VAR_BOOL, VAR_INT, VAR_DOUBLE,
-	VAR_VEC2, VAR_VEC3, VAR_VEC4,
-	VAR_BOX2, VAR_STRING
+	AL_VAR_BOOL,
+	AL_VAR_INT,
+	AL_VAR_DOUBLE,
+	AL_VAR_VEC2,
+	AL_VAR_VEC3,
+	AL_VAR_VEC4,
+	AL_VAR_BOX2,
+	AL_VAR_STRING
 } AlVarType;
 
 typedef struct AlVars AlVars;

@@ -173,14 +173,14 @@ static AlError write_string(AlData *data, const char *value, uint32_t length)
 static size_t get_var_size(AlVarType type)
 {
 	switch (type) {
-		case VAR_BOOL: return sizeof(bool);
-		case VAR_INT: return sizeof(int32_t);
-		case VAR_DOUBLE: return sizeof(double);
-		case VAR_VEC2: return sizeof(Vec2);
-		case VAR_VEC3: return sizeof(Vec3);
-		case VAR_VEC4: return sizeof(Vec4);
-		case VAR_BOX2: return sizeof(Box2);
-		case VAR_STRING: return sizeof(char *);
+		case AL_VAR_BOOL: return sizeof(bool);
+		case AL_VAR_INT: return sizeof(int32_t);
+		case AL_VAR_DOUBLE: return sizeof(double);
+		case AL_VAR_VEC2: return sizeof(Vec2);
+		case AL_VAR_VEC3: return sizeof(Vec3);
+		case AL_VAR_VEC4: return sizeof(Vec4);
+		case AL_VAR_BOX2: return sizeof(Box2);
+		case AL_VAR_STRING: return sizeof(char *);
 		default: return 0;
 	}
 }
@@ -199,13 +199,13 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint32_t *
 		void *item = array + (i * itemSize);
 
 		switch (type) {
-			case VAR_BOOL: TRY(read_bool(data, item)); break;
-			case VAR_INT: TRY(read_int(data, item)); break;
-			case VAR_DOUBLE: TRY(read_double(data, item)); break;
-			case VAR_VEC2: TRY(read_vec2(data, item)); break;
-			case VAR_VEC3: TRY(read_vec3(data, item)); break;
-			case VAR_VEC4: TRY(read_vec4(data, item)); break;
-			case VAR_BOX2: TRY(read_box2(data, item)); break;
+			case AL_VAR_BOOL: TRY(read_bool(data, item)); break;
+			case AL_VAR_INT: TRY(read_int(data, item)); break;
+			case AL_VAR_DOUBLE: TRY(read_double(data, item)); break;
+			case AL_VAR_VEC2: TRY(read_vec2(data, item)); break;
+			case AL_VAR_VEC3: TRY(read_vec3(data, item)); break;
+			case AL_VAR_VEC4: TRY(read_vec4(data, item)); break;
+			case AL_VAR_BOX2: TRY(read_box2(data, item)); break;
 			default:
 				THROW(AL_ERROR_INVALID_DATA);
 		}
@@ -236,13 +236,13 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 		const void *value = values + (i * itemSize);
 
 		switch (type) {
-			case VAR_BOOL: TRY(write_bool(data, value)); break;
-			case VAR_INT: TRY(write_int(data, value)); break;
-			case VAR_DOUBLE: TRY(write_double(data, value)); break;
-			case VAR_VEC2: TRY(write_vec2(data, value)); break;
-			case VAR_VEC3: TRY(write_vec3(data, value)); break;
-			case VAR_VEC4: TRY(write_vec4(data, value)); break;
-			case VAR_BOX2: TRY(write_box2(data, value)); break;
+			case AL_VAR_BOOL: TRY(write_bool(data, value)); break;
+			case AL_VAR_INT: TRY(write_int(data, value)); break;
+			case AL_VAR_DOUBLE: TRY(write_double(data, value)); break;
+			case AL_VAR_VEC2: TRY(write_vec2(data, value)); break;
+			case AL_VAR_VEC3: TRY(write_vec3(data, value)); break;
+			case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
+			case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
 			default:
 				THROW(AL_ERROR_INVALID_DATA);
 		}
@@ -265,24 +265,24 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 		case AL_TOKEN_END:
 			break;
 
-		case VAR_BOOL: TRY(read_bool(data, &item->value.boolVal)); break;
-		case VAR_INT: TRY(read_int(data, &item->value.intVal)); break;
-		case VAR_DOUBLE: TRY(read_double(data, &item->value.doubleVal)); break;
-		case VAR_VEC2: TRY(read_vec2(data, &item->value.vec2)); break;
-		case VAR_VEC3: TRY(read_vec3(data, &item->value.vec3)); break;
-		case VAR_VEC4: TRY(read_vec4(data, &item->value.vec4)); break;
-		case VAR_BOX2: TRY(read_box2(data, &item->value.box2)); break;
-		case VAR_STRING:
+		case AL_VAR_BOOL: TRY(read_bool(data, &item->value.boolVal)); break;
+		case AL_VAR_INT: TRY(read_int(data, &item->value.intVal)); break;
+		case AL_VAR_DOUBLE: TRY(read_double(data, &item->value.doubleVal)); break;
+		case AL_VAR_VEC2: TRY(read_vec2(data, &item->value.vec2)); break;
+		case AL_VAR_VEC3: TRY(read_vec3(data, &item->value.vec3)); break;
+		case AL_VAR_VEC4: TRY(read_vec4(data, &item->value.vec4)); break;
+		case AL_VAR_BOX2: TRY(read_box2(data, &item->value.box2)); break;
+		case AL_VAR_STRING:
 			TRY(read_string(data, &item->value.string.chars, &item->value.string.length));
 			break;
 
-		case VAR_BOOL | 0x80:
-		case VAR_INT | 0x80:
-		case VAR_DOUBLE | 0x80:
-		case VAR_VEC2 | 0x80:
-		case VAR_VEC3 | 0x80:
-		case VAR_VEC4 | 0x80:
-		case VAR_BOX2 | 0x80:
+		case AL_VAR_BOOL | 0x80:
+		case AL_VAR_INT | 0x80:
+		case AL_VAR_DOUBLE | 0x80:
+		case AL_VAR_VEC2 | 0x80:
+		case AL_VAR_VEC3 | 0x80:
+		case AL_VAR_VEC4 | 0x80:
+		case AL_VAR_BOX2 | 0x80:
 			type &= 0x7F;
 			item->array = true;
 			TRY(read_array(data, type, &item->value.array.items, &item->value.array.length));
@@ -321,7 +321,7 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 
 	switch (item.type) {
 		case AL_TOKEN_START:
-			TRY(al_data_read_value(data, VAR_INT, &tag))
+			TRY(al_data_read_value(data, AL_VAR_INT, &tag))
 
 			if (expected != AL_ANY_TAG && tag != expected)
 				THROW(AL_ERROR_INVALID_DATA);
@@ -355,14 +355,14 @@ AlError al_data_read_value(AlData *data, AlVarType type, void *value)
 		THROW(AL_ERROR_INVALID_DATA);
 
 	switch (type) {
-		case VAR_BOOL: *(bool *)value = item.value.boolVal; break;
-		case VAR_INT: *(int *)value = item.value.intVal; break;
-		case VAR_DOUBLE: *(double *)value = item.value.doubleVal; break;
-		case VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
-		case VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
-		case VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
-		case VAR_BOX2: *(Box2 *)value = item.value.box2; break;
-		case VAR_STRING: *(const char **)value = item.value.string.chars; break;
+		case AL_VAR_BOOL: *(bool *)value = item.value.boolVal; break;
+		case AL_VAR_INT: *(int *)value = item.value.intVal; break;
+		case AL_VAR_DOUBLE: *(double *)value = item.value.doubleVal; break;
+		case AL_VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
+		case AL_VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
+		case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
+		case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
+		case AL_VAR_STRING: *(const char **)value = item.value.string.chars; break;
 	}
 
 	PASS()
@@ -402,22 +402,22 @@ AlError al_data_skip_rest(AlData *data)
 				atEnd = true;
 				break;
 
-			case VAR_BOOL: TRY(data_seek(data, 1, AL_SEEK_CUR)); break;
-			case VAR_INT: TRY(data_seek(data, 4, AL_SEEK_CUR)); break;
-			case VAR_DOUBLE: TRY(data_seek(data, 8, AL_SEEK_CUR)); break;
-			case VAR_VEC2: TRY(data_seek(data, 16, AL_SEEK_CUR)); break;
-			case VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
-			case VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
-			case VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
+			case AL_VAR_BOOL: TRY(data_seek(data, 1, AL_SEEK_CUR)); break;
+			case AL_VAR_INT: TRY(data_seek(data, 4, AL_SEEK_CUR)); break;
+			case AL_VAR_DOUBLE: TRY(data_seek(data, 8, AL_SEEK_CUR)); break;
+			case AL_VAR_VEC2: TRY(data_seek(data, 16, AL_SEEK_CUR)); break;
+			case AL_VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
+			case AL_VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
+			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 
-			case VAR_STRING:
-			case VAR_BOOL | 0x80:
-			case VAR_INT | 0x80:
-			case VAR_DOUBLE | 0x80:
-			case VAR_VEC2 | 0x80:
-			case VAR_VEC3 | 0x80:
-			case VAR_VEC4 | 0x80:
-			case VAR_BOX2 | 0x80:
+			case AL_VAR_STRING:
+			case AL_VAR_BOOL | 0x80:
+			case AL_VAR_INT | 0x80:
+			case AL_VAR_DOUBLE | 0x80:
+			case AL_VAR_VEC2 | 0x80:
+			case AL_VAR_VEC3 | 0x80:
+			case AL_VAR_VEC4 | 0x80:
+			case AL_VAR_BOX2 | 0x80:
 			{
 				uint32_t length;
 				TRY(data_read(data, &length, 4));
@@ -450,7 +450,7 @@ AlError al_data_write_start_tag(AlData *data, AlDataTag tag)
 	BEGIN()
 
 	TRY(al_data_write_start(data));
-	TRY(write_type(data, VAR_INT));
+	TRY(write_type(data, AL_VAR_INT));
 	TRY(write_int(data, &tag));
 
 	PASS()
@@ -474,14 +474,14 @@ AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 	TRY(write_type(data, type));
 
 	switch (type) {
-		case VAR_BOOL: TRY(write_bool(data, value)); break;
-		case VAR_INT: TRY(write_int(data, value)); break;
-		case VAR_DOUBLE: TRY(write_double(data, value)); break;
-		case VAR_VEC2: TRY(write_vec2(data, value)); break;
-		case VAR_VEC3: TRY(write_vec3(data, value)); break;
-		case VAR_VEC4: TRY(write_vec4(data, value)); break;
-		case VAR_BOX2: TRY(write_box2(data, value)); break;
-		case VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
+		case AL_VAR_BOOL: TRY(write_bool(data, value)); break;
+		case AL_VAR_INT: TRY(write_int(data, value)); break;
+		case AL_VAR_DOUBLE: TRY(write_double(data, value)); break;
+		case AL_VAR_VEC2: TRY(write_vec2(data, value)); break;
+		case AL_VAR_VEC3: TRY(write_vec3(data, value)); break;
+		case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
+		case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
+		case AL_VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
 	}
 
 	PASS()
@@ -491,7 +491,7 @@ AlError al_data_write_string(AlData *data, const char *value, uint32_t length)
 {
 	BEGIN()
 
-	TRY(write_type(data, VAR_STRING));
+	TRY(write_type(data, AL_VAR_STRING));
 	TRY(write_string(data, value, length));
 
 	PASS()

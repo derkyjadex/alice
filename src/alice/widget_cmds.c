@@ -201,23 +201,23 @@ AlError al_widget_system_register_vars(AlVars *vars)
 {
 	BEGIN()
 
-	REG_VAR(VAR_BOOL, visible, visible);
-	REG_VAR(VAR_BOOL, pass_through, passThrough);
-	REG_VAR(VAR_VEC2, location, location);
-	REG_VAR(VAR_BOX2, bounds, bounds);
+	REG_VAR(AL_VAR_BOOL, visible, visible);
+	REG_VAR(AL_VAR_BOOL, pass_through, passThrough);
+	REG_VAR(AL_VAR_VEC2, location, location);
+	REG_VAR(AL_VAR_BOX2, bounds, bounds);
 
-	REG_VAR(VAR_VEC4, fill_colour, fillColour);
-	REG_VAR(VAR_VEC4, border_colour, border.colour);
-	REG_VAR(VAR_INT, border_width, border.width);
-	REG_VAR(VAR_VEC2, grid_size, grid.size);
-	REG_VAR(VAR_VEC2, grid_offset, grid.offset);
-	REG_VAR(VAR_VEC3, grid_colour, grid.colour);
-	REG_VAR(VAR_VEC2, model_location, model.location);
-	REG_VAR(VAR_DOUBLE, model_scale, model.scale);
-	REG_VAR(VAR_STRING, text, text.value);
-	REG_VAR(VAR_VEC3, text_colour, text.colour);
-	REG_VAR(VAR_DOUBLE, text_size, text.size);
-	REG_VAR(VAR_VEC2, text_location, text.location);
+	REG_VAR(AL_VAR_VEC4, fill_colour, fillColour);
+	REG_VAR(AL_VAR_VEC4, border_colour, border.colour);
+	REG_VAR(AL_VAR_INT, border_width, border.width);
+	REG_VAR(AL_VAR_VEC2, grid_size, grid.size);
+	REG_VAR(AL_VAR_VEC2, grid_offset, grid.offset);
+	REG_VAR(AL_VAR_VEC3, grid_colour, grid.colour);
+	REG_VAR(AL_VAR_VEC2, model_location, model.location);
+	REG_VAR(AL_VAR_DOUBLE, model_scale, model.scale);
+	REG_VAR(AL_VAR_STRING, text, text.value);
+	REG_VAR(AL_VAR_VEC3, text_colour, text.colour);
+	REG_VAR(AL_VAR_DOUBLE, text_size, text.size);
+	REG_VAR(AL_VAR_VEC2, text_location, text.location);
 
 	PASS()
 }
