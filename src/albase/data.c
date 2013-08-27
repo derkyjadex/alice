@@ -271,6 +271,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 		case AL_TOKEN_END:
 			break;
 
+		case AL_TOKEN_TAG: TRY(read_int(data, &item->value.tag)); break;
 		case AL_VAR_BOOL: TRY(read_bool(data, &item->value.boolVal)); break;
 		case AL_VAR_INT: TRY(read_int(data, &item->value.intVal)); break;
 		case AL_VAR_DOUBLE: TRY(read_double(data, &item->value.doubleVal)); break;
@@ -321,19 +322,19 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 	BEGIN()
 
 	AlDataItem item;
-	int tag;
-
 	TRY(al_data_read(data, &item));
 
 	switch (item.type) {
 		case AL_TOKEN_START:
-			TRY(al_data_read_value(data, AL_VAR_INT, &tag))
+			TRY(al_data_read(data, &item));
+			if (item.type != AL_TOKEN_TAG)
+				THROW(AL_ERROR_INVALID_DATA);
 
-			if (expected != AL_ANY_TAG && tag != expected)
+			if (expected != AL_ANY_TAG && item.value.tag != expected)
 				THROW(AL_ERROR_INVALID_DATA);
 
 			if (actual) {
-				*actual = tag;
+				*actual = item.value.tag;
 			}
 			break;
 
@@ -408,6 +409,7 @@ AlError al_data_skip_rest(AlData *data)
 				atEnd = true;
 				break;
 
+			case AL_TOKEN_TAG: TRY(data_seek(data, 4, AL_SEEK_CUR)); break;
 			case AL_VAR_BOOL: TRY(data_seek(data, 1, AL_SEEK_CUR)); break;
 			case AL_VAR_INT: TRY(data_seek(data, 4, AL_SEEK_CUR)); break;
 			case AL_VAR_DOUBLE: TRY(data_seek(data, 8, AL_SEEK_CUR)); break;

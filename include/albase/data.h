@@ -60,6 +60,7 @@ typedef struct {
 	uint8_t type;
 	bool array;
 	union {
+		AlDataTag tag;
 		bool boolVal;
 		int32_t intVal;
 		double doubleVal;
