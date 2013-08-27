@@ -36,7 +36,7 @@ static void _al_widget_init(AlWidget *widget)
 	widget->visible = true;
 	widget->passThrough = false;
 	widget->location = (Vec2){0, 0};
-	widget->bounds = (Box){{0, 0}, {0, 0}};
+	widget->bounds = (Box2){{0, 0}, {0, 0}};
 	widget->fillColour = (Vec4){1, 1, 1, 1};
 	widget->border.colour = (Vec4){1, 1, 1, 1};
 	widget->border.width = 0;
@@ -301,7 +301,7 @@ AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 
 	location = vec2_subtract(location, widget->location);
 
-	if (!box_contains(widget->bounds, location))
+	if (!box2_contains(widget->bounds, location))
 		return NULL;
 
 	for (AlWidget *child = widget->lastChild; child; child = child->prev) {

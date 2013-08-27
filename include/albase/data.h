@@ -65,7 +65,7 @@ typedef struct {
 		Vec2 vec2;
 		Vec3 vec3;
 		Vec4 vec4;
-		Box box;
+		Box2 box2;
 		struct {
 			uint32_t length;
 			char *chars;

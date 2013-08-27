@@ -204,7 +204,7 @@ AlError al_widget_system_register_vars(AlVars *vars)
 	REG_VAR(VAR_BOOL, visible, visible);
 	REG_VAR(VAR_BOOL, pass_through, passThrough);
 	REG_VAR(VAR_VEC2, location, location);
-	REG_VAR(VAR_BOX, bounds, bounds);
+	REG_VAR(VAR_BOX2, bounds, bounds);
 
 	REG_VAR(VAR_VEC4, fill_colour, fillColour);
 	REG_VAR(VAR_VEC4, border_colour, border.colour);

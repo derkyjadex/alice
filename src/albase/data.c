@@ -117,12 +117,12 @@ static AlError write_vec4(AlData *data, const Vec4 *value)
 	return data_write(data, value, 32);
 }
 
-static AlError read_box(AlData *data, Box *result)
+static AlError read_box2(AlData *data, Box2 *result)
 {
 	return data_read(data, result, 32);
 }
 
-static AlError write_box(AlData *data, const Box *value)
+static AlError write_box2(AlData *data, const Box2 *value)
 {
 	return data_write(data, value, 32);
 }
@@ -179,7 +179,7 @@ static size_t get_var_size(AlVarType type)
 		case VAR_VEC2: return sizeof(Vec2);
 		case VAR_VEC3: return sizeof(Vec3);
 		case VAR_VEC4: return sizeof(Vec4);
-		case VAR_BOX: return sizeof(Box);
+		case VAR_BOX2: return sizeof(Box2);
 		case VAR_STRING: return sizeof(char *);
 		default: return 0;
 	}
@@ -205,7 +205,7 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint32_t *
 			case VAR_VEC2: TRY(read_vec2(data, item)); break;
 			case VAR_VEC3: TRY(read_vec3(data, item)); break;
 			case VAR_VEC4: TRY(read_vec4(data, item)); break;
-			case VAR_BOX: TRY(read_box(data, item)); break;
+			case VAR_BOX2: TRY(read_box2(data, item)); break;
 			default:
 				THROW(AL_ERROR_INVALID_DATA);
 		}
@@ -242,7 +242,7 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 			case VAR_VEC2: TRY(write_vec2(data, value)); break;
 			case VAR_VEC3: TRY(write_vec3(data, value)); break;
 			case VAR_VEC4: TRY(write_vec4(data, value)); break;
-			case VAR_BOX: TRY(write_box(data, value)); break;
+			case VAR_BOX2: TRY(write_box2(data, value)); break;
 			default:
 				THROW(AL_ERROR_INVALID_DATA);
 		}
@@ -271,7 +271,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 		case VAR_VEC2: TRY(read_vec2(data, &item->value.vec2)); break;
 		case VAR_VEC3: TRY(read_vec3(data, &item->value.vec3)); break;
 		case VAR_VEC4: TRY(read_vec4(data, &item->value.vec4)); break;
-		case VAR_BOX: TRY(read_box(data, &item->value.box)); break;
+		case VAR_BOX2: TRY(read_box2(data, &item->value.box2)); break;
 		case VAR_STRING:
 			TRY(read_string(data, &item->value.string.chars, &item->value.string.length));
 			break;
@@ -282,7 +282,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 		case VAR_VEC2 | 0x80:
 		case VAR_VEC3 | 0x80:
 		case VAR_VEC4 | 0x80:
-		case VAR_BOX | 0x80:
+		case VAR_BOX2 | 0x80:
 			type &= 0x7F;
 			item->array = true;
 			TRY(read_array(data, type, &item->value.array.items, &item->value.array.length));
@@ -361,7 +361,7 @@ AlError al_data_read_value(AlData *data, AlVarType type, void *value)
 		case VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
 		case VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
 		case VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
-		case VAR_BOX: *(Box *)value = item.value.box; break;
+		case VAR_BOX2: *(Box2 *)value = item.value.box2; break;
 		case VAR_STRING: *(const char **)value = item.value.string.chars; break;
 	}
 
@@ -408,7 +408,7 @@ AlError al_data_skip_rest(AlData *data)
 			case VAR_VEC2: TRY(data_seek(data, 16, AL_SEEK_CUR)); break;
 			case VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
 			case VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
-			case VAR_BOX: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
+			case VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 
 			case VAR_STRING:
 			case VAR_BOOL | 0x80:
@@ -417,7 +417,7 @@ AlError al_data_skip_rest(AlData *data)
 			case VAR_VEC2 | 0x80:
 			case VAR_VEC3 | 0x80:
 			case VAR_VEC4 | 0x80:
-			case VAR_BOX | 0x80:
+			case VAR_BOX2 | 0x80:
 			{
 				uint32_t length;
 				TRY(data_read(data, &length, 4));
@@ -480,7 +480,7 @@ AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 		case VAR_VEC2: TRY(write_vec2(data, value)); break;
 		case VAR_VEC3: TRY(write_vec3(data, value)); break;
 		case VAR_VEC4: TRY(write_vec4(data, value)); break;
-		case VAR_BOX: TRY(write_box(data, value)); break;
+		case VAR_BOX2: TRY(write_box2(data, value)); break;
 		case VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
 	}
 

@@ -146,15 +146,15 @@ static void pushVec4(lua_State *L, Vec4 v)
 	lua_pushnumber(L, v.w);
 }
 
-static Box toBox(lua_State *L, int n)
+static Box2 toBox2(lua_State *L, int n)
 {
 	Vec2 min = toVec2(L, n + 0);
 	Vec2 max = toVec2(L, n + 2);
 
-	return (Box){min, max};
+	return (Box2){min, max};
 }
 
-static void pushBox(lua_State *L, Box b)
+static void pushBox2(lua_State *L, Box2 b)
 {
 	pushVec2(L, b.min);
 	pushVec2(L, b.max);
@@ -228,7 +228,7 @@ ACCESSOR(double, lua_pushnumber, 1, luaL_checknumber(L, arg))
 ACCESSOR(Vec2, pushVec2, 2, toVec2(L, arg))
 ACCESSOR(Vec3, pushVec3, 3, toVec3(L, arg))
 ACCESSOR(Vec4, pushVec4, 4, toVec4(L, arg))
-ACCESSOR(Box, pushBox, 4, toBox(L, arg))
+ACCESSOR(Box2, pushBox2, 4, toBox2(L, arg))
 ACCESSOR(String, lua_pushstring, 1, tonewString(L, arg, *ptr))
 
 static AlVarReg *get_entry(lua_State *L)
@@ -269,7 +269,7 @@ static int cmd_get(lua_State *L)
 		case VAR_VEC2: pushVec2(L, *(Vec2 *)ptr); return 2;
 		case VAR_VEC3: pushVec3(L, *(Vec3 *)ptr); return 3;
 		case VAR_VEC4: pushVec4(L, *(Vec4 *)ptr); return 4;
-		case VAR_BOX: pushBox(L, *(Box *)ptr); return 4;
+		case VAR_BOX2: pushBox2(L, *(Box2 *)ptr); return 4;
 		case VAR_STRING: lua_pushstring(L, *(char **)ptr); return 1;
 		default: return 0;
 	}
@@ -291,7 +291,7 @@ static int cmd_getter(lua_State *L)
 		case VAR_VEC2: USE(Vec2); break;
 		case VAR_VEC3: USE(Vec3); break;
 		case VAR_VEC4: USE(Vec4); break;
-		case VAR_BOX: USE(Box); break;
+		case VAR_BOX2: USE(Box2); break;
 		case VAR_STRING: USE(String); break;
 		default:
 			return 0;
@@ -356,8 +356,8 @@ static int cmd_set(lua_State *L)
 			*(Vec4 *)value = toVec4(L, valueArg);
 			break;
 
-		case VAR_BOX:
-			*(Box *)value = toBox(L, valueArg);
+		case VAR_BOX2:
+			*(Box2 *)value = toBox2(L, valueArg);
 			break;
 
 		case VAR_STRING:
@@ -384,7 +384,7 @@ static int cmd_setter(lua_State *L)
 		case VAR_VEC2: USE(Vec2); break;
 		case VAR_VEC3: USE(Vec3); break;
 		case VAR_VEC4: USE(Vec4); break;
-		case VAR_BOX: USE(Box); break;
+		case VAR_BOX2: USE(Box2); break;
 		case VAR_STRING: USE(String); break;
 		default:
 			return 0;

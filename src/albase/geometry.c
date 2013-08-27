@@ -76,7 +76,7 @@ bool vec2_near(Vec2 a, Vec2 b, double epsilon)
 	return fabs(a.x - b.x) < epsilon && fabs(a.y - b.y) < epsilon;
 }
 
-bool vec2_is_near_box(Vec2 v, Box box, double distance)
+bool vec2_is_near_box2(Vec2 v, Box2 box, double distance)
 {
 	Vec2 boxPoint;
 
@@ -110,17 +110,17 @@ double vec2_cross(Vec2 a, Vec2 b, Vec2 c)
 	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
-Box box_add_vec2(Box box, Vec2 v)
+Box2 box2_add_vec2(Box2 box, Vec2 v)
 {
-	return (Box){
+	return (Box2){
 		{box.min.x + v.x, box.min.y + v.y},
 		{box.max.x + v.x, box.max.y + v.y}
 	};
 }
 
-Box box_include_vec2(Box box, Vec2 v)
+Box2 box2_include_vec2(Box2 box, Vec2 v)
 {
-	Box result;
+	Box2 result;
 
 	if (v.x < box.min.x) {
 		result.min.x = v.x;
@@ -151,20 +151,20 @@ Box box_include_vec2(Box box, Vec2 v)
 	return result;
 }
 
-bool box_contains(Box box, Vec2 v)
+bool box2_contains(Box2 box, Vec2 v)
 {
 	return v.x >= box.min.x && v.x < box.max.x
 		&& v.y >= box.min.y && v.y < box.max.y;
 }
 
-bool box_is_valid(Box box)
+bool box2_is_valid(Box2 box)
 {
 	return box.min.x <= box.max.x && box.min.y <= box.max.y;
 }
 
-Box box_intersect(Box a, Box b)
+Box2 box2_intersect(Box2 a, Box2 b)
 {
-	return (Box){
+	return (Box2){
 		{
 			(a.min.x > b.min.x) ? a.min.x : b.min.x,
 			(a.min.y > b.min.y) ? a.min.y : b.min.y
@@ -176,19 +176,19 @@ Box box_intersect(Box a, Box b)
 	};
 }
 
-Vec2 box_size(Box box)
+Vec2 box2_size(Box2 box)
 {
 	return vec2_subtract(box.max, box.min);
 }
 
-Box box_round(Box box)
+Box2 box2_round(Box2 box)
 {
-	return (Box){vec2_floor(box.min), vec2_ceil(box.max)};
+	return (Box2){vec2_floor(box.min), vec2_ceil(box.max)};
 }
 
-Box box_expand(Box box, double a)
+Box2 box2_expand(Box2 box, double a)
 {
-	return (Box){
+	return (Box2){
 		{box.min.x - a, box.min.y - a},
 		{box.max.x + a, box.max.y + a}
 	};

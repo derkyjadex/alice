@@ -15,7 +15,7 @@
 typedef enum {
 	VAR_BOOL, VAR_INT, VAR_DOUBLE,
 	VAR_VEC2, VAR_VEC3, VAR_VEC4,
-	VAR_BOX, VAR_STRING
+	VAR_BOX2, VAR_STRING
 } AlVarType;
 
 typedef struct AlVars AlVars;

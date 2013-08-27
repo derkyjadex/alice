@@ -360,7 +360,7 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 	}
 }
 
-static void render_widget_main(AlWidget *widget, Box bounds)
+static void render_widget_main(AlWidget *widget, Box2 bounds)
 {
 	GLuint position;
 
@@ -369,14 +369,14 @@ static void render_widget_main(AlWidget *widget, Box bounds)
 			position = plainWidgetShader.position;
 			glUseProgram(plainWidgetShader.shader->id);
 			algl_uniform_vec2(plainWidgetShader.min, bounds.min);
-			algl_uniform_vec2(plainWidgetShader.size, box_size(bounds));
+			algl_uniform_vec2(plainWidgetShader.size, box2_size(bounds));
 			algl_uniform_vec4(plainWidgetShader.fillColour, widget->fillColour);
 
 		} else {
 			position = borderWidgetShader.position;
 			glUseProgram(borderWidgetShader.shader->id);
 			algl_uniform_vec2(borderWidgetShader.min, bounds.min);
-			algl_uniform_vec2(borderWidgetShader.size, box_size(bounds));
+			algl_uniform_vec2(borderWidgetShader.size, box2_size(bounds));
 			glUniform1f(borderWidgetShader.borderWidth, widget->border.width);
 			algl_uniform_vec4(borderWidgetShader.fillColour, widget->fillColour);
 			algl_uniform_vec4(borderWidgetShader.borderColour, widget->border.colour);
@@ -385,7 +385,7 @@ static void render_widget_main(AlWidget *widget, Box bounds)
 		position = gridBorderWidgetShader.position;
 		glUseProgram(gridBorderWidgetShader.shader->id);
 		algl_uniform_vec2(gridBorderWidgetShader.min, bounds.min);
-		algl_uniform_vec2(gridBorderWidgetShader.size, box_size(bounds));
+		algl_uniform_vec2(gridBorderWidgetShader.size, box2_size(bounds));
 		glUniform1f(gridBorderWidgetShader.borderWidth, widget->border.width);
 		algl_uniform_vec2(gridBorderWidgetShader.gridSize, widget->grid.size);
 		algl_uniform_vec2(gridBorderWidgetShader.gridOffset, widget->grid.offset);
@@ -404,13 +404,13 @@ static void render_widget_main(AlWidget *widget, Box bounds)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-static void set_scissor(Box scissor)
+static void set_scissor(Box2 scissor)
 {
-	Vec2 size = box_size(scissor);
+	Vec2 size = box2_size(scissor);
 	glScissor(scissor.min.x, scissor.min.y, size.x, size.y);
 }
 
-static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
+static void render_widget(AlWidget *widget, Vec2 translate, Box2 scissor)
 {
 	widget->valid = true;
 
@@ -418,10 +418,10 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		return;
 
 	Vec2 location = vec2_add(widget->location, translate);
-	Box bounds = box_add_vec2(widget->bounds, location);
-	scissor = box_round(box_intersect(scissor, bounds));
+	Box2 bounds = box2_add_vec2(widget->bounds, location);
+	scissor = box2_round(box2_intersect(scissor, bounds));
 
-	if (!box_is_valid(scissor))
+	if (!box2_is_valid(scissor))
 		return;
 
 	if (!widget->passThrough) {
@@ -430,7 +430,7 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box scissor)
 		render_widget_main(widget, bounds);
 
 		if (widget->border.width > 0) {
-			scissor = box_expand(scissor, -widget->border.width);
+			scissor = box2_expand(scissor, -widget->border.width);
 			set_scissor(scissor);
 		}
 
@@ -475,7 +475,7 @@ static void render_cursor(Vec2 location)
 void graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
 {
 	if (!root->valid) {
-		render_widget(root, (Vec2){0, 0}, (Box){{0, 0}, viewportSize});
+		render_widget(root, (Vec2){0, 0}, (Box2){{0, 0}, viewportSize});
 
 		if (renderCursor) {
 			render_cursor(cursorLocation);

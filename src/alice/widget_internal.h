@@ -21,7 +21,7 @@ struct AlWidget {
 	bool visible;
 	bool passThrough;
 	Vec2 location;
-	Box bounds;
+	Box2 bounds;
 
 	Vec4 fillColour;
 	struct {

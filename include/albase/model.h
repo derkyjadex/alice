@@ -18,6 +18,6 @@ AlError al_model_use_file(AlModel **model, const char *filename);
 AlError al_model_use_shape(AlModel **model, AlModelShape *shape);
 AlError al_model_set_shape(AlModel *model, AlModelShape *shape);
 void al_model_unuse(AlModel *model);
-void al_model_get_bounds(AlModel *model, Box *bounds);
+void al_model_get_bounds(AlModel *model, Box2 *bounds);
 
 #endif
