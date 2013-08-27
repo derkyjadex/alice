@@ -21,22 +21,53 @@ typedef int32_t AlDataTag;
 #define AL_ANY_TAG ((AlDataTag)0)
 #define AL_DATA_TAG(a, b, c, d) ((AlDataTag)((((d) << 24) | ((c) << 16) | ((b) << 8) | (a))))
 
+#define READ_TAGS(data, x) { \
+	bool atEnd = false; \
+	do { \
+		AlDataTag tag; \
+		TRY(al_data_read_start_tag(data, AL_ANY_TAG, &tag)); \
+		 \
+		switch (tag) { \
+			case AL_NO_TAG: \
+				atEnd = true; \
+				break; \
+			 \
+			x \
+			 \
+			default: \
+				TRY(al_data_skip_rest(data)); \
+		} \
+	} while (!atEnd); \
+}
+
+#define CASE_TAG(tag, x) \
+	case tag: { \
+			x \
+		} \
+		break;
+
+#define BREAK_READ_TAGS \
+	atEnd = true; \
+	break;
+
 typedef enum {
 	AL_TOKEN_START = 0xFE,
 	AL_TOKEN_END = 0xEF,
+	AL_TOKEN_TAG = 0xEE
 } AlToken;
 
 typedef struct {
 	uint8_t type;
 	bool array;
 	union {
+		AlDataTag tag;
 		bool boolVal;
 		int32_t intVal;
 		double doubleVal;
 		Vec2 vec2;
 		Vec3 vec3;
 		Vec4 vec4;
-		Box box;
+		Box2 box2;
 		struct {
 			uint32_t length;
 			char *chars;

@@ -146,15 +146,15 @@ static void pushVec4(lua_State *L, Vec4 v)
 	lua_pushnumber(L, v.w);
 }
 
-static Box toBox(lua_State *L, int n)
+static Box2 toBox2(lua_State *L, int n)
 {
 	Vec2 min = toVec2(L, n + 0);
 	Vec2 max = toVec2(L, n + 2);
 
-	return (Box){min, max};
+	return (Box2){min, max};
 }
 
-static void pushBox(lua_State *L, Box b)
+static void pushBox2(lua_State *L, Box2 b)
 {
 	pushVec2(L, b.min);
 	pushVec2(L, b.max);
@@ -228,7 +228,7 @@ ACCESSOR(double, lua_pushnumber, 1, luaL_checknumber(L, arg))
 ACCESSOR(Vec2, pushVec2, 2, toVec2(L, arg))
 ACCESSOR(Vec3, pushVec3, 3, toVec3(L, arg))
 ACCESSOR(Vec4, pushVec4, 4, toVec4(L, arg))
-ACCESSOR(Box, pushBox, 4, toBox(L, arg))
+ACCESSOR(Box2, pushBox2, 4, toBox2(L, arg))
 ACCESSOR(String, lua_pushstring, 1, tonewString(L, arg, *ptr))
 
 static AlVarReg *get_entry(lua_State *L)
@@ -263,14 +263,14 @@ static int cmd_get(lua_State *L)
 	}
 
 	switch (entry->type) {
-		case VAR_BOOL: lua_pushboolean(L, *(bool *)ptr); return 1;
-		case VAR_INT: lua_pushinteger(L, *(int *)ptr); return 1;
-		case VAR_DOUBLE: lua_pushnumber(L, *(double *)ptr); return 1;
-		case VAR_VEC2: pushVec2(L, *(Vec2 *)ptr); return 2;
-		case VAR_VEC3: pushVec3(L, *(Vec3 *)ptr); return 3;
-		case VAR_VEC4: pushVec4(L, *(Vec4 *)ptr); return 4;
-		case VAR_BOX: pushBox(L, *(Box *)ptr); return 4;
-		case VAR_STRING: lua_pushstring(L, *(char **)ptr); return 1;
+		case AL_VAR_BOOL: lua_pushboolean(L, *(bool *)ptr); return 1;
+		case AL_VAR_INT: lua_pushinteger(L, *(int *)ptr); return 1;
+		case AL_VAR_DOUBLE: lua_pushnumber(L, *(double *)ptr); return 1;
+		case AL_VAR_VEC2: pushVec2(L, *(Vec2 *)ptr); return 2;
+		case AL_VAR_VEC3: pushVec3(L, *(Vec3 *)ptr); return 3;
+		case AL_VAR_VEC4: pushVec4(L, *(Vec4 *)ptr); return 4;
+		case AL_VAR_BOX2: pushBox2(L, *(Box2 *)ptr); return 4;
+		case AL_VAR_STRING: lua_pushstring(L, *(char **)ptr); return 1;
 		default: return 0;
 	}
 }
@@ -285,14 +285,14 @@ static int cmd_getter(lua_State *L)
 	getInstance = get_##type##_instance;
 
 	switch (entry->type) {
-		case VAR_BOOL: USE(bool); break;
-		case VAR_INT: USE(int); break;
-		case VAR_DOUBLE: USE(double); break;
-		case VAR_VEC2: USE(Vec2); break;
-		case VAR_VEC3: USE(Vec3); break;
-		case VAR_VEC4: USE(Vec4); break;
-		case VAR_BOX: USE(Box); break;
-		case VAR_STRING: USE(String); break;
+		case AL_VAR_BOOL: USE(bool); break;
+		case AL_VAR_INT: USE(int); break;
+		case AL_VAR_DOUBLE: USE(double); break;
+		case AL_VAR_VEC2: USE(Vec2); break;
+		case AL_VAR_VEC3: USE(Vec3); break;
+		case AL_VAR_VEC4: USE(Vec4); break;
+		case AL_VAR_BOX2: USE(Box2); break;
+		case AL_VAR_STRING: USE(String); break;
 		default:
 			return 0;
 	}
@@ -331,36 +331,36 @@ static int cmd_set(lua_State *L)
 	}
 
 	switch (entry->type) {
-		case VAR_BOOL:
+		case AL_VAR_BOOL:
 			luaL_checkany(L, 2);
 			*(bool *)value = lua_toboolean(L, valueArg);
 			break;
 
-		case VAR_INT:
+		case AL_VAR_INT:
 			*(int *)value = luaL_checkint(L, valueArg);
 			break;
 
-		case VAR_DOUBLE:
+		case AL_VAR_DOUBLE:
 			*(double *)value = luaL_checknumber(L, valueArg);
 			break;
 
-		case VAR_VEC2:
+		case AL_VAR_VEC2:
 			*(Vec2 *)value = toVec2(L, valueArg);
 			break;
 
-		case VAR_VEC3:
+		case AL_VAR_VEC3:
 			*(Vec3 *)value = toVec3(L, valueArg);
 			break;
 
-		case VAR_VEC4:
+		case AL_VAR_VEC4:
 			*(Vec4 *)value = toVec4(L, valueArg);
 			break;
 
-		case VAR_BOX:
-			*(Box *)value = toBox(L, valueArg);
+		case AL_VAR_BOX2:
+			*(Box2 *)value = toBox2(L, valueArg);
 			break;
 
-		case VAR_STRING:
+		case AL_VAR_STRING:
 			*(String *)value = tonewString(L, valueArg, *(String *)value);
 			break;
 	}
@@ -378,14 +378,14 @@ static int cmd_setter(lua_State *L)
 	setInstance = set_##type##_instance;
 
 	switch (entry->type) {
-		case VAR_BOOL: USE(bool); break;
-		case VAR_INT: USE(int); break;
-		case VAR_DOUBLE: USE(double); break;
-		case VAR_VEC2: USE(Vec2); break;
-		case VAR_VEC3: USE(Vec3); break;
-		case VAR_VEC4: USE(Vec4); break;
-		case VAR_BOX: USE(Box); break;
-		case VAR_STRING: USE(String); break;
+		case AL_VAR_BOOL: USE(bool); break;
+		case AL_VAR_INT: USE(int); break;
+		case AL_VAR_DOUBLE: USE(double); break;
+		case AL_VAR_VEC2: USE(Vec2); break;
+		case AL_VAR_VEC3: USE(Vec3); break;
+		case AL_VAR_VEC4: USE(Vec4); break;
+		case AL_VAR_BOX2: USE(Box2); break;
+		case AL_VAR_STRING: USE(String); break;
 		default:
 			return 0;
 

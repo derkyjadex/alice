@@ -134,7 +134,7 @@ AlError al_host_init(AlHost **result)
 	TRY(run_alice_scripts(host->lua));
 
 	TRY(al_widget_init(&host->root));
-	host->root->bounds = (Box){{0, 0}, host->screenSize};
+	host->root->bounds = (Box2){{0, 0}, host->screenSize};
 	host->keyboardWidget = host->root;
 
 	*result = host;

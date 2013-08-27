@@ -33,7 +33,7 @@ static AlError model_init(AlModel **result)
 	model->vertexCounts = NULL;
 	model->colours = NULL;
 
-	model->bounds = (Box){{0, 0}, {0, 0}};
+	model->bounds = (Box2){{0, 0}, {0, 0}};
 
 	glGenBuffers(1, &model->vertexBuffer);
 
@@ -276,7 +276,7 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 	int *vertexCounts = NULL;
 	AlGlModelVertex *vertices = NULL;
 
-	Box bounds = {{0, 0}, {0, 0}};
+	Box2 bounds = {{0, 0}, {0, 0}};
 
 	TRY(al_malloc(&colours, sizeof(Vec3), shape->numPaths));
 	TRY(al_malloc(&vertexCounts, sizeof(int), shape->numPaths));
@@ -292,7 +292,7 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 		maxVertices += ceil(path->numPoints / 2.0) * 9 - 6;
 
 		for (int j = 0; j < path->numPoints; j++) {
-			bounds = box_include_vec2(bounds, path->points[j]);
+			bounds = box2_include_vec2(bounds, path->points[j]);
 		}
 	}
 
@@ -354,7 +354,7 @@ void al_model_unuse(AlModel *model)
 	model_free(model);
 }
 
-void al_model_get_bounds(AlModel *model, Box *bounds)
+void al_model_get_bounds(AlModel *model, Box2 *bounds)
 {
 	*bounds = model->bounds;
 }

@@ -65,33 +65,19 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 	TRY(al_data_read_start(data));
 
-	bool atEnd = false;
-	do {
-		AlDataTag tag;
-		TRY(al_data_read_start_tag(data, AL_ANY_TAG, &tag));
+	READ_TAGS(data, {
+		CASE_TAG(COLOUR_TAG, {
+			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour));
+			TRY(al_data_skip_rest(data));
+		})
+		CASE_TAG(POINTS_TAG, {
+			if (points)
+				THROW(AL_ERROR_INVALID_DATA);
 
-		switch (tag) {
-			case COLOUR_TAG:
-				TRY(al_data_read_value(data, VAR_VEC3, &colour));
-				TRY(al_data_skip_rest(data));
-				break;
-
-			case POINTS_TAG:
-				if (points)
-					THROW(AL_ERROR_INVALID_DATA);
-
-				TRY(al_data_read_array(data, VAR_VEC2, &points, &numPoints));
-				TRY(al_data_skip_rest(data));
-				break;
-
-			case AL_NO_TAG:
-				atEnd = true;
-				break;
-
-			default:
-				TRY(al_data_skip_rest(data));
-		}
-	} while (!atEnd);
+			TRY(al_data_read_array(data, AL_VAR_VEC2, &points, &numPoints));
+			TRY(al_data_skip_rest(data));
+		})
+	})
 
 	if (!points)
 		THROW(AL_ERROR_INVALID_DATA);
@@ -115,10 +101,10 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 
 	TRY(al_data_write_start(data));
 
-	TRY(al_data_write_simple_tag(data, COLOUR_TAG, VAR_VEC3, &path->colour));
+	TRY(al_data_write_simple_tag(data, COLOUR_TAG, AL_VAR_VEC3, &path->colour));
 
 	TRY(al_data_write_start_tag(data, POINTS_TAG));
-	TRY(al_data_write_array(data, VAR_VEC2, path->points, path->numPoints));
+	TRY(al_data_write_array(data, AL_VAR_VEC2, path->points, path->numPoints));
 	TRY(al_data_write_end(data));
 
 	TRY(al_data_write_end(data));
@@ -213,38 +199,25 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 	TRY(al_data_init(&data, stream));
 	TRY(al_data_read_start_tag(data, SHAPE_TAG, NULL));
 
-	bool atEnd = false;
-	do {
-		AlDataTag tag;
-		TRY(al_data_read_start_tag(data, AL_ANY_TAG, &tag));
+	READ_TAGS(data, {
+		CASE_TAG(PATHS_TAG, {
+			if (paths)
+				THROW(AL_ERROR_INVALID_DATA)
 
-		switch (tag) {
-			case PATHS_TAG:
-				if (paths)
-					THROW(AL_ERROR_INVALID_DATA)
+			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths));
+			TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
 
-				TRY(al_data_read_value(data, VAR_INT, &numPaths));
-				TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
+			for (int i = 0; i < numPaths; i++) {
+				paths[i] = NULL;
 
-				for (int i = 0; i < numPaths; i++) {
-					paths[i] = NULL;
+				TRY(al_wrapper_invoke_ctor(pathWrapper, &paths[i]));
+				reference(shape, paths[i]);
+				TRY(al_model_path_load(paths[i], data));
+			}
 
-					TRY(al_wrapper_invoke_ctor(pathWrapper, &paths[i]));
-					reference(shape, paths[i]);
-					TRY(al_model_path_load(paths[i], data));
-				}
-
-				TRY(al_data_skip_rest(data));
-				break;
-
-			case AL_NO_TAG:
-				atEnd = true;
-				break;
-
-			default:
-				TRY(al_data_skip_rest(data));
-		}
-	} while (!atEnd);
+			TRY(al_data_skip_rest(data));
+		})
+	})
 
 	if (!paths)
 		THROW(AL_ERROR_INVALID_DATA);
@@ -296,7 +269,7 @@ AlError al_model_shape_save(AlModelShape *shape, AlStream *stream)
 
 	TRY(al_data_write_start_tag(data, SHAPE_TAG));
 	TRY(al_data_write_start_tag(data, PATHS_TAG));
-	TRY(al_data_write_value(data, VAR_INT, &shape->numPaths));
+	TRY(al_data_write_value(data, AL_VAR_INT, &shape->numPaths));
 
 	for (int i = 0; i < shape->numPaths; i++) {
 		TRY(al_model_path_save(shape->paths[i], data));

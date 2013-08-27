@@ -23,7 +23,7 @@ struct AlModel {
 	int *vertexCounts;
 	Vec3 *colours;
 
-	Box bounds;
+	Box2 bounds;
 };
 
 typedef struct AlGlModelVertex {
