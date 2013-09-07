@@ -257,6 +257,31 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 	PASS()
 }
 
+static AlError skip_array(AlData *data, AlVarType type)
+{
+	BEGIN()
+
+	uint32_t length;
+	TRY(data_read(data, &length, 4));
+
+	int itemSize;
+	switch (type) {
+		case AL_VAR_BOOL: itemSize = 1; break;
+		case AL_VAR_INT: itemSize = 4; break;
+		case AL_VAR_DOUBLE: itemSize = 8; break;
+		case AL_VAR_VEC2: itemSize = 16; break;
+		case AL_VAR_VEC3: itemSize = 24; break;
+		case AL_VAR_VEC4: itemSize = 32; break;
+		case AL_VAR_BOX2: itemSize = 32; break;
+		default:
+			THROW(AL_ERROR_INVALID_DATA);
+	}
+
+	TRY(data_seek(data, length * itemSize, AL_SEEK_CUR));
+
+	PASS()
+}
+
 AlError al_data_read(AlData *data, AlDataItem *item)
 {
 	BEGIN()
@@ -419,6 +444,13 @@ AlError al_data_skip_rest(AlData *data)
 			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 
 			case AL_VAR_STRING:
+			{
+				uint32_t length;
+				TRY(data_read(data, &length, 4));
+				TRY(data_seek(data, length, AL_SEEK_CUR));
+			}
+				break;
+
 			case AL_VAR_BOOL | 0x80:
 			case AL_VAR_INT | 0x80:
 			case AL_VAR_DOUBLE | 0x80:
@@ -426,11 +458,7 @@ AlError al_data_skip_rest(AlData *data)
 			case AL_VAR_VEC3 | 0x80:
 			case AL_VAR_VEC4 | 0x80:
 			case AL_VAR_BOX2 | 0x80:
-			{
-				uint32_t length;
-				TRY(data_read(data, &length, 4));
-				TRY(data_seek(data, length, AL_SEEK_CUR));
-			}
+				TRY(skip_array(data, type & 0x7F));
 				break;
 
 			default:
