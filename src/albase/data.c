@@ -176,6 +176,17 @@ static AlError write_string(AlData *data, const char *value, uint32_t length)
 	PASS()
 }
 
+static AlError skip_string(AlData *data)
+{
+	BEGIN()
+
+	uint32_t length;
+	TRY(data_read(data, &length, 4));
+	TRY(data_seek(data, length, AL_SEEK_CUR));
+
+	PASS()
+}
+
 static size_t get_var_size(AlVarType type)
 {
 	switch (type) {
@@ -444,11 +455,7 @@ AlError al_data_skip_rest(AlData *data)
 			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 
 			case AL_VAR_STRING:
-			{
-				uint32_t length;
-				TRY(data_read(data, &length, 4));
-				TRY(data_seek(data, length, AL_SEEK_CUR));
-			}
+				TRY(skip_string(data));
 				break;
 
 			case AL_VAR_BOOL | 0x80:
