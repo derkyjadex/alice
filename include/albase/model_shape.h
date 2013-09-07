@@ -19,9 +19,6 @@ typedef struct AlModelPath AlModelPath;
 AlError al_model_systems_init(lua_State *L, AlVars *vars);
 void al_model_systems_free(void);
 
-AlError al_model_shape_register_ctor(void);
-AlError al_model_path_register_ctor(void);
-
 AlError al_model_shape_init(AlModelShape **shape);
 void al_model_shape_free(AlModelShape *shape);
 
