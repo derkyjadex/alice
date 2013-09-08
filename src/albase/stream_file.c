@@ -88,7 +88,7 @@ static void file_free(AlStream *base)
 	}
 }
 
-AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode mode)
+AlError al_stream_init_filename(AlStream **result, const char *filename, AlOpenMode mode)
 {
 	BEGIN()
 

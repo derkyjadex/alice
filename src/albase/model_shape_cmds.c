@@ -27,7 +27,7 @@ static int cmd_model_shape_load(lua_State *L)
 
 	AlStream *stream = NULL;
 
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_READ));
 	TRY(al_model_shape_load(model, stream));
 
 	CATCH_LUA(, "Error loading model")
@@ -45,7 +45,7 @@ static int cmd_model_shape_save(lua_State *L)
 
 	AlStream *stream = NULL;
 
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_WRITE));
+	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_WRITE));
 	TRY(al_model_shape_save(model, stream));
 
 	CATCH_LUA(, "Error saving model")

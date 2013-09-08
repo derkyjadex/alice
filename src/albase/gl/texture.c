@@ -151,7 +151,7 @@ AlError algl_texture_load_from_file(AlGlTexture *texture, const char *filename)
 	BEGIN()
 
 	AlStream *stream = NULL;
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_READ));
 	TRY(algl_texture_load_from_stream(texture, stream));
 
 	PASS(

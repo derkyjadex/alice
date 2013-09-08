@@ -91,7 +91,7 @@ AlError al_script_run_file(lua_State *L, const char *filename)
 	BEGIN()
 
 	AlStream *stream = NULL;
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_READ));
 	TRY(al_script_run_stream(L, stream));
 
 	PASS(
