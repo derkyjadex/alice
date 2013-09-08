@@ -163,7 +163,7 @@ static AlError read_int(AlData *data, int32_t *result)
 
 static AlError write_int(AlData *data, const int32_t *value)
 {
-	return data_write(data, value, 4);
+	return write_sint(data, *value);
 }
 
 static AlError read_double(AlData *data, double *result)
@@ -242,19 +242,16 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	FINALLY()
 }
 
-static AlError write_string(AlData *data, const char *value, uint32_t length)
+static AlError write_string(AlData *data, const char *value, uint64_t length)
 {
 	BEGIN()
 
-	uint32_t len;
-	if (length != NO_LENGTH) {
-		len = length;
-	} else {
-		len = (uint32_t)strlen(value);
+	if (length == NO_LENGTH) {
+		length = strlen(value);
 	}
 
-	TRY(data_write(data, &len, 4));
-	TRY(data_write(data, value, len));
+	TRY(write_uint(data, length));
+	TRY(data_write(data, value, length));
 
 	PASS()
 }
@@ -330,9 +327,9 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 
 	size_t itemSize = get_var_size(type);
 
-	TRY(data_write(data, &count, 4));
+	TRY(write_uint(data, count));
 
-	for (int i = 0; i < count; i++) {
+	for (uint64_t i = 0; i < count; i++) {
 		const void *value = values + (i * itemSize);
 
 		switch (type) {
