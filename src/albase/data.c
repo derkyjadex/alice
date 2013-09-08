@@ -55,6 +55,16 @@ static AlError write_type(AlData *data, AlVarType type)
 	return data_write(data, &t, 1);
 }
 
+static AlError read_tag(AlData *data, AlDataTag *tag)
+{
+	return data_read(data, tag, 4);
+}
+
+static AlError write_tag(AlData *data, const AlDataTag *result)
+{
+	return data_write(data, result, 4);
+}
+
 static AlError read_bool(AlData *data, bool *result)
 {
 	BEGIN()
@@ -307,7 +317,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 		case AL_TOKEN_END:
 			break;
 
-		case AL_TOKEN_TAG: TRY(read_int(data, &item->value.tag)); break;
+		case AL_TOKEN_TAG: TRY(read_tag(data, &item->value.tag)); break;
 		case AL_VAR_BOOL: TRY(read_bool(data, &item->value.boolVal)); break;
 		case AL_VAR_INT: TRY(read_int(data, &item->value.intVal)); break;
 		case AL_VAR_DOUBLE: TRY(read_double(data, &item->value.doubleVal)); break;
@@ -492,7 +502,7 @@ AlError al_data_write_start_tag(AlData *data, AlDataTag tag)
 
 	TRY(al_data_write_start(data));
 	TRY(write_token(data, AL_TOKEN_TAG));
-	TRY(write_int(data, &tag));
+	TRY(write_tag(data, &tag));
 
 	PASS()
 }
