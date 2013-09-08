@@ -43,6 +43,79 @@ void al_data_free(AlData *data)
 	}
 }
 
+static AlError read_uint(AlData *data, uint64_t *result)
+{
+	BEGIN()
+
+	uint8_t byte;
+	int length = 0;
+
+	*result = 0;
+	do {
+		if (length > 10)
+			THROW(AL_ERROR_INVALID_DATA);
+
+		TRY(data_read(data, &byte, 1));
+
+		*result |= (byte & 0x7F) << (length * 7);
+		length++;
+	} while (byte & 0x80);
+
+	PASS()
+}
+
+static AlError write_uint(AlData *data, uint64_t value)
+{
+	uint8_t buffer[10];
+	int length = 0;
+
+	do {
+		uint8_t byte = value & 0x7F;
+		value >>= 7;
+
+		if (value) {
+			byte |= 0x80;
+		}
+
+		buffer[length++] = byte;
+	} while (value);
+
+	return data_write(data, buffer, length);
+}
+
+static AlError skip_uint(AlData *data)
+{
+	BEGIN()
+
+	uint8_t byte;
+	do {
+		TRY(data_read(data, &byte, 1));
+	} while (byte & 0x80);
+
+	PASS()
+}
+
+static AlError read_sint(AlData *data, int64_t *result)
+{
+	BEGIN()
+
+	uint64_t uvalue;
+	TRY(read_uint(data, &uvalue));
+
+	*result = (uvalue & 1) ?
+	~(uvalue >> 1) : (uvalue >> 1);
+
+	PASS()
+}
+
+static AlError write_sint(AlData *data, int64_t value)
+{
+	uint64_t uvalue = (value < 0) ?
+		~(value << 1) : value << 1;
+
+	return write_uint(data, uvalue);
+}
+
 static AlError write_token(AlData *data, AlToken token)
 {
 	uint8_t t = token;
