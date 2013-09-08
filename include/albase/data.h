@@ -69,11 +69,11 @@ typedef struct {
 		Vec4 vec4;
 		Box2 box2;
 		struct {
-			uint32_t length;
+			uint64_t length;
 			char *chars;
 		} string;
 		struct {
-			uint32_t length;
+			uint64_t length;
 			void *items;
 		} array;
 	} value;
@@ -88,7 +88,7 @@ AlError al_data_read(AlData *data, AlDataItem *item);
 AlError al_data_read_start(AlData *data);
 AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actual);
 AlError al_data_read_value(AlData *data, AlVarType type, void *value);
-AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint32_t *count);
+AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count);
 AlError al_data_skip_rest(AlData *data);
 
 AlError al_data_write_start(AlData *data);
@@ -97,6 +97,6 @@ AlError al_data_write_start_tag(AlData *data, AlDataTag tag);
 AlError al_data_write_simple_tag(AlData *data, AlDataTag tag, AlVarType type, const void *value);
 AlError al_data_write_value(AlData *data, AlVarType type, const void *value);
 AlError al_data_write_string(AlData *data, const char *value, uint32_t length);
-AlError al_data_write_array(AlData *data, AlVarType type, const void *values, uint32_t count);
+AlError al_data_write_array(AlData *data, AlVarType type, const void *values, uint64_t count);
 
 #endif

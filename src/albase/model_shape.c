@@ -61,7 +61,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 	Vec3 colour;
 	Vec2 *points = NULL;
-	uint32_t numPoints = 0;
+	uint64_t numPoints = 0;
 
 	TRY(al_data_read_start(data));
 
@@ -75,6 +75,9 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 				THROW(AL_ERROR_INVALID_DATA);
 
 			TRY(al_data_read_array(data, AL_VAR_VEC2, &points, &numPoints));
+			if (numPoints > INT_MAX)
+				THROW(AL_ERROR_INVALID_DATA);
+
 			TRY(al_data_skip_rest(data));
 		})
 	})
@@ -86,7 +89,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 	path->colour = colour;
 	path->pointsLength = numPoints;
-	path->numPoints = numPoints;
+	path->numPoints = (int)numPoints;
 	path->points = points;
 
 	CATCH(
