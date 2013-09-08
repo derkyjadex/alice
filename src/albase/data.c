@@ -158,7 +158,17 @@ static AlError write_bool(AlData *data, const bool *value)
 
 static AlError read_int(AlData *data, int32_t *result)
 {
-	return data_read(data, result, 4);
+	BEGIN()
+
+	int64_t value;
+	TRY(read_sint(data, &value));
+
+	if (value > INT32_MAX || value < INT32_MIN)
+		THROW(AL_ERROR_INVALID_DATA);
+
+	*result = (int32_t)value;
+
+	PASS()
 }
 
 static AlError write_int(AlData *data, const int32_t *value)
@@ -220,9 +230,9 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 {
 	BEGIN()
 
-	uint32_t length;
+	uint64_t length;
 	char *chars;
-	TRY(data_read(data, &length, 4));
+	TRY(read_uint(data, &length));
 	TRY(al_malloc(&chars, sizeof(char), length + 1));
 	TRY(data_read(data, chars, length));
 	chars[length] = '\0';
@@ -260,8 +270,8 @@ static AlError skip_string(AlData *data)
 {
 	BEGIN()
 
-	uint32_t length;
-	TRY(data_read(data, &length, 4));
+	uint64_t length;
+	TRY(read_uint(data, &length));
 	TRY(data_seek(data, length, AL_SEEK_CUR));
 
 	PASS()
@@ -287,12 +297,12 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *
 	BEGIN()
 
 	size_t itemSize = get_var_size(type);
-	uint32_t length;
+	uint64_t count;
 	void *array = NULL;
-	TRY(data_read(data, &length, 4));
-	TRY(al_malloc(&array, itemSize, length));
+	TRY(read_uint(data, &count));
+	TRY(al_malloc(&array, itemSize, count));
 
-	for (int i = 0; i < length; i++) {
+	for (uint64_t i = 0; i < count; i++) {
 		void *item = array + (i * itemSize);
 
 		switch (type) {
@@ -313,7 +323,7 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *
 	}
 
 	*(void **)result = data->temp = array;
-	*resultCount = length;
+	*resultCount = count;
 
 	CATCH(
 		free(array);
@@ -352,23 +362,23 @@ static AlError skip_array(AlData *data, AlVarType type)
 {
 	BEGIN()
 
-	uint32_t length;
-	TRY(data_read(data, &length, 4));
+	uint64_t count;
+	TRY(read_uint(data, &count));
 
-	int itemSize;
-	switch (type) {
-		case AL_VAR_BOOL: itemSize = 1; break;
-		case AL_VAR_INT: itemSize = 4; break;
-		case AL_VAR_DOUBLE: itemSize = 8; break;
-		case AL_VAR_VEC2: itemSize = 16; break;
-		case AL_VAR_VEC3: itemSize = 24; break;
-		case AL_VAR_VEC4: itemSize = 32; break;
-		case AL_VAR_BOX2: itemSize = 32; break;
-		default:
-			THROW(AL_ERROR_INVALID_DATA);
+	for (uint64_t i = 0; i < count; i++) {
+		switch (type) {
+			case AL_VAR_BOOL: TRY(data_seek(data, 1, AL_SEEK_CUR)); break;
+			case AL_VAR_INT: TRY(skip_uint(data)); break;
+			case AL_VAR_DOUBLE: TRY(data_seek(data, 8, AL_SEEK_CUR)); break;
+			case AL_VAR_VEC2: TRY(data_seek(data, 16, AL_SEEK_CUR)); break;
+			case AL_VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
+			case AL_VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
+			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
+
+			default:
+				THROW(AL_ERROR_INVALID_DATA);
+		}
 	}
-
-	TRY(data_seek(data, length * itemSize, AL_SEEK_CUR));
 
 	PASS()
 }
@@ -527,7 +537,7 @@ AlError al_data_skip_rest(AlData *data)
 
 			case AL_TOKEN_TAG: TRY(data_seek(data, 4, AL_SEEK_CUR)); break;
 			case AL_VAR_BOOL: TRY(data_seek(data, 1, AL_SEEK_CUR)); break;
-			case AL_VAR_INT: TRY(data_seek(data, 4, AL_SEEK_CUR)); break;
+			case AL_VAR_INT: TRY(skip_uint(data)); break;
 			case AL_VAR_DOUBLE: TRY(data_seek(data, 8, AL_SEEK_CUR)); break;
 			case AL_VAR_VEC2: TRY(data_seek(data, 16, AL_SEEK_CUR)); break;
 			case AL_VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
