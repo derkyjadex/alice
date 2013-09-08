@@ -15,10 +15,11 @@
 #include "geometry.h"
 #include "vars.h"
 
-typedef int32_t AlDataTag;
+typedef uint32_t AlDataTag;
 
 #define AL_NO_TAG ((AlDataTag)0)
-#define AL_ANY_TAG ((AlDataTag)0)
+#define AL_ANY_TAG ((AlDataTag)UINT32_MAX)
+
 #define AL_DATA_TAG(a, b, c, d) ((AlDataTag)((((d) << 24) | ((c) << 16) | ((b) << 8) | (a))))
 
 #define READ_TAGS(data, x) { \

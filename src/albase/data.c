@@ -465,7 +465,7 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 			break;
 
 		case AL_TOKEN_END:
-			if (expected)
+			if (expected != AL_ANY_TAG)
 				THROW(AL_ERROR_INVALID_DATA);
 
 			*actual = AL_NO_TAG;
