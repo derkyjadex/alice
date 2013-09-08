@@ -143,7 +143,7 @@ static AlError write_box2(AlData *data, const Box2 *value)
 	return data_write(data, value, 32);
 }
 
-static AlError read_string(AlData *data, char **result, uint32_t *resultLength)
+static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 {
 	BEGIN()
 
@@ -212,7 +212,7 @@ static size_t get_var_size(AlVarType type)
 	}
 }
 
-static AlError read_array(AlData *data, AlVarType type, void *result, uint32_t *resultCount)
+static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *resultCount)
 {
 	BEGIN()
 
@@ -251,7 +251,7 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint32_t *
 	FINALLY()
 }
 
-static AlError write_array(AlData *data, AlVarType type, const void *values, uint32_t count)
+static AlError write_array(AlData *data, AlVarType type, const void *values, uint64_t count)
 {
 	BEGIN()
 
@@ -421,7 +421,7 @@ AlError al_data_read_value(AlData *data, AlVarType type, void *value)
 	PASS()
 }
 
-AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint32_t *count)
+AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count)
 {
 	BEGIN()
 
@@ -548,7 +548,7 @@ AlError al_data_write_string(AlData *data, const char *value, uint32_t length)
 	PASS()
 }
 
-AlError al_data_write_array(AlData *data, AlVarType type, const void *values, uint32_t count)
+AlError al_data_write_array(AlData *data, AlVarType type, const void *values, uint64_t count)
 {
 	BEGIN()
 
