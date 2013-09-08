@@ -148,7 +148,11 @@ static AlError print_data(AlData *data, int indent)
 				}
 
 				if (!item.array) {
-					print_value(item.type, &item.value);
+					if (item.type == AL_VAR_STRING) {
+						print_value(item.type, item.value.string.chars);
+					} else {
+						print_value(item.type, &item.value);
+					}
 
 				} else {
 					printf("{\n");
