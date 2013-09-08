@@ -136,8 +136,8 @@ AlError algl_shader_init_with_files(AlGlShader **result, const char *vertexFilen
 	AlStream *vertexStream = NULL;
 	AlStream *fragmentStream = NULL;
 
-	TRY(al_stream_init_file(&vertexStream, vertexFilename, AL_OPEN_READ));
-	TRY(al_stream_init_file(&fragmentStream, fragmentFilename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&vertexStream, vertexFilename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&fragmentStream, fragmentFilename, AL_OPEN_READ));
 
 	TRY(algl_shader_init_with_streams(&shader, vertexStream, fragmentStream, defines));
 

@@ -15,10 +15,11 @@
 #include "geometry.h"
 #include "vars.h"
 
-typedef int32_t AlDataTag;
+typedef uint32_t AlDataTag;
 
 #define AL_NO_TAG ((AlDataTag)0)
-#define AL_ANY_TAG ((AlDataTag)0)
+#define AL_ANY_TAG ((AlDataTag)UINT32_MAX)
+
 #define AL_DATA_TAG(a, b, c, d) ((AlDataTag)((((d) << 24) | ((c) << 16) | ((b) << 8) | (a))))
 
 #define READ_TAGS(data, x) { \
@@ -53,7 +54,8 @@ typedef int32_t AlDataTag;
 typedef enum {
 	AL_TOKEN_START = 0xFE,
 	AL_TOKEN_END = 0xEF,
-	AL_TOKEN_TAG = 0xEE
+	AL_TOKEN_TAG = 0xEE,
+	AL_TOKEN_EOF = 0xFF
 } AlToken;
 
 typedef struct {

@@ -13,6 +13,7 @@
 typedef struct {
 	AlStream base;
 	FILE *file;
+	bool closeFile;
 } FileStream;
 
 static AlError file_read(AlStream *base, void *ptr, size_t size, size_t *bytesRead)
@@ -80,7 +81,7 @@ static void file_free(AlStream *base)
 	if (stream) {
 		free((char *)base->name);
 
-		if (stream->file) {
+		if (stream->file && stream->closeFile) {
 			fclose(stream->file);
 		}
 
@@ -88,7 +89,7 @@ static void file_free(AlStream *base)
 	}
 }
 
-AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode mode)
+AlError al_stream_init_filename(AlStream **result, const char *filename, AlOpenMode mode)
 {
 	BEGIN()
 
@@ -104,6 +105,7 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 		.free = file_free
 	};
 	stream->file = NULL;
+	stream->closeFile = true;
 
 	TRY(al_malloc(&stream->base.name, sizeof(char), strlen(filename) + 1));
 	strcpy((char *)stream->base.name, filename);
@@ -113,6 +115,35 @@ AlError al_stream_init_file(AlStream **result, const char *filename, AlOpenMode 
 		al_log_error("Could not open file: %s", filename);
 		THROW(AL_ERROR_IO);
 	}
+
+	*result = &stream->base;
+
+	CATCH(
+		file_free(&stream->base);
+	)
+	FINALLY()
+}
+
+AlError al_stream_init_file(AlStream **result, FILE *file, bool closeFile, const char *name)
+{
+	BEGIN()
+
+	FileStream *stream = NULL;
+	TRY(al_malloc(&stream, sizeof(FileStream), 1));
+
+	stream->base = (AlStream){
+		.name = NULL,
+		.read = file_read,
+		.write = file_write,
+		.seek = file_seek,
+		.tell = file_tell,
+		.free = file_free
+	};
+	stream->file = file;
+	stream->closeFile = closeFile;
+
+	TRY(al_malloc(&stream->base.name, sizeof(char), strlen(name) + 1));
+	strcpy((char *)stream->base.name, name);
 
 	*result = &stream->base;
 

@@ -191,7 +191,7 @@ static AlError model_load(AlModel *model, const char *filename)
 	TRY(al_malloc(&filenameCopy, sizeof(char), strlen(filename) + 1));
 	strcpy(filenameCopy, filename);
 
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_READ));
 	TRY(al_model_shape_init(&shape));
 	TRY(al_model_shape_load(shape, stream));
 	TRY(al_model_set_shape(model, shape));

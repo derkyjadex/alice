@@ -42,7 +42,7 @@ AlError al_read_file_to_string(const char *filename, char **string)
 
 	AlStream *stream = NULL;
 
-	TRY(al_stream_init_file(&stream, filename, AL_OPEN_READ));
+	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_READ));
 	TRY(al_stream_read_to_string(stream, string, NULL));
 
 	PASS(
