@@ -18,6 +18,7 @@
 #include "albase/lua.h"
 #include "widget_internal.h"
 #include "albase/wrapper.h"
+#include "albase/fs.h"
 
 struct AlHost {
 	lua_State *lua;
@@ -60,6 +61,8 @@ AlError al_host_systems_init()
 		al_log_error("Could not set locale to %s", locale);
 		THROW(AL_ERROR_GENERIC);
 	}
+
+	TRY(al_fs_chdir_app_data());
 
 	CATCH(
 		al_host_systems_free();
