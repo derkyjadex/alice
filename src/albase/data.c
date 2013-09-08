@@ -17,6 +17,7 @@ const uint32_t NO_LENGTH = UINT32_MAX;
 
 struct AlData {
 	AlStream *stream;
+	bool eof;
 	void *temp;
 };
 
@@ -28,6 +29,7 @@ AlError al_data_init(AlData **result, AlStream *stream)
 	TRY(al_malloc(&data, sizeof(AlData), 1));
 
 	data->stream = stream;
+	data->eof = false;
 	data->temp = NULL;
 
 	*result = data;
@@ -387,42 +389,52 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 {
 	BEGIN()
 
+	if (data->eof)
+		THROW(AL_ERROR_INVALID_DATA);
+
 	uint8_t type;
-	TRY(data_read(data, &type, 1));
+	size_t bytesRead;
+	data->stream->read(data->stream, &type, 1, &bytesRead);
 
 	item->array = false;
 
-	switch (type) {
-		case AL_TOKEN_START:
-		case AL_TOKEN_END:
-			break;
+	if (!bytesRead) {
+		data->eof = true;
+		type = AL_TOKEN_EOF;
 
-		case AL_TOKEN_TAG: TRY(read_tag(data, &item->value.tag)); break;
-		case AL_VAR_BOOL: TRY(read_bool(data, &item->value.boolVal)); break;
-		case AL_VAR_INT: TRY(read_int(data, &item->value.intVal)); break;
-		case AL_VAR_DOUBLE: TRY(read_double(data, &item->value.doubleVal)); break;
-		case AL_VAR_VEC2: TRY(read_vec2(data, &item->value.vec2)); break;
-		case AL_VAR_VEC3: TRY(read_vec3(data, &item->value.vec3)); break;
-		case AL_VAR_VEC4: TRY(read_vec4(data, &item->value.vec4)); break;
-		case AL_VAR_BOX2: TRY(read_box2(data, &item->value.box2)); break;
-		case AL_VAR_STRING:
-			TRY(read_string(data, &item->value.string.chars, &item->value.string.length));
-			break;
+	} else {
+		switch (type) {
+			case AL_TOKEN_START:
+			case AL_TOKEN_END:
+				break;
 
-		case AL_VAR_BOOL | 0x80:
-		case AL_VAR_INT | 0x80:
-		case AL_VAR_DOUBLE | 0x80:
-		case AL_VAR_VEC2 | 0x80:
-		case AL_VAR_VEC3 | 0x80:
-		case AL_VAR_VEC4 | 0x80:
-		case AL_VAR_BOX2 | 0x80:
-			type &= 0x7F;
-			item->array = true;
-			TRY(read_array(data, type, &item->value.array.items, &item->value.array.length));
-			break;
+			case AL_TOKEN_TAG: TRY(read_tag(data, &item->value.tag)); break;
+			case AL_VAR_BOOL: TRY(read_bool(data, &item->value.boolVal)); break;
+			case AL_VAR_INT: TRY(read_int(data, &item->value.intVal)); break;
+			case AL_VAR_DOUBLE: TRY(read_double(data, &item->value.doubleVal)); break;
+			case AL_VAR_VEC2: TRY(read_vec2(data, &item->value.vec2)); break;
+			case AL_VAR_VEC3: TRY(read_vec3(data, &item->value.vec3)); break;
+			case AL_VAR_VEC4: TRY(read_vec4(data, &item->value.vec4)); break;
+			case AL_VAR_BOX2: TRY(read_box2(data, &item->value.box2)); break;
+			case AL_VAR_STRING:
+				TRY(read_string(data, &item->value.string.chars, &item->value.string.length));
+				break;
 
-		default:
-			THROW(AL_ERROR_INVALID_DATA);
+			case AL_VAR_BOOL | 0x80:
+			case AL_VAR_INT | 0x80:
+			case AL_VAR_DOUBLE | 0x80:
+			case AL_VAR_VEC2 | 0x80:
+			case AL_VAR_VEC3 | 0x80:
+			case AL_VAR_VEC4 | 0x80:
+			case AL_VAR_BOX2 | 0x80:
+				type &= 0x7F;
+				item->array = true;
+				TRY(read_array(data, type, &item->value.array.items, &item->value.array.length));
+				break;
+
+			default:
+				THROW(AL_ERROR_INVALID_DATA);
+		}
 	}
 
 	item->type = type;
