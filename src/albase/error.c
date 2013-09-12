@@ -17,7 +17,8 @@ static const char *errorStrings[] = {
 	"io",
 	"invalid data",
 	"graphics",
-	"script"
+	"script",
+	"invalid operation"
 };
 
 static const char *unknownError = "unknown";
