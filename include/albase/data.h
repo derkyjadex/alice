@@ -71,12 +71,13 @@ typedef struct {
 		Vec4 vec4;
 		Box2 box2;
 		struct {
-			uint64_t length;
 			char *chars;
-		} string;
-		struct {
 			uint64_t length;
+		} string;
+		AlBlob blob;
+		struct {
 			void *items;
+			uint64_t length;
 		} array;
 	} value;
 } AlDataItem;

@@ -177,6 +177,31 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	return newValue;
 }
 
+static AlBlob toAlBlob(lua_State *L, int valueArg, AlBlob oldValue)
+{
+	size_t length;
+	const char *luaValue = luaL_checklstring(L, valueArg, &length);
+	uint8_t *bytes = NULL;
+
+	AlError error = al_malloc(&bytes, sizeof(uint8_t), length);
+	if (error) {
+		luaL_error(L, "error setting blob value");
+	}
+
+	memcpy(bytes, luaValue, length);
+	free(oldValue.bytes);
+
+	return (AlBlob){
+		.bytes = bytes,
+		.length = length
+	};
+}
+
+static void pushAlBlob(lua_State *L, AlBlob blob)
+{
+	lua_pushlstring(L, (char *)blob.bytes, blob.length);
+}
+
 static void *get_instance_ptr(lua_State *L, AlVarReg *entry, int n)
 {
 	luaL_checkany(L, n);
@@ -230,6 +255,7 @@ ACCESSOR(Vec3, pushVec3, 3, toVec3(L, arg))
 ACCESSOR(Vec4, pushVec4, 4, toVec4(L, arg))
 ACCESSOR(Box2, pushBox2, 4, toBox2(L, arg))
 ACCESSOR(String, lua_pushstring, 1, tonewString(L, arg, *ptr))
+ACCESSOR(AlBlob, pushAlBlob, 1, toAlBlob(L, arg, *ptr))
 
 static AlVarReg *get_entry(lua_State *L)
 {
@@ -270,7 +296,8 @@ static int cmd_get(lua_State *L)
 		case AL_VAR_VEC3: pushVec3(L, *(Vec3 *)ptr); return 3;
 		case AL_VAR_VEC4: pushVec4(L, *(Vec4 *)ptr); return 4;
 		case AL_VAR_BOX2: pushBox2(L, *(Box2 *)ptr); return 4;
-		case AL_VAR_STRING: lua_pushstring(L, *(char **)ptr); return 1;
+		case AL_VAR_STRING: lua_pushstring(L, *(String *)ptr); return 1;
+		case AL_VAR_BLOB: pushAlBlob(L, *(AlBlob *)ptr); return 1;
 		default: return 0;
 	}
 }
@@ -293,6 +320,7 @@ static int cmd_getter(lua_State *L)
 		case AL_VAR_VEC4: USE(Vec4); break;
 		case AL_VAR_BOX2: USE(Box2); break;
 		case AL_VAR_STRING: USE(String); break;
+		case AL_VAR_BLOB: USE(AlBlob); break;
 		default:
 			return 0;
 	}
@@ -363,6 +391,10 @@ static int cmd_set(lua_State *L)
 		case AL_VAR_STRING:
 			*(String *)value = tonewString(L, valueArg, *(String *)value);
 			break;
+
+		case AL_VAR_BLOB:
+			*(AlBlob *)value = toAlBlob(L, valueArg, *(AlBlob *)value);
+			break;
 	}
 
 	return 0;
@@ -386,6 +418,7 @@ static int cmd_setter(lua_State *L)
 		case AL_VAR_VEC4: USE(Vec4); break;
 		case AL_VAR_BOX2: USE(Box2); break;
 		case AL_VAR_STRING: USE(String); break;
+		case AL_VAR_BLOB: USE(AlBlob); break;
 		default:
 			return 0;
 

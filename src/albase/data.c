@@ -283,6 +283,52 @@ static AlError skip_string(AlData *data)
 	PASS()
 }
 
+static AlError read_blob(AlData *data, AlBlob *result)
+{
+	BEGIN()
+
+	uint64_t length;
+	uint8_t	*bytes = NULL;
+	TRY(read_uint(data, &length));
+
+	if (length > SIZE_T_MAX)
+		THROW(AL_ERROR_MEMORY);
+
+	TRY(al_malloc(&bytes, sizeof(uint8_t), length));
+	TRY(data_read(data, bytes, length));
+
+	if (data->temp) {
+		free(data->temp);
+	}
+
+	data->temp = bytes;
+
+	*result = (AlBlob){
+		.length = length,
+		.bytes = bytes
+	};
+
+	CATCH({
+		free(bytes);
+	})
+	FINALLY()
+}
+
+static AlError write_blob(AlData *data, const AlBlob *value)
+{
+	BEGIN()
+
+	TRY(write_uint(data, value->length));
+	TRY(data_write(data, value->bytes, value->length));
+
+	PASS()
+}
+
+static AlError skip_blob(AlData *data)
+{
+	return skip_string(data);
+}
+
 static size_t get_var_size(AlVarType type)
 {
 	switch (type) {
@@ -294,6 +340,7 @@ static size_t get_var_size(AlVarType type)
 		case AL_VAR_VEC4: return sizeof(Vec4);
 		case AL_VAR_BOX2: return sizeof(Box2);
 		case AL_VAR_STRING: return sizeof(char *);
+		case AL_VAR_BLOB: return sizeof(AlBlob);
 		default: return 0;
 	}
 }
@@ -423,6 +470,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 			case AL_VAR_STRING:
 				TRY(read_string(data, &item->value.string.chars, &item->value.string.length));
 				break;
+			case AL_VAR_BLOB: TRY(read_blob(data, &item->value.blob)); break;
 
 			case AL_VAR_BOOL | 0x80:
 			case AL_VAR_INT | 0x80:
@@ -512,6 +560,7 @@ AlError al_data_read_value(AlData *data, AlVarType type, void *value)
 		case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
 		case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
 		case AL_VAR_STRING: *(char **)value = item.value.string.chars; break;
+		case AL_VAR_BLOB: *(AlBlob *)value = item.value.blob; break;
 	}
 
 	PASS()
@@ -560,6 +609,7 @@ AlError al_data_skip_rest(AlData *data)
 			case AL_VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 			case AL_VAR_STRING: TRY(skip_string(data)); break;
+			case AL_VAR_BLOB: TRY(skip_blob(data)); break;
 
 			case AL_VAR_BOOL | 0x80:
 			case AL_VAR_INT | 0x80:
@@ -626,6 +676,7 @@ AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 		case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
 		case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
 		case AL_VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
+		case AL_VAR_BLOB: TRY(write_blob(data, value)); break;
 		default:
 			THROW(AL_ERROR_INVALID_OPERATION);
 	}
