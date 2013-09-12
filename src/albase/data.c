@@ -233,8 +233,12 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	BEGIN()
 
 	uint64_t length;
-	char *chars;
+	char *chars = NULL;
 	TRY(read_uint(data, &length));
+
+	if (length > SIZE_T_MAX)
+		THROW(AL_ERROR_MEMORY);
+
 	TRY(al_malloc(&chars, sizeof(char), length + 1));
 	TRY(data_read(data, chars, length));
 	chars[length] = '\0';
@@ -353,7 +357,7 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 			case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
 			case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
 			default:
-				THROW(AL_ERROR_INVALID_DATA);
+				THROW(AL_ERROR_INVALID_OPERATION);
 		}
 	}
 
@@ -507,7 +511,7 @@ AlError al_data_read_value(AlData *data, AlVarType type, void *value)
 		case AL_VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
 		case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
 		case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
-		case AL_VAR_STRING: *(const char **)value = item.value.string.chars; break;
+		case AL_VAR_STRING: *(char **)value = item.value.string.chars; break;
 	}
 
 	PASS()
@@ -555,10 +559,7 @@ AlError al_data_skip_rest(AlData *data)
 			case AL_VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
 			case AL_VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
-
-			case AL_VAR_STRING:
-				TRY(skip_string(data));
-				break;
+			case AL_VAR_STRING: TRY(skip_string(data)); break;
 
 			case AL_VAR_BOOL | 0x80:
 			case AL_VAR_INT | 0x80:
@@ -625,6 +626,8 @@ AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 		case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
 		case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
 		case AL_VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
+		default:
+			THROW(AL_ERROR_INVALID_OPERATION);
 	}
 
 	PASS()
