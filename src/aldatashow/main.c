@@ -8,6 +8,13 @@
 
 #include "albase/data.h"
 
+static void print_indent(int n)
+{
+	for (int i = 0; i < n; i++) {
+		printf("  ");
+	}
+}
+
 static void print_tag(AlDataTag tag)
 {
 	char a = (0x000000FF & tag) >> 0;
@@ -67,15 +74,15 @@ static void print_value(AlVarType type, void *value)
 			break;
 
 		case AL_VAR_STRING:
-			printf("\"%s\"", (char *)value);
+			printf("\"%s\"", *(char **)value);
 			break;
-	}
-}
 
-static void print_indent(int n)
-{
-	for (int i = 0; i < n; i++) {
-		printf("  ");
+		case AL_VAR_BLOB:
+			printf("0x");
+			for (int i = 0; i < ((AlBlob *)value)->length; i++) {
+				printf("%02x", ((AlBlob *)value)->bytes[i]);
+			}
+			break;
 	}
 }
 
@@ -91,6 +98,22 @@ static size_t get_var_size(AlVarType type)
 		case AL_VAR_BOX2: return sizeof(Box2);
 		default: return 0;
 	}
+}
+
+static void print_array(AlDataItem item, int indent)
+{
+	printf("{\n");
+	void *items = item.value.array.items;
+	size_t itemSize = get_var_size(item.type);
+	for (uint64_t i = 0; i < item.value.array.length; i++) {
+		print_indent(indent + 1);
+		print_value(item.type, items);
+		printf("\n");
+		items += itemSize;
+	}
+	print_indent(indent);
+	printf("}");
+
 }
 
 static AlError print_data(AlData *data, int indent)
@@ -141,6 +164,7 @@ static AlError print_data(AlData *data, int indent)
 			case AL_VAR_VEC4:
 			case AL_VAR_BOX2:
 			case AL_VAR_STRING:
+			case AL_VAR_BLOB:
 				if (first) {
 					first = false;
 				} else {
@@ -148,24 +172,10 @@ static AlError print_data(AlData *data, int indent)
 				}
 
 				if (!item.array) {
-					if (item.type == AL_VAR_STRING) {
-						print_value(item.type, item.value.string.chars);
-					} else {
-						print_value(item.type, &item.value);
-					}
+					print_value(item.type, &item.value);
 
 				} else {
-					printf("{\n");
-					void *items = item.value.array.items;
-					size_t itemSize = get_var_size(item.type);
-					for (uint64_t i = 0; i < item.value.array.length; i++) {
-						print_indent(indent + 1);
-						print_value(item.type, items);
-						printf("\n");
-						items += itemSize;
-					}
-					print_indent(indent);
-					printf("}");
+					print_array(item, indent);
 				}
 				break;
 		}
