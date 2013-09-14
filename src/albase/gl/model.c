@@ -70,7 +70,7 @@ static AlError model_build_curve_triangles(AlModelPath *path, VertexNode *nodes,
 	BEGIN()
 
 	int n = path->numPoints;
-	Vec2 *points = path->points;
+	AlModelPoint *points = path->points;
 
 	VertexNode *lastNode = nodes;
 	*lastNode = (VertexNode){nodes, 0};
@@ -78,9 +78,9 @@ static AlError model_build_curve_triangles(AlModelPath *path, VertexNode *nodes,
 	for (int i = 0; i < n - 1; i += 2) {
 		bool last = i == n - 2;
 
-		Vec2 p1 = points[i + 0];
-		Vec2 p2 = points[i + 1];
-		Vec2 p3 = points[last ? 0 : i + 2];
+		Vec2 p1 = points[i + 0].location;
+		Vec2 p2 = points[i + 1].location;
+		Vec2 p3 = points[last ? 0 : i + 2].location;
 
 		float sign = (vec2_cross(p1, p3, p2) < 0) ? -1 : 1;
 
@@ -109,7 +109,7 @@ static AlError model_build_inner_triangles(AlModelPath *path, VertexNode *vertic
 {
 	BEGIN()
 
-	Vec2 *points = path->points;
+	AlModelPoint *points = path->points;
 	VertexNode *v1 = vertices, *lastSuccess = v1;
 
 	while (true) {
@@ -118,16 +118,16 @@ static AlError model_build_inner_triangles(AlModelPath *path, VertexNode *vertic
 		if (v3 == v1)
 			RETURN()
 
-		Vec2 p1 = points[v1->i];
-		Vec2 p2 = points[v1->next->i];
-		Vec2 p3	= points[v3->i];
+		Vec2 p1 = points[v1->i].location;
+		Vec2 p2 = points[v1->next->i].location;
+		Vec2 p3	= points[v3->i].location;
 		bool success = false;
 
 		if (vec2_cross(p1, p3, p2) < 0) {
 			bool empty = true;
 
 			for (VertexNode *v = v3->next; v != v1; v = v->next) {
-				if (triangle_contains(p1, p2, p3, points[v->i])) {
+				if (triangle_contains(p1, p2, p3, points[v->i].location)) {
 					empty = false;
 					break;
 				}
@@ -292,7 +292,7 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 		maxVertices += ceil(path->numPoints / 2.0) * 9 - 6;
 
 		for (int j = 0; j < path->numPoints; j++) {
-			bounds = box2_include_vec2(bounds, path->points[j]);
+			bounds = box2_include_vec2(bounds, path->points[j].location);
 		}
 	}
 

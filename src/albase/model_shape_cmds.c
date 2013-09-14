@@ -69,14 +69,26 @@ static int cmd_model_shape_add_path(lua_State *L)
 {
 	BEGIN()
 
-	AlModelShape *model = cmd_model_shape_accessor(L, "add_path", 6);
-	int index = (int)lua_tointeger(L, -5) - 1;
-	double startX = lua_tonumber(L, -4);
-	double startY = lua_tonumber(L, -3);
-	double endX = lua_tonumber(L, -2);
-	double endY = lua_tonumber(L, -1);
+	AlModelShape *model = cmd_model_shape_accessor(L, "add_path", 8);
+	int index = (int)luaL_checkinteger(L, 2) - 1;
 
-	TRY(al_model_shape_add_path(model, index, (Vec2){startX, startY}, (Vec2){endX, endY}));
+	AlModelPoint start = {
+		.location = {
+			luaL_checknumber(L, 3),
+			luaL_checknumber(L, 4)
+		},
+		.onCurve = lua_toboolean(L, 5)
+	};
+
+	AlModelPoint end = {
+		.location = {
+			luaL_checknumber(L, 6),
+			luaL_checknumber(L, 7)
+		},
+		.onCurve = lua_toboolean(L, 8)
+	};
+
+	TRY(al_model_shape_add_path(model, index, start, end));
 
 	if (index == -1)
 		index = model->numPaths - 1;
@@ -92,7 +104,7 @@ static int cmd_model_shape_remove_path(lua_State *L)
 	BEGIN()
 
 	AlModelShape *model = cmd_model_shape_accessor(L, "remove_path", 2);
-	int index = (int)lua_tointeger(L, -1) - 1;
+	int index = (int)luaL_checkinteger(L, 2) - 1;
 
 	TRY(al_model_shape_remove_path(model, index));
 
@@ -113,24 +125,29 @@ static int cmd_model_path_get_points(lua_State *L)
 {
 	AlModelPath *path = cmd_path_accessor(L, "get_points", 1);
 
-	luaL_checkstack(L, path->numPoints * 2, "not enough stack space for points");
+	luaL_checkstack(L, path->numPoints * 3, "not enough stack space for points");
 
 	for (int i = 0; i < path->numPoints; i++) {
-		lua_pushnumber(L, path->points[i].x);
-		lua_pushnumber(L, path->points[i].y);
+		lua_pushnumber(L, path->points[i].location.x);
+		lua_pushnumber(L, path->points[i].location.y);
+		lua_pushboolean(L, path->points[i].onCurve);
 	}
 
-	return path->numPoints * 2;
+	return path->numPoints * 3;
 }
 
 static int cmd_model_path_set_point(lua_State *L)
 {
-	AlModelPath *path = cmd_path_accessor(L, "set_point", 4);
-	int index = (int)lua_tointeger(L, -3) - 1;
-	double x = lua_tonumber(L, -2);
-	double y = lua_tonumber(L, -1);
+	AlModelPath *path = cmd_path_accessor(L, "set_point", 5);
+	int index = (int)luaL_checkinteger(L, 2) - 1;
 
-	path->points[index] = (Vec2){x, y};
+	path->points[index] = (AlModelPoint){
+		.location = {
+			luaL_checknumber(L, 3),
+			luaL_checknumber(L, 4)
+		},
+		.onCurve = lua_toboolean(L, 5)
+	};
 
 	return 0;
 }
@@ -139,12 +156,18 @@ static int cmd_model_path_add_point(lua_State *L)
 {
 	BEGIN()
 
-	AlModelPath *path = cmd_path_accessor(L, "add_point", 4);
-	int index = (int)lua_tointeger(L, -3) - 1;
-	double x = lua_tonumber(L, -2);
-	double y = lua_tonumber(L, -1);
+	AlModelPath *path = cmd_path_accessor(L, "add_point", 5);
+	int index = (int)luaL_checkinteger(L, 2) - 1;
 
-	TRY(al_model_path_add_point(path, index, (Vec2){x, y}));
+	AlModelPoint point = {
+		.location = {
+			luaL_checknumber(L, 3),
+			luaL_checknumber(L, 4)
+		},
+		.onCurve = lua_toboolean(L, 5)
+	};
+
+	TRY(al_model_path_add_point(path, index, point));
 
 	CATCH_LUA(, "Error adding point to path")
 	FINALLY_LUA(, 0)
@@ -155,7 +178,7 @@ static int cmd_model_path_remove_point(lua_State *L)
 	BEGIN()
 
 	AlModelPath *path = cmd_path_accessor(L, "add_point", 2);
-	int index = (int)lua_tointeger(L, -1) - 1;
+	int index = (int)luaL_checkinteger(L, 2) - 1;
 
 	TRY(al_model_path_remove_point(path, index));
 

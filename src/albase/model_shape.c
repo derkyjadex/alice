@@ -31,7 +31,7 @@ static AlError _al_model_path_init(AlModelPath *path)
 	path->pointsLength = 0;
 	path->points = NULL;
 
-	TRY(al_malloc(&path->points, sizeof(Vec2), 4));
+	TRY(al_malloc(&path->points, sizeof(AlModelPoint), 4));
 	path->pointsLength = 4;
 
 	PASS()
@@ -60,7 +60,8 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	BEGIN()
 
 	Vec3 colour;
-	Vec2 *points = NULL;
+	Vec2 *pointLocations = NULL;
+	AlModelPoint *points = NULL;
 	uint64_t numPoints = 0;
 
 	TRY(al_data_read_start(data, NULL));
@@ -74,9 +75,18 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 			if (points)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_data_read_array(data, AL_VAR_VEC2, &points, &numPoints, NULL));
+			TRY(al_data_read_array(data, AL_VAR_VEC2, &pointLocations, &numPoints, NULL));
 			if (numPoints > INT_MAX)
 				THROW(AL_ERROR_INVALID_DATA);
+
+			TRY(al_malloc(&points, sizeof(AlModelPoint), numPoints));
+
+			for (int i = 0; i < numPoints; i++) {
+				points[i] = ((AlModelPoint){
+					.location = pointLocations[i],
+					.onCurve = (i % 2) == 0
+				});
+			}
 
 			TRY(al_data_skip_rest(data));
 		})
@@ -92,27 +102,37 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	path->numPoints = (int)numPoints;
 	path->points = points;
 
-	CATCH(
+	CATCH({
 		free(points);
-	)
-	FINALLY()
+	})
+	FINALLY({
+		free(pointLocations);
+	})
 }
 
 static AlError al_model_path_save(AlModelPath *path, AlData *data)
 {
 	BEGIN()
 
+	Vec2 *points = NULL;
+	TRY(al_malloc(&points, sizeof(Vec2), path->numPoints));
+	for (int i = 0; i < path->numPoints; i++) {
+		points[i] = path->points[i].location;
+	}
+
 	TRY(al_data_write_start(data));
 
 	TRY(al_data_write_simple_tag(data, COLOUR_TAG, AL_VAR_VEC3, &path->colour));
 
 	TRY(al_data_write_start_tag(data, POINTS_TAG));
-	TRY(al_data_write_array(data, AL_VAR_VEC2, path->points, path->numPoints));
+	TRY(al_data_write_array(data, AL_VAR_VEC2, points, path->numPoints));
 	TRY(al_data_write_end(data));
 
 	TRY(al_data_write_end(data));
 
-	PASS()
+	PASS({
+		free(points);
+	})
 }
 
 static AlError _al_model_shape_init(AlModelShape *shape)
@@ -286,7 +306,7 @@ AlError al_model_shape_save(AlModelShape *shape, AlStream *stream)
 	)
 }
 
-AlError al_model_shape_add_path(AlModelShape *shape, int index, Vec2 start, Vec2 end)
+AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint start, AlModelPoint end)
 {
 	assert(index >= -1 && index <= shape->numPaths);
 
@@ -348,7 +368,7 @@ void al_model_path_set_colour(AlModelPath *path, Vec3 colour)
 	path->colour = colour;
 }
 
-Vec2 *al_model_path_get_points(AlModelPath *path, int *numPoints)
+AlModelPoint *al_model_path_get_points(AlModelPath *path, int *numPoints)
 {
 	if (numPoints) {
 		*numPoints = path->numPoints;
@@ -357,7 +377,7 @@ Vec2 *al_model_path_get_points(AlModelPath *path, int *numPoints)
 	return path->points;
 }
 
-AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
+AlError al_model_path_add_point(AlModelPath *path, int index, AlModelPoint point)
 {
 	assert(index >= -1 && index <= path->numPoints);
 
@@ -367,7 +387,7 @@ AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
 		index = path->numPoints;
 
 	if (path->numPoints == path->pointsLength) {
-		TRY(al_realloc(&path->points, sizeof(Vec2), path->pointsLength * 2));
+		TRY(al_realloc(&path->points, sizeof(AlModelPoint), path->pointsLength * 2));
 		path->pointsLength *= 2;
 	}
 
@@ -375,7 +395,7 @@ AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
 		path->points[i] = path->points[i - 1];
 	}
 
-	path->points[index] = location;
+	path->points[index] = point;
 
 	path->numPoints++;
 
@@ -437,14 +457,14 @@ bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
 	bool result = false;
 
 	int n = path->numPoints;
-	Vec2 *points = path->points;
+	AlModelPoint *points = path->points;
 
 	for (int i = 0; i < n - 1; i += 2) {
 		bool last = i == n - 2;
 
-		Vec2 a = points[i + 0];
-		Vec2 b = points[i + 1];
-		Vec2 c = points[last ? 0 : i + 2];
+		Vec2 a = points[i + 0].location;
+		Vec2 b = points[i + 1].location;
+		Vec2 c = points[last ? 0 : i + 2].location;
 
 		if ((a.y > point.y && b.y > point.y && c.y > point.y) ||
 			(a.y < point.y && b.y < point.y && c.y < point.y) ||

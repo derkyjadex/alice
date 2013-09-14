@@ -17,7 +17,7 @@ struct AlModelPath {
 	Vec3 colour;
 	int numPoints;
 	size_t pointsLength;
-	Vec2 *points;
+	AlModelPoint *points;
 };
 
 #endif
