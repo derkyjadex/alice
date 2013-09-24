@@ -25,7 +25,7 @@ static const char *unknownError = "unknown";
 
 const char *al_error_to_string(AlError error)
 {
-	if (error >= AL_NO_ERROR && error < sizeof(errorStrings) / sizeof(char *)) {
+	if (error >= AL_NO_ERROR && (int)error < sizeof(errorStrings) / sizeof(char *)) {
 		return errorStrings[error];
 	} else {
 		return unknownError;
