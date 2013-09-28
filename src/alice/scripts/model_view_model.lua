@@ -3,46 +3,82 @@
 -- Released under the MIT license <http://opensource.org/licenses/MIT>.
 -- See COPYING for details.
 
-local function smooth_point(point_vm)
-	local x1, y1 = point_vm.prev.location()
-	local x2, y2 = point_vm.next.location()
+local function smooth_point(mid_point_vm)
+	if mid_point_vm then
+		local point = mid_point_vm:point()
+		local x1, y1 = point.location()
+		local x2, y2 = point.next.location()
 
-	local x = 0.5 * x1 + 0.5 * x2
-	local y = 0.5 * y1 + 0.5 * y2
+		local x = 0.5 * x1 + 0.5 * x2
+		local y = 0.5 * y1 + 0.5 * y2
 
-	point_vm.location(x, y)
+		mid_point_vm.location(x, y)
+	end
+end
+
+local function remove_item(array, item)
+	if item then
+		for i, current in ipairs(array) do
+			if current == item then
+				array:remove(i)
+				return
+			end
+		end
+	end
+end
+
+local function ModelMidPointViewModel(path_vm, point_vm)
+	local self = {
+		location = Observable(0, 0)
+	}
+
+	function self:point() return point_vm end
+	function self:subdivide() path_vm:subdivide_mid_point(self) end
+
+	return self
 end
 
 local function ModelPointViewModel(path_vm, p, index)
 	local self = {
 		index = index,
-		location = Observable(p[1], p[2])
+		location = Observable(p[1], p[2]),
+		on_curve = Observable(p[3])
 	}
 
+	local mid_point_vm = nil
+
 	function self:path() return path_vm end
-	function self:remove() path_vm:remove(self) end
+	function self:remove() path_vm:remove_point(self) end
+	function self:mid_point() return mid_point_vm end
+
+	function self:update_mid_point()
+		local need_mid_point = not self.on_curve() and not self.next.on_curve()
+
+		if need_mid_point and not mid_point_vm then
+			mid_point_vm = ModelMidPointViewModel(path_vm, self)
+			path_vm:mid_points():insert(mid_point_vm)
+
+		elseif not need_mid_point and mid_point_vm then
+			remove_item(path_vm:mid_points(), mid_point_vm)
+			mid_point_vm = nil
+		end
+
+		smooth_point(mid_point_vm)
+	end
 
 	self.location.changed:add(function(x, y)
-		path_vm.path():set_point(self.index, x, y, false)
+		path_vm.path():set_point(self.index, x, y, self.on_curve())
 
-		smooth_point(self.prev)
-		smooth_point(self.next)
+		smooth_point(mid_point_vm)
+		smooth_point(self.prev.mid_point())
 	end)
 
-	return self
-end
+	self.on_curve.changed:add(function(on_curve)
+		local x, y = self.location()
+		path_vm.path():set_point(self.index, x, y, on_curve)
 
-local function ModelMidPointViewModel(path_vm, p, index)
-	local self = {
-		index = index,
-		location = Observable(p[1], p[2])
-	}
-
-	function self:path() return path_vm end
-	function self:subdivide() path_vm:subdivide(self) end
-
-	self.location.changed:add(function(x, y)
-		path_vm.path():set_point(self.index, x, y, true)
+		self:update_mid_point()
+		self.prev:update_mid_point()
 	end)
 
 	return self
@@ -67,67 +103,47 @@ local function ModelPathViewModel(model_vm, path, index)
 
 	function self:remove_point(point_vm)
 		local p1, p2, p3 = point_vm.prev, point_vm, point_vm.next
-		local i1, i2, i3 = p1.index, p2.index, p3.index
 
-		if i3 < i1 then
-			path:remove(i2)
-			path:remove(i1)
-
-			i3 = i1
-			p1, p3 = p3, p1
-
-			p1.prev = p3.prev
-			p3.prev.next = p1
-		else
-			path:remove(i3)
-			path:remove(i2)
-
-			p1.next = p3.next
-			p3.next.prev = p1
+		if p1 == p3 or p1.prev == p3 then
+			return
 		end
 
-		mid_point_vms:remove((i3 + 1) / 2)
-		for i = (i3 + 1) / 2, #mid_point_vms do
-			mid_point_vms[i].index = i * 2 - 1
+		path:remove_point(p2.index)
+
+		p1.next = p3
+		p3.prev = p1
+
+		remove_item(point_vms, p2)
+		for i = p2.index, #point_vms do
+			point_vms[i].index = i
 		end
 
-		point_vms:remove(i2 / 2)
-		for i = i2 / 2, #point_vms do
-			point_vms[i].index = i * 2
-		end
+		remove_item(mid_point_vms, p2:mid_point())
 
-		smooth_point(p1)
+		p1:update_mid_point()
 	end
 
-	function self:subdivide(mid_point_vm)
-		local p1, p4 = mid_point_vm, mid_point_vm.next
-		local i4 = p4.index
-		local x, y = p1.location()
+	function self:subdivide_mid_point(mid_point_vm)
+		local p1 = mid_point_vm:point()
+		local p3 = p1.next
+		local i2 = p1.index + 1
+		local x, y = mid_point_vm.location()
 
-		path:add_point(i4, x, y, true)
-		path:add_point(i4, x, y, false)
+		path:add_point(i2, x, y, false)
 
-		local i2, i3 = i4, i4 + 1
-		local p2 = ModelPointViewModel(self, {x, y}, i2)
-		local p3 = ModelMidPointViewModel(self, {x, y}, i3)
+		local p2 = ModelPointViewModel(self, {x, y, false}, i2)
 
 		p1.next = p2
 		p2.prev, p2.next = p1, p3
-		p3.prev, p3.next = p2, p4
-		p4.prev = p3
+		p3.prev = p2
 
-		point_vms:insert(i2 / 2, p2)
-		for i = i2 / 2, #point_vms do
-			point_vms[i].index = i * 2
+		point_vms:insert(i2, p2)
+		for i = i2, #point_vms do
+			point_vms[i].index = i
 		end
 
-		mid_point_vms:insert((i3 + 1) / 2, p3)
-		for i = (i3 + 1) / 2, #mid_point_vms do
-			mid_point_vms[i].index = i * 2 - 1
-		end
-
-		smooth_point(p1)
-		smooth_point(p3)
+		p1:update_mid_point()
+		p2:update_mid_point()
 	end
 
 	local function rebuild_point_vms()
@@ -135,26 +151,21 @@ local function ModelPathViewModel(model_vm, path, index)
 		mid_point_vms:clear()
 
 		for i, p in ipairs(path:points()) do
-			local prev, point_vm
+			local prev = point_vms[#point_vms]
+			local point_vm = ModelPointViewModel(self, p, i)
 
-			if i % 2 == 0 then
-				prev = mid_point_vms[#mid_point_vms]
-				point_vm = ModelPointViewModel(self, p, i)
-				point_vms:insert(point_vm)
-			else
-				prev = point_vms[#point_vms]
-				point_vm = ModelMidPointViewModel(self, p, i)
-				mid_point_vms:insert(point_vm)
-			end
+			point_vms:insert(point_vm)
 
 			if prev then
 				prev.next = point_vm
 				point_vm.prev = prev
+				prev:update_mid_point()
 			end
 		end
 
-		point_vms[#point_vms].next = mid_point_vms[1]
-		mid_point_vms[1].prev = point_vms[#point_vms]
+		point_vms[#point_vms].next = point_vms[1]
+		point_vms[1].prev = point_vms[#point_vms]
+		point_vms[#point_vms]:update_mid_point()
 	end
 
 	rebuild_point_vms()
@@ -180,12 +191,8 @@ function ModelViewModel(model)
 	function self:paths() return path_vms end
 
 	function self:add_path()
-		local path = model:add_path(0, 0, -20, true, 20, -20, false)
-		path:add_point(0, 20, 0, true)
-		path:add_point(0, 20, 20, false)
-		path:add_point(0, 0, 20, true)
+		local path = model:add_path(0, 20, -20, false, 20, 20, false)
 		path:add_point(0, -20, 20, false)
-		path:add_point(0, -20, 0, true)
 		path:add_point(0, -20, -20, false)
 
 		local path_vm = ModelPathViewModel(self, path, #path_vms + 1)
