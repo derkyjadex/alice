@@ -84,7 +84,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 			for (int i = 0; i < numPoints; i++) {
 				points[i] = ((AlModelPoint){
 					.location = pointLocations[i],
-					.onCurve = (i % 2) == 0
+					.curveBias = (i % 2) ? 0.5 : 0.0
 				});
 			}
 

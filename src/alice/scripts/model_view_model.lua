@@ -8,9 +8,10 @@ local function smooth_point(mid_point_vm)
 		local point = mid_point_vm:point()
 		local x1, y1 = point.location()
 		local x2, y2 = point.next.location()
+		local bias = point.curve_bias()
 
-		local x = 0.5 * x1 + 0.5 * x2
-		local y = 0.5 * y1 + 0.5 * y2
+		local x = (1 - bias) * x1 + bias * x2
+		local y = (1 - bias) * y1 + bias * y2
 
 		mid_point_vm.location(x, y)
 	end
@@ -42,7 +43,7 @@ local function ModelPointViewModel(path_vm, p, index)
 	local self = {
 		index = index,
 		location = Observable(p[1], p[2]),
-		on_curve = Observable(p[3])
+		curve_bias = Observable(p[3])
 	}
 
 	local mid_point_vm = nil
@@ -52,7 +53,7 @@ local function ModelPointViewModel(path_vm, p, index)
 	function self:mid_point() return mid_point_vm end
 
 	function self:update_mid_point()
-		local need_mid_point = not self.on_curve() and not self.next.on_curve()
+		local need_mid_point = self.curve_bias() ~= 0 and self.next.curve_bias() ~= 0
 
 		if need_mid_point and not mid_point_vm then
 			mid_point_vm = ModelMidPointViewModel(path_vm, self)
@@ -67,15 +68,15 @@ local function ModelPointViewModel(path_vm, p, index)
 	end
 
 	self.location.changed:add(function(x, y)
-		path_vm.path():set_point(self.index, x, y, self.on_curve())
+		path_vm.path():set_point(self.index, x, y, self.curve_bias())
 
 		smooth_point(mid_point_vm)
 		smooth_point(self.prev.mid_point())
 	end)
 
-	self.on_curve.changed:add(function(on_curve)
+	self.curve_bias.changed:add(function(curve_bias)
 		local x, y = self.location()
-		path_vm.path():set_point(self.index, x, y, on_curve)
+		path_vm.path():set_point(self.index, x, y, curve_bias)
 
 		self:update_mid_point()
 		self.prev:update_mid_point()
@@ -129,9 +130,9 @@ local function ModelPathViewModel(model_vm, path, index)
 		local i2 = p1.index + 1
 		local x, y = mid_point_vm.location()
 
-		path:add_point(i2, x, y, false)
+		path:add_point(i2, x, y, 0.5)
 
-		local p2 = ModelPointViewModel(self, {x, y, false}, i2)
+		local p2 = ModelPointViewModel(self, {x, y, 0.5}, i2)
 
 		p1.next = p2
 		p2.prev, p2.next = p1, p3
@@ -191,9 +192,9 @@ function ModelViewModel(model)
 	function self:paths() return path_vms end
 
 	function self:add_path()
-		local path = model:add_path(0, 20, -20, false, 20, 20, false)
-		path:add_point(0, -20, 20, false)
-		path:add_point(0, -20, -20, false)
+		local path = model:add_path(0, 20, -20, 0.5, 20, 20, 0.5)
+		path:add_point(0, -20, 20, 0.5)
+		path:add_point(0, -20, -20, 0.5)
 
 		local path_vm = ModelPathViewModel(self, path, #path_vms + 1)
 		path_vms:insert(path_vm)

@@ -77,7 +77,7 @@ static int cmd_model_shape_add_path(lua_State *L)
 			luaL_checknumber(L, 3),
 			luaL_checknumber(L, 4)
 		},
-		.onCurve = lua_toboolean(L, 5)
+		.curveBias = luaL_checknumber(L, 5)
 	};
 
 	AlModelPoint end = {
@@ -85,7 +85,7 @@ static int cmd_model_shape_add_path(lua_State *L)
 			luaL_checknumber(L, 6),
 			luaL_checknumber(L, 7)
 		},
-		.onCurve = lua_toboolean(L, 8)
+		.curveBias = luaL_checknumber(L, 8)
 	};
 
 	TRY(al_model_shape_add_path(model, index, start, end));
@@ -130,7 +130,7 @@ static int cmd_model_path_get_points(lua_State *L)
 	for (int i = 0; i < path->numPoints; i++) {
 		lua_pushnumber(L, path->points[i].location.x);
 		lua_pushnumber(L, path->points[i].location.y);
-		lua_pushboolean(L, path->points[i].onCurve);
+		lua_pushnumber(L, path->points[i].curveBias);
 	}
 
 	return path->numPoints * 3;
@@ -146,7 +146,7 @@ static int cmd_model_path_set_point(lua_State *L)
 			luaL_checknumber(L, 3),
 			luaL_checknumber(L, 4)
 		},
-		.onCurve = lua_toboolean(L, 5)
+		.curveBias = luaL_checknumber(L, 5)
 	};
 
 	return 0;
@@ -164,7 +164,7 @@ static int cmd_model_path_add_point(lua_State *L)
 			luaL_checknumber(L, 3),
 			luaL_checknumber(L, 4)
 		},
-		.onCurve = lua_toboolean(L, 5)
+		.curveBias = luaL_checknumber(L, 5)
 	};
 
 	TRY(al_model_path_add_point(path, index, point));

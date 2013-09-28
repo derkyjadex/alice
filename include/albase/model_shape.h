@@ -18,7 +18,7 @@ typedef struct AlModelPath AlModelPath;
 
 typedef struct {
 	Vec2 location;
-	bool onCurve;
+	double curveBias;
 } AlModelPoint;
 
 AlError al_model_systems_init(lua_State *L, AlVars *vars);

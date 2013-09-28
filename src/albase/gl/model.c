@@ -71,15 +71,16 @@ static void build_vertex_nodes(AlModelPath *path, VertexNode *vertices)
 	*last = (VertexNode){vertices, path->points[path->numPoints - 1]};
 
 	for (int i = 0; i < path->numPoints; i++) {
-		if (!path->points[i].onCurve && !last->point.onCurve) {
+		if (path->points[i].curveBias && last->point.curveBias) {
 			Vec2 a = last->point.location;
 			Vec2 b = path->points[i].location;
+			double t = last->point.curveBias;
 
 			last->next = last + 1;
 			last++;
 			*last = (VertexNode){vertices, {
-				.location = vec2_scale(vec2_add(a, b), 0.5),
-				.onCurve = true
+				.location = vec2_mix(a, b, t),
+				.curveBias = 0.0
 			}};
 		}
 
@@ -95,7 +96,7 @@ static void build_curve_triangles(VertexNode *vertices, AlGlModelVertex *output,
 {
 	bool first = true;
 	for (VertexNode *node = vertices; first || node != vertices; first = false, node = node->next) {
-		if (!node->next->point.onCurve) {
+		if (node->next->point.curveBias) {
 			Vec2 p1 = node->point.location;
 			Vec2 p2 = node->next->point.location;
 			Vec2 p3 = node->next->next->point.location;
@@ -183,8 +184,8 @@ static AlError build_path_vertices(AlModelPath *path, AlGlModelVertex *output, i
 
 	build_vertex_nodes(path, vertices);
 
-	VertexNode *first = (vertices->point.onCurve) ?
-		vertices : vertices->next;
+	VertexNode *first = (vertices->point.curveBias) ?
+		vertices->next : vertices;
 
 	*outputCount = 0;
 
