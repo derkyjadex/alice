@@ -60,9 +60,10 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	BEGIN()
 
 	Vec3 colour;
-	Vec2 *pointLocations = NULL;
-	AlModelPoint *points = NULL;
 	uint64_t numPoints = 0;
+	Vec2 *locations = NULL;
+	double *biases = NULL;
+	AlModelPoint *points = NULL;
 
 	TRY(al_data_read_start(data, NULL));
 
@@ -75,7 +76,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 			if (points)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_data_read_array(data, AL_VAR_VEC2, &pointLocations, &numPoints, NULL));
+			TRY(al_data_read_array(data, AL_VAR_VEC2, &locations, &numPoints, NULL));
 			if (numPoints > INT_MAX)
 				THROW(AL_ERROR_INVALID_DATA);
 
@@ -83,12 +84,21 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 			for (int i = 0; i < numPoints; i++) {
 				points[i] = ((AlModelPoint){
-					.location = pointLocations[i],
+					.location = locations[i],
 					.curveBias = (i % 2) ? 0.5 : 0.0
 				});
 			}
 
-			TRY(al_data_skip_rest(data));
+			bool biasesMissing;
+			uint64_t numBiases;
+			TRY(al_data_read_array(data, AL_VAR_DOUBLE, &biases, &numBiases, &biasesMissing));
+			if (!biasesMissing) {
+				for (int i = 0; i < numPoints && i < numBiases; i++) {
+					points[i].curveBias = biases[i];
+				}
+
+				TRY(al_data_skip_rest(data));
+			}
 		})
 	})
 
@@ -106,7 +116,8 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 		free(points);
 	})
 	FINALLY({
-		free(pointLocations);
+		free(locations);
+		free(biases);
 	})
 }
 
@@ -114,10 +125,15 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 {
 	BEGIN()
 
-	Vec2 *points = NULL;
-	TRY(al_malloc(&points, sizeof(Vec2), path->numPoints));
+	Vec2 *locations = NULL;
+	double *biases = NULL;
+
+	TRY(al_malloc(&locations, sizeof(Vec2), path->numPoints));
+	TRY(al_malloc(&biases, sizeof(double), path->numPoints));
+
 	for (int i = 0; i < path->numPoints; i++) {
-		points[i] = path->points[i].location;
+		locations[i] = path->points[i].location;
+		biases[i] = path->points[i].curveBias;
 	}
 
 	TRY(al_data_write_start(data));
@@ -125,13 +141,15 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 	TRY(al_data_write_simple_tag(data, COLOUR_TAG, AL_VAR_VEC3, &path->colour));
 
 	TRY(al_data_write_start_tag(data, POINTS_TAG));
-	TRY(al_data_write_array(data, AL_VAR_VEC2, points, path->numPoints));
+	TRY(al_data_write_array(data, AL_VAR_VEC2, locations, path->numPoints));
+	TRY(al_data_write_array(data, AL_VAR_DOUBLE, biases, path->numPoints));
 	TRY(al_data_write_end(data));
 
 	TRY(al_data_write_end(data));
 
 	PASS({
-		free(points);
+		free(locations);
+		free(biases);
 	})
 }
 
