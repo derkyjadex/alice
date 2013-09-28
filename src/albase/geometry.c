@@ -110,6 +110,14 @@ double vec2_cross(Vec2 a, Vec2 b, Vec2 c)
 	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
+Vec2 vec2_mix(Vec2 a, Vec2 b, double t)
+{
+	return (Vec2){
+		(1.0 - t) * a.x + t * b.x,
+		(1.0 - t) * a.y + t * b.y,
+	};
+}
+
 Box2 box2_add_vec2(Box2 box, Vec2 v)
 {
 	return (Box2){
