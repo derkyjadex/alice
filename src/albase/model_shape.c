@@ -63,18 +63,18 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	Vec2 *points = NULL;
 	uint64_t numPoints = 0;
 
-	TRY(al_data_read_start(data));
+	TRY(al_data_read_start(data, NULL));
 
 	READ_TAGS(data, {
 		CASE_TAG(COLOUR_TAG, {
-			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour));
+			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour, NULL));
 			TRY(al_data_skip_rest(data));
 		})
 		CASE_TAG(POINTS_TAG, {
 			if (points)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_data_read_array(data, AL_VAR_VEC2, &points, &numPoints));
+			TRY(al_data_read_array(data, AL_VAR_VEC2, &points, &numPoints, NULL));
 			if (numPoints > INT_MAX)
 				THROW(AL_ERROR_INVALID_DATA);
 
@@ -207,7 +207,7 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			if (paths)
 				THROW(AL_ERROR_INVALID_DATA)
 
-			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths));
+			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths, NULL));
 			TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
 
 			for (int i = 0; i < numPaths; i++) {

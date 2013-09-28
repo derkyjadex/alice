@@ -494,15 +494,26 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 	PASS()
 }
 
-AlError al_data_read_start(AlData *data)
+AlError al_data_read_start(AlData *data, bool *atEnd)
 {
 	BEGIN()
 
 	AlDataItem item;
 	TRY(al_data_read(data, &item));
 
-	if (item.type != AL_TOKEN_START)
+	if (item.type == AL_TOKEN_END) {
+		if (atEnd) {
+			*atEnd = true;
+		} else {
+			THROW(AL_ERROR_INVALID_DATA);
+		}
+
+	} else if (item.type != AL_TOKEN_START) {
 		THROW(AL_ERROR_INVALID_DATA);
+
+	} else if (atEnd) {
+		*atEnd = false;
+	}
 
 	PASS()
 }
@@ -542,42 +553,70 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 	PASS()
 }
 
-AlError al_data_read_value(AlData *data, AlVarType type, void *value)
+AlError al_data_read_value(AlData *data, AlVarType type, void *value, bool *atEnd)
 {
 	BEGIN()
 
 	AlDataItem item;
 	TRY(al_data_read(data, &item));
-	if (item.type != type || item.array)
+
+	if (item.type == AL_TOKEN_END) {
+		if (atEnd) {
+			*atEnd = true;
+		} else {
+			THROW(AL_ERROR_INVALID_DATA);
+		}
+
+	} else if (item.type != type || item.array) {
 		THROW(AL_ERROR_INVALID_DATA);
 
-	switch (type) {
-		case AL_VAR_BOOL: *(bool *)value = item.value.boolVal; break;
-		case AL_VAR_INT: *(int *)value = item.value.intVal; break;
-		case AL_VAR_DOUBLE: *(double *)value = item.value.doubleVal; break;
-		case AL_VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
-		case AL_VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
-		case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
-		case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
-		case AL_VAR_STRING: *(char **)value = item.value.string.chars; break;
-		case AL_VAR_BLOB: *(AlBlob *)value = item.value.blob; break;
+	} else {
+		if (atEnd) {
+			*atEnd = false;
+		}
+
+		switch (type) {
+			case AL_VAR_BOOL: *(bool *)value = item.value.boolVal; break;
+			case AL_VAR_INT: *(int *)value = item.value.intVal; break;
+			case AL_VAR_DOUBLE: *(double *)value = item.value.doubleVal; break;
+			case AL_VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
+			case AL_VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
+			case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
+			case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
+			case AL_VAR_STRING: *(char **)value = item.value.string.chars; break;
+			case AL_VAR_BLOB: *(AlBlob *)value = item.value.blob; break;
+		}
 	}
 
 	PASS()
 }
 
-AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count)
+AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count, bool *atEnd)
 {
 	BEGIN()
 
 	AlDataItem item;
 	TRY(al_data_read(data, &item));
-	if (item.type != type || !item.array)
+
+	if (item.type == AL_TOKEN_END) {
+		if (atEnd) {
+			*atEnd = true;
+		} else {
+			THROW(AL_ERROR_INVALID_DATA);
+		}
+
+	} else if (item.type != type || !item.array) {
 		THROW(AL_ERROR_INVALID_DATA);
 
-	*(void **)values = item.value.array.items;
-	*count = item.value.array.length;
-	data->temp = NULL;
+	} else {
+		if (atEnd) {
+			*atEnd = false;
+		}
+
+		*(void **)values = item.value.array.items;
+		*count = item.value.array.length;
+		data->temp = NULL;
+	}
 
 	PASS()
 }
