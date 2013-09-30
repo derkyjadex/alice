@@ -441,7 +441,7 @@ static bool inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
 		   vec2_cross(c, a, p) * vec2_cross(c, a, b) >= 0;
 }
 
-static bool crosses_infront(Vec2 a, Vec2 c, Vec2 p)
+static bool crosses_line(Vec2 a, Vec2 c, Vec2 p)
 {
 	if ((a.y > p.y && c.y > p.y) ||
 		(a.y <= p.y && c.y <= p.y) ||
@@ -470,38 +470,100 @@ static bool inside_curve(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
 	return x * x - y <= 0;
 }
 
+static bool crosses_curve(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
+{
+	if ((a.y > p.y && b.y > p.y && c.y > p.y) ||
+		(a.y < p.y && b.y < p.y && c.y < p.y) ||
+		(a.x < p.x && b.x < p.x && c.x < p.x))
+		return false;
+
+	bool insideTriangle = inside_triangle(a, b, c, p);
+	bool crossesInfront = crosses_line(a, c, p);
+
+	if (!insideTriangle) {
+		return crossesInfront;
+
+	} else {
+		bool insideCurve = inside_curve(a, b, c, p);
+
+		return insideCurve != crossesInfront;
+	}
+}
+
 bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
 {
 	bool result = false;
 
 	int n = path->numPoints;
 	AlModelPoint *points = path->points;
+	AlModelPoint *a = &points[n - 2];
+	AlModelPoint *b = &points[n - 1];
+	AlModelPoint *c = &points[0];
 
-	for (int i = 0; i < n - 1; i += 2) {
-		bool last = i == n - 2;
+	while (c < &points[n]) {
+		bool crosses;
+		int shift;
+		Vec2 mab, mbc;
 
-		Vec2 a = points[i + 0].location;
-		Vec2 b = points[i + 1].location;
-		Vec2 c = points[last ? 0 : i + 2].location;
+		int type =
+			(a->curveBias != 0) << 0 |
+			(b->curveBias != 0) << 1 |
+			(c->curveBias != 0) << 2;
 
-		if ((a.y > point.y && b.y > point.y && c.y > point.y) ||
-			(a.y < point.y && b.y < point.y && c.y < point.y) ||
-			(a.x < point.x && b.x < point.x && c.x < point.x))
-			continue;
+		switch (type) {
+			case 0:
+			case 1:
+				crosses = crosses_line(a->location, b->location, point);
+				shift = 1;
+				break;
 
-		bool insideTriangle = inside_triangle(a, b, c, point);
-		bool crossesInfront = crosses_infront(a, c, point);
+			case 2:
+				crosses = crosses_curve(a->location, b->location, c->location, point);
+				shift = 2;
+				break;
 
-		if (!insideTriangle) {
-			if (crossesInfront) {
-				result = !result;
-			}
-		} else {
-			bool insideCurve = inside_curve(a, b, c, point);
+			case 3:
+				mbc = vec2_mix(b->location, c->location, b->curveBias);
+				crosses = crosses_curve(a->location, b->location, mbc, point);
+				shift = 1;
+				break;
 
-			if (insideCurve != crossesInfront) {
-				result = !result;
-			}
+			case 4:
+				crosses = crosses_line(b->location, c->location, point);
+				shift = 2;
+				break;
+
+			case 5:
+				crosses = false;
+				shift = 1;
+				break;
+
+			case 6:
+				mab = vec2_mix(a->location, b->location, a->curveBias);
+				crosses = crosses_curve(mab, b->location, c->location, point);
+				shift = 2;
+				break;
+
+			case 7:
+				mab = vec2_mix(a->location, b->location, a->curveBias);
+				mbc = vec2_mix(b->location, c->location, b->curveBias);
+				crosses = crosses_curve(mab, b->location, mbc, point);
+				shift = 1;
+				break;
+		}
+
+		if (crosses) {
+			result = !result;
+		}
+
+		if (shift == 1) {
+			a = b;
+			b = c;
+			c = c + 1;
+		} else if (shift == 2) {
+			a = c;
+			b = c + 1;
+			c = c + 2;
 		}
 	}
 
