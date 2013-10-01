@@ -11,8 +11,8 @@ ModelPath.prototype.colour = make_var_accessor('model_path.colour')
 function ModelPath.prototype:points()
 	local values = {model.path_get_points(self)}
 	local points = {}
-	for i = 1, #values, 2 do
-		local point = {values[i], values[i + 1]}
+	for i = 1, #values, 3 do
+		local point = {values[i], values[i + 1], values[i + 2]}
 		table.insert(points, point)
 	end
 
@@ -25,11 +25,11 @@ ModelPath.prototype.remove_point = model.path_remove_point
 ModelPath.prototype.hit_test = model.path_hit_test
 
 local function build_path(self, data)
-	local path = self:add_path(0, data[1], data[2], data[3], data[4])
+	local path = self:add_path(0, data[1], data[2], data[3], data[4], data[5], data[6])
 
-	if #data > 4 then
-		for j = 6, #data, 2 do
-			path:add_point(j / 2, data[j - 1], data[j])
+	if #data > 6 then
+		for j = 9, #data, 3 do
+			path:add_point(j / 3, data[j - 2], data[j - 1], data[j])
 		end
 	end
 

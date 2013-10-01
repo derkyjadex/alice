@@ -8,6 +8,7 @@
 #define __ALBASE_VARS_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "albase/common.h"
 #include "albase/lua.h"
@@ -20,8 +21,14 @@ typedef enum {
 	AL_VAR_VEC3,
 	AL_VAR_VEC4,
 	AL_VAR_BOX2,
-	AL_VAR_STRING
+	AL_VAR_STRING,
+	AL_VAR_BLOB
 } AlVarType;
+
+typedef struct {
+	uint8_t *bytes;
+	size_t length;
+} AlBlob;
 
 typedef struct AlVars AlVars;
 

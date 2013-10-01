@@ -113,7 +113,7 @@ local function insert_handle(self, path, i, point_vm)
 	make_draggable(handle, nil, nil,
 		function(x, y) move_point(self, point_vm, x, y) end)
 
-	table.insert(path.handles, handle)
+	table.insert(path.handles, i, handle)
 	update_model(self)
 end
 

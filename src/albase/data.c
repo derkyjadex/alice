@@ -233,8 +233,12 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	BEGIN()
 
 	uint64_t length;
-	char *chars;
+	char *chars = NULL;
 	TRY(read_uint(data, &length));
+
+	if (length > SIZE_T_MAX)
+		THROW(AL_ERROR_MEMORY);
+
 	TRY(al_malloc(&chars, sizeof(char), length + 1));
 	TRY(data_read(data, chars, length));
 	chars[length] = '\0';
@@ -279,6 +283,52 @@ static AlError skip_string(AlData *data)
 	PASS()
 }
 
+static AlError read_blob(AlData *data, AlBlob *result)
+{
+	BEGIN()
+
+	uint64_t length;
+	uint8_t	*bytes = NULL;
+	TRY(read_uint(data, &length));
+
+	if (length > SIZE_T_MAX)
+		THROW(AL_ERROR_MEMORY);
+
+	TRY(al_malloc(&bytes, sizeof(uint8_t), length));
+	TRY(data_read(data, bytes, length));
+
+	if (data->temp) {
+		free(data->temp);
+	}
+
+	data->temp = bytes;
+
+	*result = (AlBlob){
+		.length = length,
+		.bytes = bytes
+	};
+
+	CATCH({
+		free(bytes);
+	})
+	FINALLY()
+}
+
+static AlError write_blob(AlData *data, const AlBlob *value)
+{
+	BEGIN()
+
+	TRY(write_uint(data, value->length));
+	TRY(data_write(data, value->bytes, value->length));
+
+	PASS()
+}
+
+static AlError skip_blob(AlData *data)
+{
+	return skip_string(data);
+}
+
 static size_t get_var_size(AlVarType type)
 {
 	switch (type) {
@@ -290,6 +340,7 @@ static size_t get_var_size(AlVarType type)
 		case AL_VAR_VEC4: return sizeof(Vec4);
 		case AL_VAR_BOX2: return sizeof(Box2);
 		case AL_VAR_STRING: return sizeof(char *);
+		case AL_VAR_BLOB: return sizeof(AlBlob);
 		default: return 0;
 	}
 }
@@ -353,7 +404,7 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 			case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
 			case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
 			default:
-				THROW(AL_ERROR_INVALID_DATA);
+				THROW(AL_ERROR_INVALID_OPERATION);
 		}
 	}
 
@@ -419,6 +470,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 			case AL_VAR_STRING:
 				TRY(read_string(data, &item->value.string.chars, &item->value.string.length));
 				break;
+			case AL_VAR_BLOB: TRY(read_blob(data, &item->value.blob)); break;
 
 			case AL_VAR_BOOL | 0x80:
 			case AL_VAR_INT | 0x80:
@@ -442,15 +494,26 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 	PASS()
 }
 
-AlError al_data_read_start(AlData *data)
+AlError al_data_read_start(AlData *data, bool *atEnd)
 {
 	BEGIN()
 
 	AlDataItem item;
 	TRY(al_data_read(data, &item));
 
-	if (item.type != AL_TOKEN_START)
+	if (item.type == AL_TOKEN_END) {
+		if (atEnd) {
+			*atEnd = true;
+		} else {
+			THROW(AL_ERROR_INVALID_DATA);
+		}
+
+	} else if (item.type != AL_TOKEN_START) {
 		THROW(AL_ERROR_INVALID_DATA);
+
+	} else if (atEnd) {
+		*atEnd = false;
+	}
 
 	PASS()
 }
@@ -490,41 +553,70 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 	PASS()
 }
 
-AlError al_data_read_value(AlData *data, AlVarType type, void *value)
+AlError al_data_read_value(AlData *data, AlVarType type, void *value, bool *atEnd)
 {
 	BEGIN()
 
 	AlDataItem item;
 	TRY(al_data_read(data, &item));
-	if (item.type != type || item.array)
+
+	if (item.type == AL_TOKEN_END) {
+		if (atEnd) {
+			*atEnd = true;
+		} else {
+			THROW(AL_ERROR_INVALID_DATA);
+		}
+
+	} else if (item.type != type || item.array) {
 		THROW(AL_ERROR_INVALID_DATA);
 
-	switch (type) {
-		case AL_VAR_BOOL: *(bool *)value = item.value.boolVal; break;
-		case AL_VAR_INT: *(int *)value = item.value.intVal; break;
-		case AL_VAR_DOUBLE: *(double *)value = item.value.doubleVal; break;
-		case AL_VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
-		case AL_VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
-		case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
-		case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
-		case AL_VAR_STRING: *(const char **)value = item.value.string.chars; break;
+	} else {
+		if (atEnd) {
+			*atEnd = false;
+		}
+
+		switch (type) {
+			case AL_VAR_BOOL: *(bool *)value = item.value.boolVal; break;
+			case AL_VAR_INT: *(int *)value = item.value.intVal; break;
+			case AL_VAR_DOUBLE: *(double *)value = item.value.doubleVal; break;
+			case AL_VAR_VEC2: *(Vec2 *)value = item.value.vec2; break;
+			case AL_VAR_VEC3: *(Vec3 *)value = item.value.vec3; break;
+			case AL_VAR_VEC4: *(Vec4 *)value = item.value.vec4; break;
+			case AL_VAR_BOX2: *(Box2 *)value = item.value.box2; break;
+			case AL_VAR_STRING: *(char **)value = item.value.string.chars; break;
+			case AL_VAR_BLOB: *(AlBlob *)value = item.value.blob; break;
+		}
 	}
 
 	PASS()
 }
 
-AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count)
+AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count, bool *atEnd)
 {
 	BEGIN()
 
 	AlDataItem item;
 	TRY(al_data_read(data, &item));
-	if (item.type != type || !item.array)
+
+	if (item.type == AL_TOKEN_END) {
+		if (atEnd) {
+			*atEnd = true;
+		} else {
+			THROW(AL_ERROR_INVALID_DATA);
+		}
+
+	} else if (item.type != type || !item.array) {
 		THROW(AL_ERROR_INVALID_DATA);
 
-	*(void **)values = item.value.array.items;
-	*count = item.value.array.length;
-	data->temp = NULL;
+	} else {
+		if (atEnd) {
+			*atEnd = false;
+		}
+
+		*(void **)values = item.value.array.items;
+		*count = item.value.array.length;
+		data->temp = NULL;
+	}
 
 	PASS()
 }
@@ -555,10 +647,8 @@ AlError al_data_skip_rest(AlData *data)
 			case AL_VAR_VEC3: TRY(data_seek(data, 24, AL_SEEK_CUR)); break;
 			case AL_VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
-
-			case AL_VAR_STRING:
-				TRY(skip_string(data));
-				break;
+			case AL_VAR_STRING: TRY(skip_string(data)); break;
+			case AL_VAR_BLOB: TRY(skip_blob(data)); break;
 
 			case AL_VAR_BOOL | 0x80:
 			case AL_VAR_INT | 0x80:
@@ -625,6 +715,9 @@ AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 		case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
 		case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
 		case AL_VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
+		case AL_VAR_BLOB: TRY(write_blob(data, value)); break;
+		default:
+			THROW(AL_ERROR_INVALID_OPERATION);
 	}
 
 	PASS()

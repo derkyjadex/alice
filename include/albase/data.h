@@ -71,12 +71,13 @@ typedef struct {
 		Vec4 vec4;
 		Box2 box2;
 		struct {
-			uint64_t length;
 			char *chars;
-		} string;
-		struct {
 			uint64_t length;
+		} string;
+		AlBlob blob;
+		struct {
 			void *items;
+			uint64_t length;
 		} array;
 	} value;
 } AlDataItem;
@@ -87,10 +88,10 @@ AlError al_data_init(AlData **data, AlStream *stream);
 void al_data_free(AlData *data);
 
 AlError al_data_read(AlData *data, AlDataItem *item);
-AlError al_data_read_start(AlData *data);
+AlError al_data_read_start(AlData *data, bool *atEnd);
 AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actual);
-AlError al_data_read_value(AlData *data, AlVarType type, void *value);
-AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count);
+AlError al_data_read_value(AlData *data, AlVarType type, void *value, bool *atEnd);
+AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t *count, bool *atEnd);
 AlError al_data_skip_rest(AlData *data);
 
 AlError al_data_write_start(AlData *data);

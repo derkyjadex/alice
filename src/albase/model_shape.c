@@ -31,7 +31,7 @@ static AlError _al_model_path_init(AlModelPath *path)
 	path->pointsLength = 0;
 	path->points = NULL;
 
-	TRY(al_malloc(&path->points, sizeof(Vec2), 4));
+	TRY(al_malloc(&path->points, sizeof(AlModelPoint), 4));
 	path->pointsLength = 4;
 
 	PASS()
@@ -60,25 +60,45 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	BEGIN()
 
 	Vec3 colour;
-	Vec2 *points = NULL;
 	uint64_t numPoints = 0;
+	Vec2 *locations = NULL;
+	double *biases = NULL;
+	AlModelPoint *points = NULL;
 
-	TRY(al_data_read_start(data));
+	TRY(al_data_read_start(data, NULL));
 
 	READ_TAGS(data, {
 		CASE_TAG(COLOUR_TAG, {
-			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour));
+			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour, NULL));
 			TRY(al_data_skip_rest(data));
 		})
 		CASE_TAG(POINTS_TAG, {
 			if (points)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_data_read_array(data, AL_VAR_VEC2, &points, &numPoints));
+			TRY(al_data_read_array(data, AL_VAR_VEC2, &locations, &numPoints, NULL));
 			if (numPoints > INT_MAX)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_data_skip_rest(data));
+			TRY(al_malloc(&points, sizeof(AlModelPoint), numPoints));
+
+			for (int i = 0; i < numPoints; i++) {
+				points[i] = ((AlModelPoint){
+					.location = locations[i],
+					.curveBias = (i % 2) ? 0.5 : 0.0
+				});
+			}
+
+			bool biasesMissing;
+			uint64_t numBiases;
+			TRY(al_data_read_array(data, AL_VAR_DOUBLE, &biases, &numBiases, &biasesMissing));
+			if (!biasesMissing) {
+				for (int i = 0; i < numPoints && i < numBiases; i++) {
+					points[i].curveBias = biases[i];
+				}
+
+				TRY(al_data_skip_rest(data));
+			}
 		})
 	})
 
@@ -92,27 +112,45 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	path->numPoints = (int)numPoints;
 	path->points = points;
 
-	CATCH(
+	CATCH({
 		free(points);
-	)
-	FINALLY()
+	})
+	FINALLY({
+		free(locations);
+		free(biases);
+	})
 }
 
 static AlError al_model_path_save(AlModelPath *path, AlData *data)
 {
 	BEGIN()
 
+	Vec2 *locations = NULL;
+	double *biases = NULL;
+
+	TRY(al_malloc(&locations, sizeof(Vec2), path->numPoints));
+	TRY(al_malloc(&biases, sizeof(double), path->numPoints));
+
+	for (int i = 0; i < path->numPoints; i++) {
+		locations[i] = path->points[i].location;
+		biases[i] = path->points[i].curveBias;
+	}
+
 	TRY(al_data_write_start(data));
 
 	TRY(al_data_write_simple_tag(data, COLOUR_TAG, AL_VAR_VEC3, &path->colour));
 
 	TRY(al_data_write_start_tag(data, POINTS_TAG));
-	TRY(al_data_write_array(data, AL_VAR_VEC2, path->points, path->numPoints));
+	TRY(al_data_write_array(data, AL_VAR_VEC2, locations, path->numPoints));
+	TRY(al_data_write_array(data, AL_VAR_DOUBLE, biases, path->numPoints));
 	TRY(al_data_write_end(data));
 
 	TRY(al_data_write_end(data));
 
-	PASS()
+	PASS({
+		free(locations);
+		free(biases);
+	})
 }
 
 static AlError _al_model_shape_init(AlModelShape *shape)
@@ -207,7 +245,7 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			if (paths)
 				THROW(AL_ERROR_INVALID_DATA)
 
-			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths));
+			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths, NULL));
 			TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
 
 			for (int i = 0; i < numPaths; i++) {
@@ -286,7 +324,7 @@ AlError al_model_shape_save(AlModelShape *shape, AlStream *stream)
 	)
 }
 
-AlError al_model_shape_add_path(AlModelShape *shape, int index, Vec2 start, Vec2 end)
+AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint start, AlModelPoint end)
 {
 	assert(index >= -1 && index <= shape->numPaths);
 
@@ -348,7 +386,7 @@ void al_model_path_set_colour(AlModelPath *path, Vec3 colour)
 	path->colour = colour;
 }
 
-Vec2 *al_model_path_get_points(AlModelPath *path, int *numPoints)
+AlModelPoint *al_model_path_get_points(AlModelPath *path, int *numPoints)
 {
 	if (numPoints) {
 		*numPoints = path->numPoints;
@@ -357,7 +395,7 @@ Vec2 *al_model_path_get_points(AlModelPath *path, int *numPoints)
 	return path->points;
 }
 
-AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
+AlError al_model_path_add_point(AlModelPath *path, int index, AlModelPoint point)
 {
 	assert(index >= -1 && index <= path->numPoints);
 
@@ -367,7 +405,7 @@ AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
 		index = path->numPoints;
 
 	if (path->numPoints == path->pointsLength) {
-		TRY(al_realloc(&path->points, sizeof(Vec2), path->pointsLength * 2));
+		TRY(al_realloc(&path->points, sizeof(AlModelPoint), path->pointsLength * 2));
 		path->pointsLength *= 2;
 	}
 
@@ -375,7 +413,7 @@ AlError al_model_path_add_point(AlModelPath *path, int index, Vec2 location)
 		path->points[i] = path->points[i - 1];
 	}
 
-	path->points[index] = location;
+	path->points[index] = point;
 
 	path->numPoints++;
 
@@ -403,7 +441,7 @@ static bool inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
 		   vec2_cross(c, a, p) * vec2_cross(c, a, b) >= 0;
 }
 
-static bool crosses_infront(Vec2 a, Vec2 c, Vec2 p)
+static bool crosses_line(Vec2 a, Vec2 c, Vec2 p)
 {
 	if ((a.y > p.y && c.y > p.y) ||
 		(a.y <= p.y && c.y <= p.y) ||
@@ -432,38 +470,100 @@ static bool inside_curve(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
 	return x * x - y <= 0;
 }
 
+static bool crosses_curve(Vec2 a, Vec2 b, Vec2 c, Vec2 p)
+{
+	if ((a.y > p.y && b.y > p.y && c.y > p.y) ||
+		(a.y < p.y && b.y < p.y && c.y < p.y) ||
+		(a.x < p.x && b.x < p.x && c.x < p.x))
+		return false;
+
+	bool insideTriangle = inside_triangle(a, b, c, p);
+	bool crossesInfront = crosses_line(a, c, p);
+
+	if (!insideTriangle) {
+		return crossesInfront;
+
+	} else {
+		bool insideCurve = inside_curve(a, b, c, p);
+
+		return insideCurve != crossesInfront;
+	}
+}
+
 bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
 {
 	bool result = false;
 
 	int n = path->numPoints;
-	Vec2 *points = path->points;
+	AlModelPoint *points = path->points;
+	AlModelPoint *a = &points[n - 2];
+	AlModelPoint *b = &points[n - 1];
+	AlModelPoint *c = &points[0];
 
-	for (int i = 0; i < n - 1; i += 2) {
-		bool last = i == n - 2;
+	while (c < &points[n]) {
+		bool crosses;
+		int shift;
+		Vec2 mab, mbc;
 
-		Vec2 a = points[i + 0];
-		Vec2 b = points[i + 1];
-		Vec2 c = points[last ? 0 : i + 2];
+		int type =
+			(a->curveBias != 0) << 0 |
+			(b->curveBias != 0) << 1 |
+			(c->curveBias != 0) << 2;
 
-		if ((a.y > point.y && b.y > point.y && c.y > point.y) ||
-			(a.y < point.y && b.y < point.y && c.y < point.y) ||
-			(a.x < point.x && b.x < point.x && c.x < point.x))
-			continue;
+		switch (type) {
+			case 0:
+			case 1:
+				crosses = crosses_line(a->location, b->location, point);
+				shift = 1;
+				break;
 
-		bool insideTriangle = inside_triangle(a, b, c, point);
-		bool crossesInfront = crosses_infront(a, c, point);
+			case 2:
+				crosses = crosses_curve(a->location, b->location, c->location, point);
+				shift = 2;
+				break;
 
-		if (!insideTriangle) {
-			if (crossesInfront) {
-				result = !result;
-			}
-		} else {
-			bool insideCurve = inside_curve(a, b, c, point);
+			case 3:
+				mbc = vec2_mix(b->location, c->location, b->curveBias);
+				crosses = crosses_curve(a->location, b->location, mbc, point);
+				shift = 1;
+				break;
 
-			if (insideCurve != crossesInfront) {
-				result = !result;
-			}
+			case 4:
+				crosses = crosses_line(b->location, c->location, point);
+				shift = 2;
+				break;
+
+			case 5:
+				crosses = false;
+				shift = 1;
+				break;
+
+			case 6:
+				mab = vec2_mix(a->location, b->location, a->curveBias);
+				crosses = crosses_curve(mab, b->location, c->location, point);
+				shift = 2;
+				break;
+
+			case 7:
+				mab = vec2_mix(a->location, b->location, a->curveBias);
+				mbc = vec2_mix(b->location, c->location, b->curveBias);
+				crosses = crosses_curve(mab, b->location, mbc, point);
+				shift = 1;
+				break;
+		}
+
+		if (crosses) {
+			result = !result;
+		}
+
+		if (shift == 1) {
+			a = b;
+			b = c;
+			c = c + 1;
+		} else if (shift == 2) {
+			a = c;
+			b = c + 1;
+			c = c + 2;
 		}
 	}
 

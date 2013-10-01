@@ -41,6 +41,7 @@ Vec2 vec2_floor(Vec2 v);
 Vec2 vec2_ceil(Vec2 v);
 double vec2_dot(Vec2 a, Vec2 b);
 double vec2_cross(Vec2 a, Vec2 b, Vec2 c);
+Vec2 vec2_mix(Vec2 a, Vec2 b, double t);
 
 Box2 box2_add_vec2(Box2 box, Vec2 v);
 Box2 box2_include_vec2(Box2 box, Vec2 v);
