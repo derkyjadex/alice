@@ -60,7 +60,30 @@ function Observable(...)
 		})
 end
 
+function Property(...)
+	local observable = Observable(...)
+
+	return setmetatable(
+		{},
+		{
+			__call = function(_, __, ...)
+				return observable(...)
+			end,
+			__index = {
+				changed = observable.changed,
+				observable = observable
+			},
+			__newindex = function()
+				error('cannot change properties of Property')
+			end
+		})
+end
+
 function Binding(observable, callback)
+	if observable.observable then
+		observable = observable.observable
+	end
+
 	local updating_self = false
 
 	local handle = observable.changed:add(function(...)
