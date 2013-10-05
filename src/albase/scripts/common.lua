@@ -9,25 +9,29 @@ end
 
 function Multicast()
 	return setmetatable(
-		{
-			add = function(self, f)
-				table.insert(self, f)
-				return f
-			end,
-			remove = function(self, f)
-				for i, current in ipairs(self) do
-					if current == f then
-						table.remove(self, i)
-						return
-					end
-				end
-			end
-		},
+		{},
 		{
 			__call = function(self, ...)
 				for _, f in ipairs(self) do
 					f(...)
 				end
+			end,
+			__index = {
+				add = function(self, f)
+					table.insert(self, f)
+					return f
+				end,
+				remove = function(self, f)
+					for i, current in ipairs(self) do
+						if current == f then
+							table.remove(self, i)
+							return
+						end
+					end
+				end
+			},
+			__newindex = function()
+				error('cannot change properties of Multicast')
 			end
 		})
 end
@@ -37,9 +41,7 @@ function Observable(...)
 	local changed = Multicast()
 
 	return setmetatable(
-		{
-			changed = changed
-		},
+		{},
 		{
 			__call = function(_, ...)
 				if select('#', ...) == 0 then
@@ -48,6 +50,12 @@ function Observable(...)
 					value = {...}
 					changed(...)
 				end
+			end,
+			__index = {
+				changed = changed
+			},
+			__newindex = function()
+				error('cannot change properties of Observable')
 			end
 		})
 end
@@ -64,11 +72,7 @@ function Binding(observable, callback)
 	callback(observable())
 
 	return setmetatable(
-		{
-			unbind = function()
-				observable.changed:remove(handle)
-			end
-		},
+		{},
 		{
 			__call = function(_, ...)
 				if select('#', ...) == 0 then
@@ -78,6 +82,14 @@ function Binding(observable, callback)
 					observable(...)
 					updating_self = false
 				end
+			end,
+			__index = {
+				unbind = function()
+					observable.changed:remove(handle)
+				end
+			},
+			__newindex = function()
+				error('cannot change properties of Binding')
 			end
 		})
 end
@@ -109,50 +121,62 @@ function ObservableArray(...)
 		end, nil, 0
 	end
 
-	return setmetatable(
-		{
-			inserted = inserted,
-			removed = removed,
-			updated = updated,
-			cleared = cleared,
+	local properties = {
+		inserted = inserted,
+		removed = removed,
+		updated = updated,
+		cleared = cleared,
 
-			insert = function(_, i_or_value, ...)
-				local i, value
-				if select('#', ...) == 0 then
-					i = length + 1
-					value = i_or_value
-				else
-					i = i_or_value
-					value = select(1, ...)
-					check_index(i, 1, length + 1)
-				end
-
-				length = length + 1
-				table.insert(values, i, value)
-				inserted(i, value)
-			end,
-			remove = function(_, i)
-				i = i or length
-				check_index(i, 1, length)
-
-				local value = values[i]
-
-				length = length - 1
-				table.remove(values, i)
-				removed(i, value)
-			end,
-			clear = function()
-				length = 0
-				values = {}
-				cleared()
+		insert = function(_, i_or_value, ...)
+			local i, value
+			if select('#', ...) == 0 then
+				i = length + 1
+				value = i_or_value
+			else
+				i = i_or_value
+				value = select(1, ...)
+				check_index(i, 1, length + 1)
 			end
-		},
+
+			length = length + 1
+			table.insert(values, i, value)
+			inserted(i, value)
+		end,
+		remove = function(_, i)
+			i = i or length
+			check_index(i, 1, length)
+
+			local value = values[i]
+
+			length = length - 1
+			table.remove(values, i)
+			removed(i, value)
+		end,
+		clear = function()
+			length = 0
+			values = {}
+			cleared()
+		end
+	}
+
+	return setmetatable(
+		{},
 		{
-			__index = function(_, i) return values[i] end,
+			__index = function(_, i)
+				if type(i) == 'number' then
+					return values[i]
+				else
+					return properties[i]
+				end
+			end,
 			__newindex = function(_, i, value)
-				check_index(i, 1, length)
-				values[i] = value
-				updated(i, value)
+				if type(i) == 'number' then
+					check_index(i, 1, length)
+					values[i] = value
+					updated(i, value)
+				else
+					error('cannot change properties of ObservableArray')
+				end
 			end,
 			__len = function(_) return length end,
 			__ipairs = build_iterator,
@@ -170,9 +194,7 @@ function Computed(source, f)
 	end)
 
 	return setmetatable(
-		{
-			changed = changed
-		},
+		{},
 		{
 			__call = function(_, ...)
 				if select('#', ...) == 0 then
@@ -180,6 +202,12 @@ function Computed(source, f)
 				else
 					error('cannot set value of computed')
 				end
+			end,
+			__index = {
+				changed = changed
+			},
+			__newindex = function()
+				error('cannot change properties of Computed')
 			end
 		})
 end
