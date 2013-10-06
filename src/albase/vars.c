@@ -42,9 +42,9 @@ AlError al_vars_init(AlVars **result, lua_State *lua)
 
 	*result = vars;
 
-	CATCH(
-		free(vars);
-	)
+	CATCH({
+		al_free(vars);
+	})
 	FINALLY()
 }
 
@@ -58,7 +58,7 @@ void al_vars_free(AlVars *vars)
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
 			AlVarReg *entry = lua_touserdata(L, -1);
-			free(entry);
+			al_free(entry);
 			lua_pop(L, 1);
 		}
 
@@ -68,7 +68,7 @@ void al_vars_free(AlVars *vars)
 		lua_pushnil(L);
 		lua_settable(L, LUA_REGISTRYINDEX);
 
-		free(vars);
+		al_free(vars);
 	}
 }
 
@@ -172,7 +172,7 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	}
 
 	strcpy(newValue, luaValue);
-	free(oldValue);
+	al_free(oldValue);
 
 	return newValue;
 }
@@ -189,7 +189,7 @@ static AlBlob toAlBlob(lua_State *L, int valueArg, AlBlob oldValue)
 	}
 
 	memcpy(bytes, luaValue, length);
-	free(oldValue.bytes);
+	al_free(oldValue.bytes);
 
 	return (AlBlob){
 		.bytes = bytes,

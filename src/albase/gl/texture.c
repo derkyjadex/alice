@@ -39,7 +39,7 @@ void algl_texture_free(AlGlTexture *texture)
 {
 	if (texture != NULL) {
 		glDeleteTextures(1, &texture->id);
-		free(texture);
+		al_free(texture);
 	}
 }
 

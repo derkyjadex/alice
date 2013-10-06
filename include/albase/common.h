@@ -13,5 +13,6 @@
 
 AlError al_malloc(void *ptr, size_t size);
 AlError al_realloc(void *ptr, size_t size);
+void al_free(void *ptr);
 
 #endif

@@ -56,7 +56,7 @@ void al_commands_free(AlCommands *commands)
 		lua_pushnil(L);
 		lua_settable(L, LUA_REGISTRYINDEX);
 
-		free(commands);
+		al_free(commands);
 	}
 }
 

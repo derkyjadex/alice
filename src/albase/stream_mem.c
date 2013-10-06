@@ -88,13 +88,13 @@ static void mem_free(AlStream *base)
 	HeapMemStream *stream = (HeapMemStream *)base;
 
 	if (stream) {
-		free((char *)base->name);
+		al_free((char *)base->name);
 
 		if (stream->base.ptr && stream->freePtr) {
-			free((void *)stream->base.ptr);
+			al_free((void *)stream->base.ptr);
 		}
 
-		free(stream);
+		al_free(stream);
 	}
 }
 
@@ -130,9 +130,9 @@ AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freeP
 
 	*result = &stream->base.base;
 
-	CATCH(
-		free(nameCopy);
-	)
+	CATCH({
+		al_free(nameCopy);
+	})
 	FINALLY()
 }
 

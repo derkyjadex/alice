@@ -85,7 +85,7 @@ static int cmd_text_insert(lua_State *L)
 	}
 
 	lua_pushlstring(L, result, resultLength);
-	free(result);
+	al_free(result);
 
 	lua_pushnumber(L, insertedChars);
 
@@ -140,7 +140,7 @@ static int cmd_text_remove(lua_State *L)
 	}
 
 	lua_pushlstring(L, result, resultLength);
-	free(result);
+	al_free(result);
 
 	return 1;
 }

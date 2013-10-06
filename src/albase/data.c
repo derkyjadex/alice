@@ -40,8 +40,8 @@ AlError al_data_init(AlData **result, AlStream *stream)
 void al_data_free(AlData *data)
 {
 	if (data) {
-		free(data->temp);
-		free(data);
+		al_free(data->temp);
+		al_free(data);
 	}
 }
 
@@ -244,7 +244,7 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	chars[length] = '\0';
 
 	if (data->temp) {
-		free(data->temp);
+		al_free(data->temp);
 	}
 
 	*result = data->temp = chars;
@@ -252,9 +252,9 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 		*resultLength = length;
 	}
 
-	CATCH(
-		free(chars);
-	)
+	CATCH({
+		al_free(chars);
+	})
 	FINALLY()
 }
 
@@ -298,7 +298,7 @@ static AlError read_blob(AlData *data, AlBlob *result)
 	TRY(data_read(data, bytes, length));
 
 	if (data->temp) {
-		free(data->temp);
+		al_free(data->temp);
 	}
 
 	data->temp = bytes;
@@ -309,7 +309,7 @@ static AlError read_blob(AlData *data, AlBlob *result)
 	};
 
 	CATCH({
-		free(bytes);
+		al_free(bytes);
 	})
 	FINALLY()
 }
@@ -372,15 +372,15 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *
 	}
 
 	if (data->temp) {
-		free(data->temp);
+		al_free(data->temp);
 	}
 
 	*(void **)result = data->temp = array;
 	*resultCount = count;
 
-	CATCH(
-		free(array);
-	)
+	CATCH({
+		al_free(array);
+	})
 	FINALLY()
 }
 

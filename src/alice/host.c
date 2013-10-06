@@ -164,7 +164,7 @@ void al_host_free(AlHost *host)
 
 		lua_close(host->lua);
 
-		free(host);
+		al_free(host);
 	}
 }
 

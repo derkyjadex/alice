@@ -45,11 +45,11 @@ static AlError model_init(AlModel **result)
 static void model_free(AlModel *model)
 {
 	if (model != NULL) {
-		free(model->filename);
+		al_free(model->filename);
 		glDeleteBuffers(1, &model->vertexBuffer);
-		free(model->vertexCounts);
-		free(model->colours);
-		free(model);
+		al_free(model->vertexCounts);
+		al_free(model->colours);
+		al_free(model);
 	}
 }
 
@@ -195,7 +195,7 @@ static AlError build_path_vertices(AlModelPath *path, AlGlModelVertex *output, i
 	build_inner_triangles(first, output, outputCount);
 
 	PASS({
-		free(vertices);
+		al_free(vertices);
 	})
 }
 
@@ -217,14 +217,14 @@ static AlError model_load(AlModel *model, const char *filename)
 
 	model->filename = filenameCopy;
 
-	CATCH(
+	CATCH({
 		al_log_error("Error reading model file: %s", filename);
-		free(filenameCopy);
-	)
-	FINALLY(
+		al_free(filenameCopy);
+	})
+	FINALLY({
 		al_stream_free(stream);
 		al_model_shape_free(shape);
-	)
+	})
 }
 
 static void model_use(AlModel *model)
@@ -264,9 +264,9 @@ AlError al_model_use_file(AlModel **result, const char *filename)
 
 	model_use(*result);
 
-	CATCH(
-		free(newModel);
-	)
+	CATCH({
+		al_free(newModel);
+	})
 	FINALLY()
 }
 
@@ -331,22 +331,22 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(AlGlModelVertex) * totalVertices, vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	free(model->colours);
-	free(model->vertexCounts);
+	al_free(model->colours);
+	al_free(model->vertexCounts);
 
 	model->numPaths = shape->numPaths;
 	model->colours = colours;
 	model->vertexCounts = vertexCounts;
 	model->bounds = bounds;
 
-	CATCH(
+	CATCH({
 		al_log_error("Error building GL data from model shape");
-		free(colours);
-		free(vertexCounts);
-	)
-	FINALLY(
-		free(vertices);
-	)
+		al_free(colours);
+		al_free(vertexCounts);
+	})
+	FINALLY({
+		al_free(vertices);
+	})
 }
 
 void al_model_unuse(AlModel *model)

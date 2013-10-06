@@ -55,7 +55,7 @@ void algl_framebuffer_free(AlGlFramebuffer *framebuffer)
 	if (framebuffer != NULL) {
 		glDeleteFramebuffers(1, &framebuffer->id);
 		glDeleteTextures(1, &framebuffer->colourTex);
-		free(framebuffer);
+		al_free(framebuffer);
 	}
 }
 

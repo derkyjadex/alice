@@ -51,7 +51,7 @@ static int al_model_path_ctor(lua_State *L)
 static void _al_model_path_free(AlModelPath *path)
 {
 	if (path) {
-		free(path->points);
+		al_free(path->points);
 	}
 }
 
@@ -107,7 +107,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	if (!points)
 		THROW(AL_ERROR_INVALID_DATA);
 
-	free(path->points);
+	al_free(path->points);
 
 	path->colour = colour;
 	path->pointsLength = numPoints;
@@ -115,11 +115,11 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	path->points = points;
 
 	CATCH({
-		free(points);
+		al_free(points);
 	})
 	FINALLY({
-		free(locations);
-		free(biases);
+		al_free(locations);
+		al_free(biases);
 	})
 }
 
@@ -150,8 +150,8 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 	TRY(al_data_write_end(data));
 
 	PASS({
-		free(locations);
-		free(biases);
+		al_free(locations);
+		al_free(biases);
 	})
 }
 
@@ -199,7 +199,7 @@ AlError al_model_shape_init(AlModelShape **result)
 static void _al_model_shape_free(AlModelShape *shape)
 {
 	if (shape) {
-		free(shape->paths);
+		al_free(shape->paths);
 	}
 }
 
@@ -269,13 +269,13 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 		unreference(shape, shape->paths[i]);
 	}
 
-	free(shape->paths);
+	al_free(shape->paths);
 
 	shape->numPaths = numPaths;
 	shape->pathsLength = numPaths;
 	shape->paths = paths;
 
-	CATCH(
+	CATCH({
 		al_log_error("Error reading model file");
 		if (paths) {
 			for (int i = 0; i < numPaths; i++) {
@@ -285,12 +285,12 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			  unreference(shape, paths[i]);
 			}
 
-			free(paths);
+			al_free(paths);
 		}
-	)
-	FINALLY(
+	})
+	FINALLY({
 		al_data_free(data);
-	)
+	})
 }
 
 AlModelPath *const *al_model_shape_get_paths(AlModelShape *shape, int *numPaths)

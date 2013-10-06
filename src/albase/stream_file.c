@@ -79,13 +79,13 @@ static void file_free(AlStream *base)
 	FileStream *stream = (FileStream *)base;
 
 	if (stream) {
-		free((char *)base->name);
+		al_free((char *)base->name);
 
 		if (stream->file && stream->closeFile) {
 			fclose(stream->file);
 		}
 
-		free(stream);
+		al_free(stream);
 	}
 }
 

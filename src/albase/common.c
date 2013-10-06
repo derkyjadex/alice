@@ -50,3 +50,8 @@ AlError al_realloc(void *ptr, size_t size)
 
 	PASS()
 }
+
+void al_free(void *ptr)
+{
+	free(ptr);
+}
