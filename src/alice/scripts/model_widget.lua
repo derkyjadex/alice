@@ -22,7 +22,7 @@ local function select_path(self, x, y)
 		end
 	end
 
-	self._model.selected_path(nil)
+	self._model:selected_path(nil)
 end
 
 ModelWidget = Widget:derive(function(self)
@@ -47,7 +47,7 @@ local function update_model(self)
 end
 
 local function transform_handle(handle, scale, pan_x, pan_y)
-	local x, y = handle.point.location()
+	local x, y = handle.point:location()
 	handle:location((x + pan_x) * scale, (y + pan_y) * scale)
 end
 
@@ -91,7 +91,7 @@ end
 
 local function move_point(self, point_vm, x, y)
 	local scale, pan_x, pan_y = get_transform(self)
-	point_vm.location((x / scale) - pan_x, (y / scale) - pan_y)
+	point_vm:location((x / scale) - pan_x, (y / scale) - pan_y)
 	update_model(self)
 end
 
