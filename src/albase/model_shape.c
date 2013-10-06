@@ -67,12 +67,13 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 	TRY(al_data_read_start(data, NULL));
 
-	READ_TAGS(data, {
-		CASE_TAG(COLOUR_TAG, {
+	START_READ_TAGS(data) {
+		case COLOUR_TAG:
 			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour, NULL));
 			TRY(al_data_skip_rest(data));
-		})
-		CASE_TAG(POINTS_TAG, {
+			break;
+
+		case POINTS_TAG: {
 			if (points)
 				THROW(AL_ERROR_INVALID_DATA);
 
@@ -99,8 +100,9 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 				TRY(al_data_skip_rest(data));
 			}
-		})
-	})
+			break;
+		}
+	} END_READ_TAGS(data);
 
 	if (!points)
 		THROW(AL_ERROR_INVALID_DATA);
@@ -240,8 +242,8 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 	TRY(al_data_init(&data, stream));
 	TRY(al_data_read_start_tag(data, SHAPE_TAG, NULL));
 
-	READ_TAGS(data, {
-		CASE_TAG(PATHS_TAG, {
+	START_READ_TAGS(data) {
+		case PATHS_TAG:
 			if (paths)
 				THROW(AL_ERROR_INVALID_DATA)
 
@@ -257,8 +259,8 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			}
 
 			TRY(al_data_skip_rest(data));
-		})
-	})
+			break;
+	} END_READ_TAGS(data);
 
 	if (!paths)
 		THROW(AL_ERROR_INVALID_DATA);
