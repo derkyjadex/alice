@@ -26,7 +26,7 @@ AlError al_commands_init(AlCommands **result, lua_State *lua)
 	BEGIN()
 
 	AlCommands *commands = NULL;
-	TRY(al_malloc(&commands, sizeof(AlCommands), 1));
+	TRY(al_malloc(&commands, sizeof(AlCommands)));
 
 	commands->lua = lua;
 	commands->first = 0;

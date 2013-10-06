@@ -94,7 +94,7 @@ AlError al_stream_init_filename(AlStream **result, const char *filename, AlOpenM
 	BEGIN()
 
 	FileStream *stream = NULL;
-	TRY(al_malloc(&stream, sizeof(FileStream), 1));
+	TRY(al_malloc(&stream, sizeof(FileStream)));
 
 	stream->base = (AlStream){
 		.name = NULL,
@@ -107,7 +107,7 @@ AlError al_stream_init_filename(AlStream **result, const char *filename, AlOpenM
 	stream->file = NULL;
 	stream->closeFile = true;
 
-	TRY(al_malloc(&stream->base.name, sizeof(char), strlen(filename) + 1));
+	TRY(al_malloc(&stream->base.name, strlen(filename) + 1));
 	strcpy((char *)stream->base.name, filename);
 
 	stream->file = fopen(filename, (mode == AL_OPEN_READ) ? "rb" : "w");
@@ -129,7 +129,7 @@ AlError al_stream_init_file(AlStream **result, FILE *file, bool closeFile, const
 	BEGIN()
 
 	FileStream *stream = NULL;
-	TRY(al_malloc(&stream, sizeof(FileStream), 1));
+	TRY(al_malloc(&stream, sizeof(FileStream)));
 
 	stream->base = (AlStream){
 		.name = NULL,
@@ -142,7 +142,7 @@ AlError al_stream_init_file(AlStream **result, FILE *file, bool closeFile, const
 	stream->file = file;
 	stream->closeFile = closeFile;
 
-	TRY(al_malloc(&stream->base.name, sizeof(char), strlen(name) + 1));
+	TRY(al_malloc(&stream->base.name, strlen(name) + 1));
 	strcpy((char *)stream->base.name, name);
 
 	*result = &stream->base;

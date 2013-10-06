@@ -26,7 +26,7 @@ AlError al_vars_init(AlVars **result, lua_State *lua)
 	BEGIN()
 
 	AlVars *vars = NULL;
-	TRY(al_malloc(&vars, sizeof(AlVars), 1));
+	TRY(al_malloc(&vars, sizeof(AlVars)));
 
 	vars->lua = lua;
 
@@ -77,7 +77,7 @@ AlError al_vars_register(AlVars *vars, AlVarReg reg)
 	BEGIN()
 
 	AlVarReg *entry = NULL;
-	TRY(al_malloc(&entry, sizeof(AlVarReg), 1));
+	TRY(al_malloc(&entry, sizeof(AlVarReg)));
 
 	*entry = reg;
 	entry->name = NULL;
@@ -166,7 +166,7 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	const char *luaValue = luaL_checklstring(L, valueArg, &length);
 	char *newValue = NULL;
 
-	AlError error = al_malloc(&newValue, sizeof(char), length + 1);
+	AlError error = al_malloc(&newValue, length + 1);
 	if (error) {
 		luaL_error(L, "error setting string value");
 	}
@@ -183,7 +183,7 @@ static AlBlob toAlBlob(lua_State *L, int valueArg, AlBlob oldValue)
 	const char *luaValue = luaL_checklstring(L, valueArg, &length);
 	uint8_t *bytes = NULL;
 
-	AlError error = al_malloc(&bytes, sizeof(uint8_t), length);
+	AlError error = al_malloc(&bytes, length);
 	if (error) {
 		luaL_error(L, "error setting blob value");
 	}

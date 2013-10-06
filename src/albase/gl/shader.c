@@ -85,7 +85,7 @@ AlError algl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vert
 	BEGIN()
 
 	AlGlShader *shader = NULL;
-	TRY(al_malloc(&shader, sizeof(AlGlShader), 1));
+	TRY(al_malloc(&shader, sizeof(AlGlShader)));
 
 	shader->id = 0;
 	shader->vertexShader = 0;

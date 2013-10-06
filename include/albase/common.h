@@ -14,7 +14,7 @@
 #define FOR_EACH(type, item, initial) \
 	for (type **(item ## Iter) = (initial), *item = *(item ## Iter); item; item = *(++(item ## Iter)))
 
-AlError al_malloc(void *ptr, size_t size, size_t count);
-AlError al_realloc(void *ptr, size_t size, size_t count);
+AlError al_malloc(void *ptr, size_t size);
+AlError al_realloc(void *ptr, size_t size);
 
 #endif

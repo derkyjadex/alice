@@ -31,7 +31,7 @@ static AlError _al_model_path_init(AlModelPath *path)
 	path->pointsLength = 0;
 	path->points = NULL;
 
-	TRY(al_malloc(&path->points, sizeof(AlModelPoint), 4));
+	TRY(al_malloc(&path->points, sizeof(AlModelPoint) * 4));
 	path->pointsLength = 4;
 
 	PASS()
@@ -81,7 +81,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 			if (numPoints > INT_MAX)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_malloc(&points, sizeof(AlModelPoint), numPoints));
+			TRY(al_malloc(&points, sizeof(AlModelPoint) * numPoints));
 
 			for (int i = 0; i < numPoints; i++) {
 				points[i] = ((AlModelPoint){
@@ -130,8 +130,8 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 	Vec2 *locations = NULL;
 	double *biases = NULL;
 
-	TRY(al_malloc(&locations, sizeof(Vec2), path->numPoints));
-	TRY(al_malloc(&biases, sizeof(double), path->numPoints));
+	TRY(al_malloc(&locations, sizeof(Vec2) * path->numPoints));
+	TRY(al_malloc(&biases, sizeof(double) * path->numPoints));
 
 	for (int i = 0; i < path->numPoints; i++) {
 		locations[i] = path->points[i].location;
@@ -163,7 +163,7 @@ static AlError _al_model_shape_init(AlModelShape *shape)
 	shape->pathsLength = 0;
 	shape->paths = NULL;
 
-	TRY(al_malloc(&shape->paths, sizeof(AlModelPath *), 4));
+	TRY(al_malloc(&shape->paths, sizeof(AlModelPath *) * 4));
 	shape->pathsLength = 4;
 
 	CATCH(
@@ -248,7 +248,7 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 				THROW(AL_ERROR_INVALID_DATA)
 
 			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths, NULL));
-			TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
+			TRY(al_malloc(&paths, sizeof(AlModelPath *) * numPaths));
 
 			for (int i = 0; i < numPaths; i++) {
 				paths[i] = NULL;
@@ -339,7 +339,7 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint sta
 	}
 
 	if (shape->numPaths == shape->pathsLength) {
-		TRY(al_realloc(&shape->paths, sizeof(AlModelPath), shape->pathsLength * 2));
+		TRY(al_realloc(&shape->paths, sizeof(AlModelPath) * shape->pathsLength * 2));
 		shape->pathsLength *= 2;
 	}
 
@@ -407,7 +407,7 @@ AlError al_model_path_add_point(AlModelPath *path, int index, AlModelPoint point
 		index = path->numPoints;
 
 	if (path->numPoints == path->pointsLength) {
-		TRY(al_realloc(&path->points, sizeof(AlModelPoint), path->pointsLength * 2));
+		TRY(al_realloc(&path->points, sizeof(AlModelPoint) * path->pointsLength * 2));
 		path->pointsLength *= 2;
 	}
 

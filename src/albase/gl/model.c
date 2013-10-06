@@ -21,7 +21,7 @@ static AlError model_init(AlModel **result)
 	BEGIN()
 
 	AlModel *model = NULL;
-	TRY(al_malloc(&model, sizeof(AlModel), 1));
+	TRY(al_malloc(&model, sizeof(AlModel)));
 
 	model->prev = NULL;
 	model->next = NULL;
@@ -180,7 +180,7 @@ static AlError build_path_vertices(AlModelPath *path, AlGlModelVertex *output, i
 	if (path->numPoints < 2)
 		THROW(AL_ERROR_INVALID_DATA);
 
-	TRY(al_malloc(&vertices, sizeof(VertexNode), path->numPoints * 2));
+	TRY(al_malloc(&vertices, sizeof(VertexNode) * path->numPoints * 2));
 
 	build_vertex_nodes(path, vertices);
 
@@ -207,7 +207,7 @@ static AlError model_load(AlModel *model, const char *filename)
 	AlStream *stream = NULL;
 	AlModelShape *shape = NULL;
 
-	TRY(al_malloc(&filenameCopy, sizeof(char), strlen(filename) + 1));
+	TRY(al_malloc(&filenameCopy, strlen(filename) + 1));
 	strcpy(filenameCopy, filename);
 
 	TRY(al_stream_init_filename(&stream, filename, AL_OPEN_READ));
@@ -297,8 +297,8 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 
 	Box2 bounds = {{0, 0}, {0, 0}};
 
-	TRY(al_malloc(&colours, sizeof(Vec3), shape->numPaths));
-	TRY(al_malloc(&vertexCounts, sizeof(int), shape->numPaths));
+	TRY(al_malloc(&colours, sizeof(Vec3) * shape->numPaths));
+	TRY(al_malloc(&vertexCounts, sizeof(int) * shape->numPaths));
 
 	AlModelPath **pathPtr = shape->paths;
 	Vec3 *colour = colours;
@@ -315,7 +315,7 @@ AlError al_model_set_shape(AlModel *model, AlModelShape *shape)
 		}
 	}
 
-	TRY(al_malloc(&vertices, sizeof(AlGlModelVertex), maxVertices));
+	TRY(al_malloc(&vertices, sizeof(AlGlModelVertex) * maxVertices));
 
 	pathPtr = shape->paths;
 	AlGlModelVertex *pathVertices = vertices;

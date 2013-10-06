@@ -107,7 +107,7 @@ AlError al_host_init(AlHost **result)
 	BEGIN()
 
 	AlHost *host = NULL;
-	TRY(al_malloc(&host, sizeof(AlHost), 1));
+	TRY(al_malloc(&host, sizeof(AlHost)));
 
 	host->lua = NULL;
 	host->commands = NULL;

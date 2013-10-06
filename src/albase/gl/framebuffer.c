@@ -13,7 +13,7 @@ AlError algl_framebuffer_init(AlGlFramebuffer **result)
 	BEGIN()
 
 	AlGlFramebuffer *framebuffer = NULL;
-	TRY(al_malloc(&framebuffer, sizeof(AlGlFramebuffer), 1));
+	TRY(al_malloc(&framebuffer, sizeof(AlGlFramebuffer)));
 
 	framebuffer->id = 0;
 	framebuffer->colourTex = 0;

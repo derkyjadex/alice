@@ -105,10 +105,10 @@ AlError al_stream_init_mem(AlStream **result, void *ptr, size_t size, bool freeP
 	HeapMemStream *stream = NULL;
 	char *nameCopy = NULL;
 
-	TRY(al_malloc(&stream, sizeof(HeapMemStream), 1));
+	TRY(al_malloc(&stream, sizeof(HeapMemStream)));
 
 	if (name) {
-		TRY(al_malloc(&nameCopy, sizeof(char), strlen(name) + 1));
+		TRY(al_malloc(&nameCopy, strlen(name) + 1));
 		strcpy(nameCopy, name);
 	}
 

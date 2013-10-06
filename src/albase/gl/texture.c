@@ -19,7 +19,7 @@ AlError algl_texture_init(AlGlTexture **result)
 	BEGIN()
 
 	AlGlTexture *texture = NULL;
-	TRY(al_malloc(&texture, sizeof(AlGlTexture), 1));
+	TRY(al_malloc(&texture, sizeof(AlGlTexture)));
 
 	texture->id = 0;
 	glGenTextures(1, &texture->id);

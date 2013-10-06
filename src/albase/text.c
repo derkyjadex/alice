@@ -51,7 +51,7 @@ static int cmd_text_insert(lua_State *L)
 	size_t resultLength = selfLength + textLength;
 	size_t insertedChars = 0;
 
-	if (al_malloc(&result, sizeof(char), resultLength) != AL_NO_ERROR)
+	if (al_malloc(&result, resultLength) != AL_NO_ERROR)
 		return luaL_error(L, "text_insert: memory error");
 
 	char *resultCursor = result;
@@ -102,7 +102,7 @@ static int cmd_text_remove(lua_State *L)
 	char *result = NULL;
 	size_t resultLength = selfLength - length + 1;
 
-	if (al_malloc(&result, sizeof(char), resultLength))
+	if (al_malloc(&result, resultLength))
 		return luaL_error(L, "text_remove: memory error");
 
 	char *resultCursor = result;

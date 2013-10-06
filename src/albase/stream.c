@@ -23,7 +23,7 @@ AlError al_stream_read_to_string(AlStream *stream, char **result, size_t *result
 	TRY(stream->seek(stream, 0, AL_SEEK_SET));
 
 	char *string;
-	TRY(al_malloc(&string, sizeof(char), size + 1));
+	TRY(al_malloc(&string, size + 1));
 	TRY(stream->read(stream, &string, size, NULL));
 	string[size] = '\0';
 
