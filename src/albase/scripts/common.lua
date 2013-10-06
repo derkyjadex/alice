@@ -43,15 +43,21 @@ function Observable(...)
 	return setmetatable(
 		{},
 		{
-			__call = function(_, ...)
+			__call = function(self, ...)
 				if select('#', ...) == 0 then
-					return table.unpack(value)
+					return self:get()
 				else
-					value = {...}
-					changed(...)
+					return self:set(...)
 				end
 			end,
 			__index = {
+				get = function()
+					return table.unpack(value)
+				end,
+				set = function(self, ...)
+					value = {...}
+					changed(...)
+				end,
 				changed = changed
 			},
 			__newindex = function()
@@ -66,12 +72,22 @@ function Property(...)
 	return setmetatable(
 		{},
 		{
-			__call = function(_, __, ...)
-				return observable(...)
+			__call = function(self, owner, ...)
+				if select('#', ...) == 0 then
+					return observable:get()
+				else
+					observable:set(...)
+					return owner
+				end
 			end,
 			__index = {
-				changed = observable.changed,
-				observable = observable
+				get = function()
+					return observable:get()
+				end,
+				set = function(self, ...)
+					return observable:set(...)
+				end,
+				changed = observable.changed
 			},
 			__newindex = function()
 				error('cannot change properties of Property')
@@ -79,36 +95,38 @@ function Property(...)
 		})
 end
 
-function Binding(observable, callback)
-	if observable.observable then
-		observable = observable.observable
-	end
-
+function Binding(source, callback)
 	local updating_self = false
 
-	local handle = observable.changed:add(function(...)
+	local handle = source.changed:add(function(...)
 		if not updating_self then
 			callback(...)
 		end
 	end)
 
-	callback(observable())
+	callback(source:get())
 
 	return setmetatable(
 		{},
 		{
-			__call = function(_, ...)
+			__call = function(self, ...)
 				if select('#', ...) == 0 then
-					return observable()
+					return self:get()
 				else
-					updating_self = true
-					observable(...)
-					updating_self = false
+					return self:set(...)
 				end
 			end,
 			__index = {
+				get = function()
+					return source:get()
+				end,
+				set = function(self, ...)
+					updating_self = true
+					source:set(...)
+					updating_self = false
+				end,
 				unbind = function()
-					observable.changed:remove(handle)
+					source.changed:remove(handle)
 				end
 			},
 			__newindex = function()
@@ -208,7 +226,7 @@ function ObservableArray(...)
 end
 
 function Computed(source, f)
-	local value = {f(source())}
+	local value = {f(source:get())}
 	local changed = Multicast()
 
 	source.changed:add(function(...)
@@ -219,14 +237,17 @@ function Computed(source, f)
 	return setmetatable(
 		{},
 		{
-			__call = function(_, ...)
+			__call = function(self, ...)
 				if select('#', ...) == 0 then
-					return table.unpack(value)
+					return self:get()
 				else
 					error('cannot set value of computed')
 				end
 			end,
 			__index = {
+				get = function()
+					return table.unpack(value)
+				end,
 				changed = changed
 			},
 			__newindex = function()
