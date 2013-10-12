@@ -36,10 +36,6 @@ struct AlHost {
 static AlLuaKey hostKey;
 static int luaopen_host(lua_State *L);
 
-#ifdef RASPI
-static bool showMouse = true;
-#endif
-
 AlError al_host_systems_init()
 {
 	BEGIN()
@@ -251,9 +247,6 @@ void al_host_run(AlHost *host)
 					break;
 
 				case SDL_MOUSEMOTION:
-#ifdef RASPI
-					widget_invalidate(host->root);
-#endif
 					if (host->grabbingWidget) {
 						Vec2 motion = {event.motion.xrel, -event.motion.yrel};
 						al_widget_send_motion(host->grabbingWidget, motion);
@@ -276,11 +269,7 @@ void al_host_run(AlHost *host)
 
 		al_commands_process_queue(host->commands);
 
-#ifdef RASPI
-		graphics_render(host->root, showMouse, get_mouse_pos(host));
-#else
 		graphics_render(host->root, false, (Vec2){0, 0});
-#endif
 	}
 }
 
@@ -290,10 +279,6 @@ Vec2 al_host_grab_mouse(AlHost *host, AlWidget *widget)
 	Vec2 position = get_mouse_pos(host);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-
-#ifdef RASPI
-	showMouse = false;
-#endif
 
 	return position;
 }
@@ -312,10 +297,6 @@ void al_host_release_mouse(AlHost *host, Vec2 location)
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 	SDL_WarpMouseInWindow(NULL, location.x, host->screenSize.y - location.y);
-
-#ifdef RASPI
-	showMouse = true;
-#endif
 }
 
 AlError al_host_grab_keyboard(AlHost *host, AlWidget *widget)
