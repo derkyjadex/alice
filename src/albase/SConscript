@@ -29,12 +29,13 @@ scripts = Split('''
 	scripts/model.lua
 ''')
 
+sources.append('gl/system_sdl.c')
+
 if env['PLATFORM'] == 'darwin':
-	sources.append('gl/system_sdl.c')
 	sources.append('fs_osx.c')
 
 if env['PLATFORM'] == 'raspi':
-	sources.append('gl/system_raspi.c')
+	sources.append('fs_posix.c')
 
 
 sources.append(env.Resources('scripts', scripts))
