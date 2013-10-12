@@ -13,9 +13,9 @@ Building
 
 You will need the following frameworks:
 
-- SDL 1.2 <http://www.libsdl.org/download-1.2.php> 
-- SDL_image 1.2 <http://www.libsdl.org/projects/SDL_image/>
-- Lua 5.1 <https://github.com/derkyjadex/Lua-Framework>
+- SDL2 2.0 <http://www.libsdl.org/download-2.0.php>
+- SDL2_image 2.0 <http://www.libsdl.org/projects/SDL_image/>
+- Lua 5.2 <https://github.com/derkyjadex/Lua-Framework>
 
 After you have installed these to `/Library/Frameworks`, you will be able to
 build the Xcode project, or use scons. This should work for 10.6+, but may also
@@ -30,10 +30,16 @@ favourite package management interface to install the following packages:
 
 - scons
 - liblua5.2-dev
-- libsdl1.2-dev
-- libsdl-image1.2-dev
 
-Simply run `scons` from the root of the project in order to build the library.
+You will need to build and install SDL2 from source <http://hg.libsdl.org/SDL>.
+Raspberry Pi support was initially added in changeset e4c38f17bfad (2013-09-28),
+so you will need to build from at least this version, or a newer one.
+
+You will also need to install SDL2_image. This is not available in Wheezy, so
+you need to build this from source <http://hg.libsdl.org/SDL_image/>.
+
+Once these are installed, simply run `scons` from the root of the project in
+order to build the library.
 
 
 Usage
