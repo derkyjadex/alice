@@ -236,7 +236,7 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	char *chars = NULL;
 	TRY(read_uint(data, &length));
 
-	if (length > SIZE_T_MAX)
+	if (length > SIZE_MAX)
 		THROW(AL_ERROR_MEMORY);
 
 	TRY(al_malloc(&chars, length + 1));
@@ -291,7 +291,7 @@ static AlError read_blob(AlData *data, AlBlob *result)
 	uint8_t	*bytes = NULL;
 	TRY(read_uint(data, &length));
 
-	if (length > SIZE_T_MAX)
+	if (length > SIZE_MAX)
 		THROW(AL_ERROR_MEMORY);
 
 	TRY(al_malloc(&bytes, length));
