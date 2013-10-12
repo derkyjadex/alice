@@ -11,44 +11,47 @@
 
 #include "albase/common.h"
 
-AlError al_malloc(void *ptr, size_t size, size_t count)
+AlError al_malloc(void *ptr, size_t size)
 {
 	BEGIN()
 
 	void *result;
 
-	if (size == 0 || count == 0) {
+	if (size == 0) {
 		result = NULL;
 
 	} else {
-		result = malloc(size * count);
-		if (result == NULL) {
-			THROW(AL_ERROR_MEMORY)
-		}
+		result = malloc(size);
+		if (!result)
+			THROW(AL_ERROR_MEMORY);
 	}
 
-	*(void**)ptr = result;
+	*(void **)ptr = result;
 
 	PASS()
 }
 
-AlError al_realloc(void *ptr, size_t size, size_t count)
+AlError al_realloc(void *ptr, size_t size)
 {
 	BEGIN()
 
 	void *result = NULL;
 
-	if (size == 0 || count == 0) {
-		free(*(void**)ptr);
+	if (size == 0) {
+		free(*(void **)ptr);
 
 	} else {
-		result = realloc(*(void**)ptr, size * count);
-		if (result == NULL) {
-			THROW(AL_ERROR_MEMORY)
-		}
+		result = realloc(*(void **)ptr, size);
+		if (result == NULL)
+			THROW(AL_ERROR_MEMORY);
 	}
 
-	*(void**)ptr = result;
+	*(void **)ptr = result;
 
 	PASS()
+}
+
+void al_free(void *ptr)
+{
+	free(ptr);
 }

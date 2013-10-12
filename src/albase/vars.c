@@ -26,7 +26,7 @@ AlError al_vars_init(AlVars **result, lua_State *lua)
 	BEGIN()
 
 	AlVars *vars = NULL;
-	TRY(al_malloc(&vars, sizeof(AlVars), 1));
+	TRY(al_malloc(&vars, sizeof(AlVars)));
 
 	vars->lua = lua;
 
@@ -42,9 +42,9 @@ AlError al_vars_init(AlVars **result, lua_State *lua)
 
 	*result = vars;
 
-	CATCH(
-		free(vars);
-	)
+	CATCH({
+		al_free(vars);
+	})
 	FINALLY()
 }
 
@@ -58,7 +58,7 @@ void al_vars_free(AlVars *vars)
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
 			AlVarReg *entry = lua_touserdata(L, -1);
-			free(entry);
+			al_free(entry);
 			lua_pop(L, 1);
 		}
 
@@ -68,7 +68,7 @@ void al_vars_free(AlVars *vars)
 		lua_pushnil(L);
 		lua_settable(L, LUA_REGISTRYINDEX);
 
-		free(vars);
+		al_free(vars);
 	}
 }
 
@@ -77,7 +77,7 @@ AlError al_vars_register(AlVars *vars, AlVarReg reg)
 	BEGIN()
 
 	AlVarReg *entry = NULL;
-	TRY(al_malloc(&entry, sizeof(AlVarReg), 1));
+	TRY(al_malloc(&entry, sizeof(AlVarReg)));
 
 	*entry = reg;
 	entry->name = NULL;
@@ -166,13 +166,13 @@ static String tonewString(lua_State *L, int valueArg, char *oldValue)
 	const char *luaValue = luaL_checklstring(L, valueArg, &length);
 	char *newValue = NULL;
 
-	AlError error = al_malloc(&newValue, sizeof(char), length + 1);
+	AlError error = al_malloc(&newValue, length + 1);
 	if (error) {
 		luaL_error(L, "error setting string value");
 	}
 
 	strcpy(newValue, luaValue);
-	free(oldValue);
+	al_free(oldValue);
 
 	return newValue;
 }
@@ -183,13 +183,13 @@ static AlBlob toAlBlob(lua_State *L, int valueArg, AlBlob oldValue)
 	const char *luaValue = luaL_checklstring(L, valueArg, &length);
 	uint8_t *bytes = NULL;
 
-	AlError error = al_malloc(&bytes, sizeof(uint8_t), length);
+	AlError error = al_malloc(&bytes, length);
 	if (error) {
 		luaL_error(L, "error setting blob value");
 	}
 
 	memcpy(bytes, luaValue, length);
-	free(oldValue.bytes);
+	al_free(oldValue.bytes);
 
 	return (AlBlob){
 		.bytes = bytes,

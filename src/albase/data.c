@@ -26,7 +26,7 @@ AlError al_data_init(AlData **result, AlStream *stream)
 	BEGIN()
 
 	AlData *data = NULL;
-	TRY(al_malloc(&data, sizeof(AlData), 1));
+	TRY(al_malloc(&data, sizeof(AlData)));
 
 	data->stream = stream;
 	data->eof = false;
@@ -40,8 +40,8 @@ AlError al_data_init(AlData **result, AlStream *stream)
 void al_data_free(AlData *data)
 {
 	if (data) {
-		free(data->temp);
-		free(data);
+		al_free(data->temp);
+		al_free(data);
 	}
 }
 
@@ -239,12 +239,12 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	if (length > SIZE_T_MAX)
 		THROW(AL_ERROR_MEMORY);
 
-	TRY(al_malloc(&chars, sizeof(char), length + 1));
+	TRY(al_malloc(&chars, length + 1));
 	TRY(data_read(data, chars, length));
 	chars[length] = '\0';
 
 	if (data->temp) {
-		free(data->temp);
+		al_free(data->temp);
 	}
 
 	*result = data->temp = chars;
@@ -252,9 +252,9 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 		*resultLength = length;
 	}
 
-	CATCH(
-		free(chars);
-	)
+	CATCH({
+		al_free(chars);
+	})
 	FINALLY()
 }
 
@@ -294,11 +294,11 @@ static AlError read_blob(AlData *data, AlBlob *result)
 	if (length > SIZE_T_MAX)
 		THROW(AL_ERROR_MEMORY);
 
-	TRY(al_malloc(&bytes, sizeof(uint8_t), length));
+	TRY(al_malloc(&bytes, length));
 	TRY(data_read(data, bytes, length));
 
 	if (data->temp) {
-		free(data->temp);
+		al_free(data->temp);
 	}
 
 	data->temp = bytes;
@@ -309,7 +309,7 @@ static AlError read_blob(AlData *data, AlBlob *result)
 	};
 
 	CATCH({
-		free(bytes);
+		al_free(bytes);
 	})
 	FINALLY()
 }
@@ -353,7 +353,7 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *
 	uint64_t count;
 	void *array = NULL;
 	TRY(read_uint(data, &count));
-	TRY(al_malloc(&array, itemSize, count));
+	TRY(al_malloc(&array, itemSize * count));
 
 	for (uint64_t i = 0; i < count; i++) {
 		void *item = array + (i * itemSize);
@@ -372,15 +372,15 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *
 	}
 
 	if (data->temp) {
-		free(data->temp);
+		al_free(data->temp);
 	}
 
 	*(void **)result = data->temp = array;
 	*resultCount = count;
 
-	CATCH(
-		free(array);
-	)
+	CATCH({
+		al_free(array);
+	})
 	FINALLY()
 }
 

@@ -85,7 +85,7 @@ AlError algl_shader_init_with_sources(AlGlShader **result, AlGLShaderSource vert
 	BEGIN()
 
 	AlGlShader *shader = NULL;
-	TRY(al_malloc(&shader, sizeof(AlGlShader), 1));
+	TRY(al_malloc(&shader, sizeof(AlGlShader)));
 
 	shader->id = 0;
 	shader->vertexShader = 0;
@@ -119,13 +119,13 @@ AlError algl_shader_init_with_streams(AlGlShader **result, AlStream *vertexStrea
 
 	*result = shader;
 
-	CATCH(
+	CATCH({
 		algl_shader_free(shader);
-	)
-	FINALLY(
-		free(vertexSource);
-		free(fragmentSource);
-	)
+	})
+	FINALLY({
+		al_free(vertexSource);
+		al_free(fragmentSource);
+	})
 }
 
 AlError algl_shader_init_with_files(AlGlShader **result, const char *vertexFilename, const char *fragmentFilename, const char *defines)
@@ -158,7 +158,7 @@ void algl_shader_free(AlGlShader *shader)
 		glDeleteShader(shader->vertexShader);
 		glDeleteShader(shader->fragmentShader);
 		glDeleteProgram(shader->id);
-		free(shader);
+		al_free(shader);
 	}
 }
 

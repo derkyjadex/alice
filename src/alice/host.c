@@ -80,22 +80,16 @@ static AlError run_alice_scripts(lua_State *L)
 {
 	BEGIN()
 
-	AlMemStream scripts[] = {
-		AL_SCRIPT(widget),
-		AL_SCRIPT(draggable),
-		AL_SCRIPT(toolbar),
-		AL_SCRIPT(slider_widget),
-		AL_SCRIPT(colour_widget),
-		AL_SCRIPT(model_widget),
-		AL_SCRIPT(file_widget),
-		AL_SCRIPT(text_box),
-		AL_SCRIPT(panning_widget),
-		AL_SCRIPT(model_view_model)
-	};
-
-	for (int i = 0; i < sizeof(scripts) / sizeof(scripts[0]); i++) {
-		TRY(al_script_run_stream(L, &scripts[i].base));
-	}
+	TRY(AL_SCRIPT_RUN(L, widget));
+	TRY(AL_SCRIPT_RUN(L, draggable));
+	TRY(AL_SCRIPT_RUN(L, toolbar));
+	TRY(AL_SCRIPT_RUN(L, slider_widget));
+	TRY(AL_SCRIPT_RUN(L, colour_widget));
+	TRY(AL_SCRIPT_RUN(L, model_widget));
+	TRY(AL_SCRIPT_RUN(L, file_widget));
+	TRY(AL_SCRIPT_RUN(L, text_box));
+	TRY(AL_SCRIPT_RUN(L, panning_widget));
+	TRY(AL_SCRIPT_RUN(L, model_view_model));
 
 	PASS()
 }
@@ -105,7 +99,7 @@ AlError al_host_init(AlHost **result)
 	BEGIN()
 
 	AlHost *host = NULL;
-	TRY(al_malloc(&host, sizeof(AlHost), 1));
+	TRY(al_malloc(&host, sizeof(AlHost)));
 
 	host->lua = NULL;
 	host->commands = NULL;
@@ -162,7 +156,7 @@ void al_host_free(AlHost *host)
 
 		lua_close(host->lua);
 
-		free(host);
+		al_free(host);
 	}
 }
 

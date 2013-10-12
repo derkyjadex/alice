@@ -19,7 +19,7 @@ AlError algl_texture_init(AlGlTexture **result)
 	BEGIN()
 
 	AlGlTexture *texture = NULL;
-	TRY(al_malloc(&texture, sizeof(AlGlTexture), 1));
+	TRY(al_malloc(&texture, sizeof(AlGlTexture)));
 
 	texture->id = 0;
 	glGenTextures(1, &texture->id);
@@ -39,7 +39,7 @@ void algl_texture_free(AlGlTexture *texture)
 {
 	if (texture != NULL) {
 		glDeleteTextures(1, &texture->id);
-		free(texture);
+		al_free(texture);
 	}
 }
 

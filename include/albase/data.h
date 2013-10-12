@@ -22,33 +22,26 @@ typedef uint32_t AlDataTag;
 
 #define AL_DATA_TAG(a, b, c, d) ((AlDataTag)((((d) << 24) | ((c) << 16) | ((b) << 8) | (a))))
 
-#define READ_TAGS(data, x) { \
-	bool atEnd = false; \
+#define START_READ_TAGS(data) { \
+	bool data##AtEnd = false; \
 	do { \
 		AlDataTag tag; \
 		TRY(al_data_read_start_tag(data, AL_ANY_TAG, &tag)); \
 		 \
 		switch (tag) { \
 			case AL_NO_TAG: \
-				atEnd = true; \
+				data##AtEnd = true; \
 				break; \
-			 \
-			x \
-			 \
+
+#define END_READ_TAGS(data) \
 			default: \
 				TRY(al_data_skip_rest(data)); \
 		} \
-	} while (!atEnd); \
+	} while (!data##AtEnd); \
 }
 
-#define CASE_TAG(tag, x) \
-	case tag: { \
-			x \
-		} \
-		break;
-
-#define BREAK_READ_TAGS \
-	atEnd = true; \
+#define BREAK_READ_TAGS(data) \
+	data##AtEnd = true; \
 	break;
 
 typedef enum {

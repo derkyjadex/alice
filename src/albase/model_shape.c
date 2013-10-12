@@ -31,7 +31,7 @@ static AlError _al_model_path_init(AlModelPath *path)
 	path->pointsLength = 0;
 	path->points = NULL;
 
-	TRY(al_malloc(&path->points, sizeof(AlModelPoint), 4));
+	TRY(al_malloc(&path->points, sizeof(AlModelPoint) * 4));
 	path->pointsLength = 4;
 
 	PASS()
@@ -51,7 +51,7 @@ static int al_model_path_ctor(lua_State *L)
 static void _al_model_path_free(AlModelPath *path)
 {
 	if (path) {
-		free(path->points);
+		al_free(path->points);
 	}
 }
 
@@ -67,12 +67,13 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 	TRY(al_data_read_start(data, NULL));
 
-	READ_TAGS(data, {
-		CASE_TAG(COLOUR_TAG, {
+	START_READ_TAGS(data) {
+		case COLOUR_TAG:
 			TRY(al_data_read_value(data, AL_VAR_VEC3, &colour, NULL));
 			TRY(al_data_skip_rest(data));
-		})
-		CASE_TAG(POINTS_TAG, {
+			break;
+
+		case POINTS_TAG: {
 			if (points)
 				THROW(AL_ERROR_INVALID_DATA);
 
@@ -80,7 +81,7 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 			if (numPoints > INT_MAX)
 				THROW(AL_ERROR_INVALID_DATA);
 
-			TRY(al_malloc(&points, sizeof(AlModelPoint), numPoints));
+			TRY(al_malloc(&points, sizeof(AlModelPoint) * numPoints));
 
 			for (int i = 0; i < numPoints; i++) {
 				points[i] = ((AlModelPoint){
@@ -99,13 +100,14 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 
 				TRY(al_data_skip_rest(data));
 			}
-		})
-	})
+			break;
+		}
+	} END_READ_TAGS(data);
 
 	if (!points)
 		THROW(AL_ERROR_INVALID_DATA);
 
-	free(path->points);
+	al_free(path->points);
 
 	path->colour = colour;
 	path->pointsLength = numPoints;
@@ -113,11 +115,11 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 	path->points = points;
 
 	CATCH({
-		free(points);
+		al_free(points);
 	})
 	FINALLY({
-		free(locations);
-		free(biases);
+		al_free(locations);
+		al_free(biases);
 	})
 }
 
@@ -128,8 +130,8 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 	Vec2 *locations = NULL;
 	double *biases = NULL;
 
-	TRY(al_malloc(&locations, sizeof(Vec2), path->numPoints));
-	TRY(al_malloc(&biases, sizeof(double), path->numPoints));
+	TRY(al_malloc(&locations, sizeof(Vec2) * path->numPoints));
+	TRY(al_malloc(&biases, sizeof(double) * path->numPoints));
 
 	for (int i = 0; i < path->numPoints; i++) {
 		locations[i] = path->points[i].location;
@@ -148,8 +150,8 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 	TRY(al_data_write_end(data));
 
 	PASS({
-		free(locations);
-		free(biases);
+		al_free(locations);
+		al_free(biases);
 	})
 }
 
@@ -161,7 +163,7 @@ static AlError _al_model_shape_init(AlModelShape *shape)
 	shape->pathsLength = 0;
 	shape->paths = NULL;
 
-	TRY(al_malloc(&shape->paths, sizeof(AlModelPath *), 4));
+	TRY(al_malloc(&shape->paths, sizeof(AlModelPath *) * 4));
 	shape->pathsLength = 4;
 
 	CATCH(
@@ -197,7 +199,7 @@ AlError al_model_shape_init(AlModelShape **result)
 static void _al_model_shape_free(AlModelShape *shape)
 {
 	if (shape) {
-		free(shape->paths);
+		al_free(shape->paths);
 	}
 }
 
@@ -240,13 +242,13 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 	TRY(al_data_init(&data, stream));
 	TRY(al_data_read_start_tag(data, SHAPE_TAG, NULL));
 
-	READ_TAGS(data, {
-		CASE_TAG(PATHS_TAG, {
+	START_READ_TAGS(data) {
+		case PATHS_TAG:
 			if (paths)
 				THROW(AL_ERROR_INVALID_DATA)
 
 			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths, NULL));
-			TRY(al_malloc(&paths, sizeof(AlModelPath *), numPaths));
+			TRY(al_malloc(&paths, sizeof(AlModelPath *) * numPaths));
 
 			for (int i = 0; i < numPaths; i++) {
 				paths[i] = NULL;
@@ -257,8 +259,8 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			}
 
 			TRY(al_data_skip_rest(data));
-		})
-	})
+			break;
+	} END_READ_TAGS(data);
 
 	if (!paths)
 		THROW(AL_ERROR_INVALID_DATA);
@@ -267,13 +269,13 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 		unreference(shape, shape->paths[i]);
 	}
 
-	free(shape->paths);
+	al_free(shape->paths);
 
 	shape->numPaths = numPaths;
 	shape->pathsLength = numPaths;
 	shape->paths = paths;
 
-	CATCH(
+	CATCH({
 		al_log_error("Error reading model file");
 		if (paths) {
 			for (int i = 0; i < numPaths; i++) {
@@ -283,12 +285,12 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			  unreference(shape, paths[i]);
 			}
 
-			free(paths);
+			al_free(paths);
 		}
-	)
-	FINALLY(
+	})
+	FINALLY({
 		al_data_free(data);
-	)
+	})
 }
 
 AlModelPath *const *al_model_shape_get_paths(AlModelShape *shape, int *numPaths)
@@ -337,7 +339,7 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint sta
 	}
 
 	if (shape->numPaths == shape->pathsLength) {
-		TRY(al_realloc(&shape->paths, sizeof(AlModelPath), shape->pathsLength * 2));
+		TRY(al_realloc(&shape->paths, sizeof(AlModelPath) * shape->pathsLength * 2));
 		shape->pathsLength *= 2;
 	}
 
@@ -405,7 +407,7 @@ AlError al_model_path_add_point(AlModelPath *path, int index, AlModelPoint point
 		index = path->numPoints;
 
 	if (path->numPoints == path->pointsLength) {
-		TRY(al_realloc(&path->points, sizeof(AlModelPoint), path->pointsLength * 2));
+		TRY(al_realloc(&path->points, sizeof(AlModelPoint) * path->pointsLength * 2));
 		path->pointsLength *= 2;
 	}
 

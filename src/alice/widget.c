@@ -116,7 +116,7 @@ static void _al_widget_free(AlWidget *widget)
 {
 	if (widget) {
 		al_model_unuse(widget->model.model);
-		free(widget->text.value);
+		al_free(widget->text.value);
 
 		free_binding(widget, offsetof(AlWidget, downBinding));
 		free_binding(widget, offsetof(AlWidget, upBinding));

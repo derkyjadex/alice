@@ -99,20 +99,24 @@ AlError al_script_run_file(lua_State *L, const char *filename)
 	)
 }
 
+AlError al_script_run_buffer(lua_State *L, const void *ptr, size_t size, const char* name)
+{
+	BEGIN()
+
+	AlMemStream stream = al_stream_init_mem_stack(ptr, size, name);
+	TRY(al_script_run_stream(L, &stream.base));
+
+	PASS()
+}
+
 AlError al_script_run_base_scripts(lua_State *L)
 {
 	BEGIN()
 
-	AlMemStream scripts[] = {
-		AL_SCRIPT(common),
-		AL_SCRIPT(class),
-		AL_SCRIPT(wrapper),
-		AL_SCRIPT(model)
-	};
-
-	for (int i = 0; i < sizeof(scripts) / sizeof(scripts[0]); i++) {
-		TRY(al_script_run_stream(L, &scripts[i].base));
-	}
+	TRY(AL_SCRIPT_RUN(L, common));
+	TRY(AL_SCRIPT_RUN(L, class));
+	TRY(AL_SCRIPT_RUN(L, wrapper));
+	TRY(AL_SCRIPT_RUN(L, model));
 
 	PASS()
 }
