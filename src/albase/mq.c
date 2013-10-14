@@ -30,7 +30,7 @@ AlError al_mq_init(AlMQ **result, size_t messageSize, size_t size)
 		THROW(AL_ERROR_GENERIC);
 
 	AlMQ *mq = NULL;
-	TRY(al_malloc(&mq, sizeof(AlMQ) - 1 + messageSize * size, 1));
+	TRY(al_malloc(&mq, sizeof(AlMQ) - 1 + messageSize * size));
 
 	mq->lock = SDL_CreateMutex();
 	if (!mq->lock)
