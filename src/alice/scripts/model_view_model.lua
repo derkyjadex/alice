@@ -247,7 +247,7 @@ function ModelContextViewModel(model)
 		end
 	end)
 
-	paths.inserted:add(function(i, path_vm)
+	local function wrap_path(i, path_vm)
 		path_vm.selected = Computed(self.selected_path,
 			function(selected) return path_vm == selected end)
 
@@ -255,7 +255,9 @@ function ModelContextViewModel(model)
 		function path_vm:select()
 			model_vm:selected_path(self)
 		end
-	end)
+	end
+
+	paths.inserted:add(wrap_path)
 	paths.removed:add(function(i, path_vm)
 		if path_vm == self:selected_path() then
 			self:selected_path(nil)
@@ -283,6 +285,10 @@ function ModelContextViewModel(model)
 		end
 
 		base_remove_path(self, path_vm)
+	end
+
+	for i, path_vm in ipairs(paths) do
+		wrap_path(i, path_vm)
 	end
 
 	return self

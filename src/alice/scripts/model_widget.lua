@@ -249,7 +249,7 @@ function ModelWidget.prototype:bind_model(model)
 	clear_paths(self)
 
 	for i, path in ipairs(paths) do
-		insert_path(i, path)
+		insert_path(self, i, path)
 	end
 
 	update_model(self)
