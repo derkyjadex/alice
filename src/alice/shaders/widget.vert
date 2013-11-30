@@ -6,7 +6,7 @@
 
 uniform vec2 viewportSize;
 
-uniform vec2 min;
+uniform vec2 minCoord;
 uniform vec2 size;
 uniform float borderWidth;
 uniform vec2 gridSize;
@@ -22,7 +22,7 @@ varying vec2 gridStep;
 
 void main()
 {
-	vec2 _min = floor(min);
+	vec2 _min = floor(minCoord);
 	vec2 _size = floor(size);
 	float _borderWidth = floor(borderWidth);
 	vec2 _gridSize = floor(gridSize);

@@ -21,7 +21,7 @@ static Vec2 viewportSize;
 static struct {
 	AlGlShader *shader;
 	GLuint viewportSize;
-	GLuint min;
+	GLuint minCoord;
 	GLuint size;
 	GLuint fillColour;
 	GLuint position;
@@ -30,7 +30,7 @@ static struct {
 static struct {
 	AlGlShader *shader;
 	GLuint viewportSize;
-	GLuint min;
+	GLuint minCoord;
 	GLuint size;
 	GLuint borderWidth;
 	GLuint fillColour;
@@ -41,7 +41,7 @@ static struct {
 static struct {
 	AlGlShader *shader;
 	GLuint viewportSize;
-	GLuint min;
+	GLuint minCoord;
 	GLuint size;
 	GLuint borderWidth;
 	GLuint gridSize;
@@ -65,7 +65,7 @@ static struct {
 static struct {
 	AlGlShader *shader;
 	GLuint viewportSize;
-	GLuint min;
+	GLuint minCoord;
 	GLuint size;
 	GLuint charMin;
 	GLuint charSize;
@@ -145,7 +145,7 @@ static AlError init_shaders()
 		AL_FRAG_SHADER(widget),
 		NULL));
 	ALGL_GET_UNIFORM(plainWidgetShader, viewportSize);
-	ALGL_GET_UNIFORM(plainWidgetShader, min);
+	ALGL_GET_UNIFORM(plainWidgetShader, minCoord);
 	ALGL_GET_UNIFORM(plainWidgetShader, size);
 	ALGL_GET_UNIFORM(plainWidgetShader, fillColour);
 	ALGL_GET_ATTRIB(plainWidgetShader, position);
@@ -155,7 +155,7 @@ static AlError init_shaders()
 		AL_FRAG_SHADER(widget),
 		"#define WITH_BORDER\n"));
 	ALGL_GET_UNIFORM(borderWidgetShader, viewportSize);
-	ALGL_GET_UNIFORM(borderWidgetShader, min);
+	ALGL_GET_UNIFORM(borderWidgetShader, minCoord);
 	ALGL_GET_UNIFORM(borderWidgetShader, size);
 	ALGL_GET_UNIFORM(borderWidgetShader, borderWidth);
 	ALGL_GET_UNIFORM(borderWidgetShader, fillColour);
@@ -168,7 +168,7 @@ static AlError init_shaders()
 		"#define WITH_BORDER\n"
 		"#define WITH_GRID"));
 	ALGL_GET_UNIFORM(gridBorderWidgetShader, viewportSize);
-	ALGL_GET_UNIFORM(gridBorderWidgetShader, min);
+	ALGL_GET_UNIFORM(gridBorderWidgetShader, minCoord);
 	ALGL_GET_UNIFORM(gridBorderWidgetShader, size);
 	ALGL_GET_UNIFORM(gridBorderWidgetShader, borderWidth);
 	ALGL_GET_UNIFORM(gridBorderWidgetShader, gridSize);
@@ -194,7 +194,7 @@ static AlError init_shaders()
 		AL_FRAG_SHADER(text),
 		NULL));
 	ALGL_GET_UNIFORM(textShader, viewportSize);
-	ALGL_GET_UNIFORM(textShader, min);
+	ALGL_GET_UNIFORM(textShader, minCoord);
 	ALGL_GET_UNIFORM(textShader, size);
 	ALGL_GET_UNIFORM(textShader, charMin);
 	ALGL_GET_UNIFORM(textShader, charSize);
@@ -351,7 +351,7 @@ static void render_text(const char *text, Vec3 colour, Vec2 location, double siz
 		float x = (float)(c % fontInfo.numCharsW) / fontInfo.numCharsW;
 		float y = (float)(c / fontInfo.numCharsW) / fontInfo.numCharsH;
 
-		algl_uniform_vec2(textShader.min, location);
+		algl_uniform_vec2(textShader.minCoord, location);
 		glUniform2f(textShader.charMin, x, y);
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -368,14 +368,14 @@ static void render_widget_main(AlWidget *widget, Box2 bounds)
 		if (!widget->border.width) {
 			position = plainWidgetShader.position;
 			glUseProgram(plainWidgetShader.shader->id);
-			algl_uniform_vec2(plainWidgetShader.min, bounds.min);
+			algl_uniform_vec2(plainWidgetShader.minCoord, bounds.min);
 			algl_uniform_vec2(plainWidgetShader.size, box2_size(bounds));
 			algl_uniform_vec4(plainWidgetShader.fillColour, widget->fillColour);
 
 		} else {
 			position = borderWidgetShader.position;
 			glUseProgram(borderWidgetShader.shader->id);
-			algl_uniform_vec2(borderWidgetShader.min, bounds.min);
+			algl_uniform_vec2(borderWidgetShader.minCoord, bounds.min);
 			algl_uniform_vec2(borderWidgetShader.size, box2_size(bounds));
 			glUniform1f(borderWidgetShader.borderWidth, widget->border.width);
 			algl_uniform_vec4(borderWidgetShader.fillColour, widget->fillColour);
@@ -384,7 +384,7 @@ static void render_widget_main(AlWidget *widget, Box2 bounds)
 	} else {
 		position = gridBorderWidgetShader.position;
 		glUseProgram(gridBorderWidgetShader.shader->id);
-		algl_uniform_vec2(gridBorderWidgetShader.min, bounds.min);
+		algl_uniform_vec2(gridBorderWidgetShader.minCoord, bounds.min);
 		algl_uniform_vec2(gridBorderWidgetShader.size, box2_size(bounds));
 		glUniform1f(gridBorderWidgetShader.borderWidth, widget->border.width);
 		algl_uniform_vec2(gridBorderWidgetShader.gridSize, widget->grid.size);
