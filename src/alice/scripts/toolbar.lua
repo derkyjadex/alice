@@ -10,12 +10,15 @@ Toolbar = Widget:derive(function(self)
 	self._nextX = 5
 end)
 
-function Toolbar.prototype.add_button(self, r, g, b, binding)
+function Toolbar.prototype.add_button(self, r, g, b, model, binding)
 	Widget():add_to(self)
 		:location(self._nextX, 5)
 		:bounds(0, 0, 30, 30)
 		:fill_colour(r, g, b, 0.9)
 		:bind_down(binding)
+		:model_scale(1)
+		:model_location(15, 15)
+		:model(model)
 
 	self._nextX = self._nextX + 35
 
