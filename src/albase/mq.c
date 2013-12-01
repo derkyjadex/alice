@@ -55,7 +55,7 @@ void al_mq_free(AlMQ *mq)
 {
 	if (mq) {
 		SDL_DestroyMutex(mq->lock);
-		free(mq);
+		al_free(mq);
 	}
 }
 

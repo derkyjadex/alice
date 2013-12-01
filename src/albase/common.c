@@ -38,7 +38,7 @@ AlError al_realloc(void *ptr, size_t size)
 	void *result = NULL;
 
 	if (size == 0) {
-		free(*(void **)ptr);
+		al_free(*(void **)ptr);
 
 	} else {
 		result = realloc(*(void **)ptr, size);
