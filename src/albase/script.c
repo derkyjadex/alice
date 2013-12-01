@@ -24,13 +24,22 @@ static int traceback(lua_State *L)
 	return 1;
 }
 
+static void *alloc(void *ud, void *ptr, size_t osize, size_t nsize)
+{
+	AlError error = al_realloc(&ptr, nsize);
+	if (error)
+		ptr = NULL;
+
+	return ptr;
+}
+
 AlError al_script_init(lua_State **result)
 {
 	BEGIN()
 
 	lua_State *L = NULL;
 
-	L = luaL_newstate();
+	L = lua_newstate(alloc, NULL);
 	if (!L)
 		THROW(AL_ERROR_MEMORY)
 
