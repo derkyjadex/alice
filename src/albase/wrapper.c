@@ -351,6 +351,9 @@ void al_wrapper_retain(AlWrapper *wrapper, void *obj)
 
 void al_wrapper_release(AlWrapper *wrapper, void *obj)
 {
+	if (!obj)
+		return;
+
 	lua_State *L = wrapperSystem.lua;
 
 	lua_pushlightuserdata(L, &wrapper->retained);
