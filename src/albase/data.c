@@ -54,8 +54,10 @@ static AlError read_uint(AlData *data, uint64_t *result)
 
 	*result = 0;
 	do {
-		if (length > 10)
+		if (length > 10) {
+			al_log_error("varint too long");
 			THROW(AL_ERROR_INVALID_DATA);
+		}
 
 		TRY(data_read(data, &byte, 1));
 
@@ -165,8 +167,10 @@ static AlError read_int(AlData *data, int32_t *result)
 	int64_t value;
 	TRY(read_sint(data, &value));
 
-	if (value > INT32_MAX || value < INT32_MIN)
+	if (value > INT32_MAX || value < INT32_MIN) {
+		al_log_error("value out of range for int32");
 		THROW(AL_ERROR_INVALID_DATA);
+	}
 
 	*result = (int32_t)value;
 
@@ -236,8 +240,10 @@ static AlError read_string(AlData *data, char **result, uint64_t *resultLength)
 	char *chars = NULL;
 	TRY(read_uint(data, &length));
 
-	if (length > SIZE_MAX)
+	if (length > SIZE_MAX) {
+		al_log_error("string too long to fit in memory");
 		THROW(AL_ERROR_MEMORY);
+	}
 
 	TRY(al_malloc(&chars, length + 1));
 	TRY(data_read(data, chars, length));
@@ -291,8 +297,10 @@ static AlError read_blob(AlData *data, AlBlob *result)
 	uint8_t	*bytes = NULL;
 	TRY(read_uint(data, &length));
 
-	if (length > SIZE_MAX)
+	if (length > SIZE_MAX) {
+		al_log_error("blob too large to fit in memory");
 		THROW(AL_ERROR_MEMORY);
+	}
 
 	TRY(al_malloc(&bytes, length));
 	TRY(data_read(data, bytes, length));
@@ -366,7 +374,15 @@ static AlError read_array(AlData *data, AlVarType type, void *result, uint64_t *
 			case AL_VAR_VEC3: TRY(read_vec3(data, item)); break;
 			case AL_VAR_VEC4: TRY(read_vec4(data, item)); break;
 			case AL_VAR_BOX2: TRY(read_box2(data, item)); break;
+
+			case AL_VAR_STRING:
+				al_log_error("arrays of strings not supported");
+				THROW(AL_ERROR_INVALID_DATA);
+			case AL_VAR_BLOB:
+				al_log_error("arrays of blobs not supported");
+				THROW(AL_ERROR_INVALID_DATA);
 			default:
+				al_log_error("unknown value type: 0x%02x", type);
 				THROW(AL_ERROR_INVALID_DATA);
 		}
 	}
@@ -403,7 +419,15 @@ static AlError write_array(AlData *data, AlVarType type, const void *values, uin
 			case AL_VAR_VEC3: TRY(write_vec3(data, value)); break;
 			case AL_VAR_VEC4: TRY(write_vec4(data, value)); break;
 			case AL_VAR_BOX2: TRY(write_box2(data, value)); break;
+
+			case AL_VAR_STRING:
+				al_log_error("arrays of strings not supported");
+				THROW(AL_ERROR_INVALID_OPERATION);
+			case AL_VAR_BLOB:
+				al_log_error("arrays of blobs not supported");
+				THROW(AL_ERROR_INVALID_OPERATION);
 			default:
+				al_log_error("unknown value type: 0x%02x", type);
 				THROW(AL_ERROR_INVALID_OPERATION);
 		}
 	}
@@ -428,7 +452,14 @@ static AlError skip_array(AlData *data, AlVarType type)
 			case AL_VAR_VEC4: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 			case AL_VAR_BOX2: TRY(data_seek(data, 32, AL_SEEK_CUR)); break;
 
+			case AL_VAR_STRING:
+				al_log_error("arrays of strings not supported");
+				THROW(AL_ERROR_INVALID_DATA);
+			case AL_VAR_BLOB:
+				al_log_error("arrays of blobs not supported");
+				THROW(AL_ERROR_INVALID_DATA);
 			default:
+				al_log_error("unknown value type: 0x%02x", type);
 				THROW(AL_ERROR_INVALID_DATA);
 		}
 	}
@@ -440,8 +471,10 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 {
 	BEGIN()
 
-	if (data->eof)
+	if (data->eof) {
+		al_log_error("unexpected end of stream");
 		THROW(AL_ERROR_INVALID_DATA);
+	}
 
 	uint8_t type;
 	size_t bytesRead;
@@ -485,6 +518,7 @@ AlError al_data_read(AlData *data, AlDataItem *item)
 				break;
 
 			default:
+				al_log_error("unknown value type: 0x%02x", type);
 				THROW(AL_ERROR_INVALID_DATA);
 		}
 	}
@@ -505,10 +539,12 @@ AlError al_data_read_start(AlData *data, bool *atEnd)
 		if (atEnd) {
 			*atEnd = true;
 		} else {
+			al_log_error("unexpected end of group");
 			THROW(AL_ERROR_INVALID_DATA);
 		}
 
 	} else if (item.type != AL_TOKEN_START) {
+		al_log_error("unexpected value, type: 0x%02x", item.type);
 		THROW(AL_ERROR_INVALID_DATA);
 
 	} else if (atEnd) {
@@ -528,11 +564,15 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 	switch (item.type) {
 		case AL_TOKEN_START:
 			TRY(al_data_read(data, &item));
-			if (item.type != AL_TOKEN_TAG)
+			if (item.type != AL_TOKEN_TAG) {
+				al_log_error("missing expected tag");
 				THROW(AL_ERROR_INVALID_DATA);
+			}
 
-			if (expected != AL_ANY_TAG && item.value.tag != expected)
+			if (expected != AL_ANY_TAG && item.value.tag != expected) {
+				al_log_error("unexpected tag: 0x%04x", item.value.tag);
 				THROW(AL_ERROR_INVALID_DATA);
+			}
 
 			if (actual) {
 				*actual = item.value.tag;
@@ -540,13 +580,16 @@ AlError al_data_read_start_tag(AlData *data, AlDataTag expected, AlDataTag *actu
 			break;
 
 		case AL_TOKEN_END:
-			if (expected != AL_ANY_TAG)
+			if (expected != AL_ANY_TAG) {
+				al_log_error("unexpected end of group");
 				THROW(AL_ERROR_INVALID_DATA);
+			}
 
 			*actual = AL_NO_TAG;
 			break;
 
 		default:
+			al_log_error("unexpected value, type: 0x%02x", item.type);
 			THROW(AL_ERROR_INVALID_DATA);
 	}
 	
@@ -564,10 +607,16 @@ AlError al_data_read_value(AlData *data, AlVarType type, void *value, bool *atEn
 		if (atEnd) {
 			*atEnd = true;
 		} else {
+			al_log_error("unexpected end of group");
 			THROW(AL_ERROR_INVALID_DATA);
 		}
 
-	} else if (item.type != type || item.array) {
+	} else if (item.type != type) {
+		al_log_error("value is unexpected type: 0x%02x, expecting: 0x%02x", item.type, type);
+		THROW(AL_ERROR_INVALID_DATA);
+
+	} else if (item.array) {
+		al_log_error("unexpected array");
 		THROW(AL_ERROR_INVALID_DATA);
 
 	} else {
@@ -602,10 +651,16 @@ AlError al_data_read_array(AlData *data, AlVarType type, void *values, uint64_t 
 		if (atEnd) {
 			*atEnd = true;
 		} else {
+			al_log_error("unexpected end of group");
 			THROW(AL_ERROR_INVALID_DATA);
 		}
 
-	} else if (item.type != type || !item.array) {
+	} else if (item.type != type) {
+		al_log_error("value is unexpected type: 0x%02x, expecting: 0x%02x", item.type, type);
+		THROW(AL_ERROR_INVALID_DATA);
+
+	} else if (!item.array) {
+		al_log_error("unexpected single value");
 		THROW(AL_ERROR_INVALID_DATA);
 
 	} else {
@@ -661,6 +716,7 @@ AlError al_data_skip_rest(AlData *data)
 				break;
 
 			default:
+				al_log_error("unknown value type: 0x%02x", type);
 				THROW(AL_ERROR_INVALID_DATA);
 		}
 	} while (!atEnd);
@@ -717,6 +773,7 @@ AlError al_data_write_value(AlData *data, AlVarType type, const void *value)
 		case AL_VAR_STRING: TRY(write_string(data, value, NO_LENGTH)); break;
 		case AL_VAR_BLOB: TRY(write_blob(data, value)); break;
 		default:
+			al_log_error("unknown value type: 0x%02x", type);
 			THROW(AL_ERROR_INVALID_OPERATION);
 	}
 

@@ -27,6 +27,7 @@ static AlError mem_read(AlStream *base, void *ptr, size_t size, size_t *bytesRea
 		if (bytesRead) {
 			size = available;
 		} else {
+			al_log_error("unexpected end of stream");
 			THROW(AL_ERROR_IO);
 		}
 	}
@@ -64,8 +65,15 @@ static AlError mem_seek(AlStream *base, long offset, AlSeekPos whence)
 			break;
 	}
 
-	if (cur < stream->ptr || cur > stream->end)
+	if (cur < stream->ptr) {
+		al_log_error("cannot seek before start of stream");
 		THROW(AL_ERROR_IO);
+	}
+
+	if (cur > stream->end) {
+		al_log_error("cannot seek past end of stream");
+		THROW(AL_ERROR_IO);
+	}
 
 	stream->cur = cur;
 

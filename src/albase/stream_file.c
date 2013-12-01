@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "albase/stream.h"
 
@@ -24,8 +25,16 @@ static AlError file_read(AlStream *base, void *ptr, size_t size, size_t *bytesRe
 
 	size_t result = fread(ptr, 1, size, stream->file);
 
-	if (result < size && (!feof(stream->file) || !bytesRead))
-		THROW(AL_ERROR_IO);
+	if (result < size) {
+		if (ferror(stream->file)) {
+			al_log_error("error reading file %s: %s", stream->base.name, strerror(errno));
+			THROW(AL_ERROR_IO);
+
+		} else if (!bytesRead) {
+			al_log_error("unexpected end of file");
+			THROW(AL_ERROR_IO);
+		}
+	}
 
 	if (bytesRead) {
 		*bytesRead = result;
@@ -40,8 +49,10 @@ static AlError file_write(AlStream *base, const void *ptr, size_t size)
 
 	FileStream *stream = (FileStream *)base;
 
-	if (fwrite(ptr, size, 1, stream->file) != 1)
+	if (fwrite(ptr, size, 1, stream->file) != 1) {
+		al_log_error("error writing file %s: %s", stream->base.name, strerror(errno));
 		THROW(AL_ERROR_IO);
+	}
 
 	PASS()
 }
@@ -52,8 +63,10 @@ static AlError file_seek(AlStream *base, long offset, AlSeekPos whence)
 
 	FileStream *stream = (FileStream *)base;
 
-	if (fseek(stream->file, offset, whence))
+	if (fseek(stream->file, offset, whence)) {
+		al_log_error("error seeking file %s: %s", stream->base.name, strerror(errno));
 		THROW(AL_ERROR_IO);
+	}
 
 	PASS()
 }
@@ -66,8 +79,10 @@ static AlError file_tell(AlStream *base, long *result)
 
 	long offset = ftell(stream->file);
 
-	if (offset < 0)
+	if (offset < 0) {
+		al_log_error("error getting file position %s: %s", stream->base.name, strerror(errno));
 		THROW(AL_ERROR_IO);
+	}
 
 	*result = offset;
 
@@ -112,7 +127,7 @@ AlError al_stream_init_filename(AlStream **result, const char *filename, AlOpenM
 
 	stream->file = fopen(filename, (mode == AL_OPEN_READ) ? "rb" : "w");
 	if (!stream->file) {
-		al_log_error("Could not open file: %s", filename);
+		al_log_error("error opening file %s: %s", filename, strerror(errno));
 		THROW(AL_ERROR_IO);
 	}
 

@@ -26,15 +26,19 @@ AlError al_mq_init(AlMQ **result, size_t messageSize, size_t size)
 {
 	BEGIN()
 
-	if (((size - 1) & size) != 0)
+	if (((size - 1) & size) != 0) {
+		al_log_error("queue size must be a power of 2");
 		THROW(AL_ERROR_GENERIC);
+	}
 
 	AlMQ *mq = NULL;
 	TRY(al_malloc(&mq, sizeof(AlMQ) - 1 + messageSize * size));
 
 	mq->lock = SDL_CreateMutex();
-	if (!mq->lock)
+	if (!mq->lock) {
+		al_log_error("failed to create mutex");
 		THROW(AL_ERROR_GENERIC);
+	}
 
 	mq->messageSize = messageSize;
 	mq->size = size;

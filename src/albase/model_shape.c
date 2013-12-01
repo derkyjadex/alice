@@ -74,12 +74,16 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 			break;
 
 		case POINTS_TAG: {
-			if (points)
+			if (points) {
+				al_log_error("points can only be specified once in path");
 				THROW(AL_ERROR_INVALID_DATA);
+			}
 
 			TRY(al_data_read_array(data, AL_VAR_VEC2, &locations, &numPoints, NULL));
-			if (numPoints > INT_MAX)
+			if (numPoints > INT_MAX) {
+				al_log_error("too many points in path");
 				THROW(AL_ERROR_INVALID_DATA);
+			}
 
 			TRY(al_malloc(&points, sizeof(AlModelPoint) * numPoints));
 
@@ -104,8 +108,10 @@ static AlError al_model_path_load(AlModelPath *path, AlData *data)
 		}
 	} END_READ_TAGS(data);
 
-	if (!points)
+	if (!points) {
+		al_log_error("no points defined in path");
 		THROW(AL_ERROR_INVALID_DATA);
+	}
 
 	al_free(path->points);
 
@@ -244,8 +250,10 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 
 	START_READ_TAGS(data) {
 		case PATHS_TAG:
-			if (paths)
+			if (paths) {
+				al_log_error("paths can only be specified once in shape");
 				THROW(AL_ERROR_INVALID_DATA)
+			}
 
 			TRY(al_data_read_value(data, AL_VAR_INT, &numPaths, NULL));
 			TRY(al_malloc(&paths, sizeof(AlModelPath *) * numPaths));
@@ -262,8 +270,10 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			break;
 	} END_READ_TAGS(data);
 
-	if (!paths)
+	if (!paths) {
+		al_log_error("no paths defined in shape");
 		THROW(AL_ERROR_INVALID_DATA);
+	}
 
 	for (int i = 0; i < shape->numPaths; i++) {
 		unreference(shape, shape->paths[i]);
@@ -276,7 +286,7 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 	shape->paths = paths;
 
 	CATCH({
-		al_log_error("Error reading model file");
+		al_log_error("error reading model file");
 		if (paths) {
 			for (int i = 0; i < numPaths; i++) {
 			  if (!paths[i])

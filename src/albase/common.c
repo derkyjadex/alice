@@ -22,8 +22,10 @@ AlError al_malloc(void *ptr, size_t size)
 
 	} else {
 		result = malloc(size);
-		if (!result)
+		if (!result) {
+			al_log_error("malloc for %dB failed", size);
 			THROW(AL_ERROR_MEMORY);
+		}
 	}
 
 	*(void **)ptr = result;
@@ -42,8 +44,10 @@ AlError al_realloc(void *ptr, size_t size)
 
 	} else {
 		result = realloc(*(void **)ptr, size);
-		if (result == NULL)
+		if (result == NULL) {
+			al_log_error("realloc for %dB failed", size);
 			THROW(AL_ERROR_MEMORY);
+		}
 	}
 
 	*(void **)ptr = result;

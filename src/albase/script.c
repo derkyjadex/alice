@@ -40,8 +40,10 @@ AlError al_script_init(lua_State **result)
 	lua_State *L = NULL;
 
 	L = lua_newstate(alloc, NULL);
-	if (!L)
+	if (!L) {
+		al_log_error("failed to create Lua state");
 		THROW(AL_ERROR_MEMORY)
+	}
 
 	luaL_openlibs(L);
 
@@ -85,7 +87,7 @@ static AlError run_script(lua_State *L, int loadResult)
 
 	if (loadResult != LUA_OK) {
 		const char *message = lua_tostring(L, -1);
-		al_log_error("Error running script: \n%s", message);
+		al_log_error("error running script: \n%s", message);
 		lua_pop(L, 1);
 		THROW(AL_ERROR_SCRIPT);
 	}
