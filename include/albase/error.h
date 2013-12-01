@@ -63,8 +63,10 @@ catch_return: \
 
 const char *al_error_to_string(AlError error);
 
+void _al_log(const char *file, int line, const char *func, const char *format, ...);
 void _al_log_error(const char *file, int line, const char *func, const char *format, ...);
 
+#define al_log(format, ...) _al_log(__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
 #define al_log_error(format, ...) _al_log_error(__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
 
 #endif
