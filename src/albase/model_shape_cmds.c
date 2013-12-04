@@ -4,10 +4,12 @@
  * See COPYING for details.
  */
 
-#include "model_shape_cmds.h"
 #include "albase/model_shape.h"
-#include "model_shape_internal.h"
 #include "albase/lua.h"
+#include "albase/wrapper.h"
+
+#include "model_shape_cmds.h"
+#include "model_shape_internal.h"
 
 static AlModelShape *cmd_model_shape_accessor(lua_State *L, const char *name, int numArgs)
 {
@@ -59,7 +61,7 @@ static int cmd_model_shape_get_paths(lua_State *L)
 	AlModelShape *model = cmd_model_shape_accessor(L, "get_paths", 1);
 
 	for (int i = 0; i < model->numPaths; i++) {
-		al_model_path_push_userdata(model->paths[i]);
+		al_wrapper_push_userdata(L, model->paths[i]);
 	}
 
 	return model->numPaths;
@@ -93,7 +95,7 @@ static int cmd_model_shape_add_path(lua_State *L)
 	if (index == -1)
 		index = model->numPaths - 1;
 
-	al_model_path_push_userdata(model->paths[index]);
+	al_wrapper_push_userdata(L, model->paths[index]);
 
 	CATCH_LUA(, "Error adding path")
 	FINALLY_LUA(, 1)

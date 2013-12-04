@@ -42,7 +42,4 @@ AlError al_model_path_remove_point(AlModelPath *path, int index);
 
 bool al_model_path_hit_test(AlModelPath *path, Vec2 point);
 
-void al_model_shape_push_userdata(AlModelShape *shape);
-void al_model_path_push_userdata(AlModelPath *path);
-
 #endif
