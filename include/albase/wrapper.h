@@ -11,7 +11,6 @@
 #include "albase/common.h"
 #include "albase/lua.h"
 
-typedef struct AlWrapper AlWrapper;
 typedef struct AlWrappedType AlWrappedType;
 
 typedef struct {
@@ -22,18 +21,18 @@ typedef struct {
 	void (*free)(lua_State *L, void *ptr);
 } AlWrapperReg;
 
-AlError al_wrapper_init(AlWrapper **wrapper, lua_State *L);
-void al_wrapper_free(AlWrapper *wrapper);
+AlError al_wrapper_init(lua_State *L);
+void al_wrapper_free(lua_State *L);
 
-AlError al_wrapper_register(AlWrapper *wrapper, AlWrapperReg reg, AlWrappedType **type);
+AlError al_wrapper_register(lua_State *L, AlWrapperReg reg, AlWrappedType **type);
 AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result);
 
-void al_wrapper_retain(AlWrapper *wrapper, void *ptr);
-void al_wrapper_release(AlWrapper *wrapper, void *ptr);
+void al_wrapper_retain(lua_State *L, void *ptr);
+void al_wrapper_release(lua_State *L, void *ptr);
 
-void al_wrapper_push_userdata(AlWrapper *wrapper, void *ptr);
+void al_wrapper_push_userdata(lua_State *L, void *ptr);
 
-void al_wrapper_reference(AlWrapper *wrapper);
-void al_wrapper_unreference(AlWrapper *wrapper);
+void al_wrapper_reference(lua_State *L);
+void al_wrapper_unreference(lua_State *L);
 
 #endif

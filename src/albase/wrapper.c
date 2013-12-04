@@ -10,9 +10,8 @@
 
 #include "albase/wrapper.h"
 
-struct AlWrapper {
-	lua_State *lua;
-
+static struct {
+	/** Table of registered types, by type name */
 	AlLuaKey types;
 
 	/** Table of state tables for each wrapped
@@ -33,17 +32,16 @@ struct AlWrapper {
 	 *  of other wrapped objects that they
 	 *  reference from outside Lua */
 	AlLuaKey references;
-};
+} keys;
 
 struct AlWrappedType {
-	AlWrapper *wrapper;
+	lua_State *lua;
 	AlWrapperReg reg;
 
 	AlLuaKey mt;
 	AlLuaKey ctor;
 };
 
-static AlLuaKey wrapperKey;
 static int luaopen_wrapper(lua_State *L);
 
 static void build_weak_table(lua_State *L, const char *mode)
@@ -56,42 +54,31 @@ static void build_weak_table(lua_State *L, const char *mode)
 	lua_setmetatable(L, -2);
 }
 
-AlError al_wrapper_init(AlWrapper **result, lua_State *L)
+AlError al_wrapper_init(lua_State *L)
 {
 	BEGIN()
 
-	AlWrapper *wrapper = NULL;
-	TRY(al_malloc(&wrapper, sizeof(AlWrapper)));
-
-	wrapper->lua = L;
-
-	lua_pushlightuserdata(L, &wrapper->types);
+	lua_pushlightuserdata(L, &keys.types);
 	lua_newtable(L);
 	lua_settable(L, LUA_REGISTRYINDEX);
 
-	lua_pushlightuserdata(L, &wrapper->states);
+	lua_pushlightuserdata(L, &keys.states);
 	build_weak_table(L, "k");
 	lua_settable(L, LUA_REGISTRYINDEX);
 
-	lua_pushlightuserdata(L, &wrapper->ptrs);
+	lua_pushlightuserdata(L, &keys.ptrs);
 	build_weak_table(L, "v");
 	lua_settable(L, LUA_REGISTRYINDEX);
 
-	lua_pushlightuserdata(L, &wrapper->retained);
+	lua_pushlightuserdata(L, &keys.retained);
 	lua_newtable(L);
 	lua_settable(L, LUA_REGISTRYINDEX);
 
-	lua_pushlightuserdata(L, &wrapper->references);
+	lua_pushlightuserdata(L, &keys.references);
 	build_weak_table(L, "k");
 	lua_settable(L, LUA_REGISTRYINDEX);
 
-	lua_pushlightuserdata(L, &wrapperKey);
-	lua_pushlightuserdata(L, wrapper);
-	lua_settable(L, LUA_REGISTRYINDEX);
-
 	luaL_requiref(L, "wrapper", luaopen_wrapper, false);
-
-	*result = wrapper;
 
 	PASS()
 }
@@ -103,30 +90,38 @@ static void remove_table(lua_State *L, AlLuaKey *key)
 	lua_settable(L, LUA_REGISTRYINDEX);
 }
 
-void al_wrapper_free(AlWrapper *wrapper)
+void al_wrapper_free(lua_State *L)
 {
-	if (wrapper) {
-		lua_State *L = wrapper->lua;
+	lua_gc(L, LUA_GCSTOP, 0);
 
-		AlWrapperFree free = wrapper->free;
-		wrapper->free = NULL;
+	lua_pushlightuserdata(L, &keys.ptrs);
+	lua_gettable(L, LUA_REGISTRYINDEX);
 
-		lua_pushlightuserdata(L, &wrapper->ptrs);
-		lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushnil(L);
+	while (lua_next(L, -2)) {
+		if (lua_getmetatable(L, -1)) {
+			lua_pushliteral(L, "__gc");
+			lua_gettable(L, -2);
+			lua_pushvalue(L, -3);
+			lua_call(L, 1, 0);
+			lua_pop(L, 1);
 
-		lua_pushnil(L);
-		while (lua_next(L, -2)) {
-			void *ptr = lua_touserdata(L, -2);
-			free(L, ptr);
 			lua_pushnil(L);
 			lua_setmetatable(L, -2);
-			lua_pop(L, 1);
 		}
 
 		lua_pop(L, 1);
-
-		al_free(wrapper);
 	}
+
+	lua_pop(L, 1);
+
+	remove_table(L, &keys.types);
+	remove_table(L, &keys.states);
+	remove_table(L, &keys.ptrs);
+	remove_table(L, &keys.retained);
+	remove_table(L, &keys.references);
+
+	lua_gc(L, LUA_GCRESTART, 0);
 }
 
 static int mt_gc(lua_State *L)
@@ -164,10 +159,8 @@ static int mt_newindex(lua_State *L)
 	return 0;
 }
 
-static void build_mt(AlWrapper *wrapper, AlWrappedType *type)
+static void build_mt(lua_State *L, AlWrappedType *type)
 {
-	lua_State *L = wrapper->lua;
-
 	lua_newtable(L);
 
 	lua_pushliteral(L, "__gc");
@@ -176,13 +169,13 @@ static void build_mt(AlWrapper *wrapper, AlWrappedType *type)
 	lua_settable(L, -3);
 
 	lua_pushliteral(L, "__index");
-	lua_pushlightuserdata(L, &wrapper->states);
+	lua_pushlightuserdata(L, &keys.states);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushcclosure(L, mt_index, 1);
 	lua_settable(L, -3);
 
 	lua_pushliteral(L, "__newindex");
-	lua_pushlightuserdata(L, &wrapper->states);
+	lua_pushlightuserdata(L, &keys.states);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushcclosure(L, mt_newindex, 1);
 	lua_settable(L, -3);
@@ -190,12 +183,11 @@ static void build_mt(AlWrapper *wrapper, AlWrappedType *type)
 
 static int base_ctor(lua_State *L)
 {
-	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
-	AlWrappedType *type = lua_touserdata(L, lua_upvalueindex(2));
+	AlWrappedType *type = lua_touserdata(L, lua_upvalueindex(1));
 
 	void *ptr = lua_newuserdata(L, type->reg.size);
 
-	lua_pushlightuserdata(L, &wrapper->states);
+	lua_pushlightuserdata(L, &keys.states);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushvalue(L, -2);
 	lua_newtable(L);
@@ -206,7 +198,7 @@ static int base_ctor(lua_State *L)
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_setmetatable(L, -2);
 
-	lua_pushlightuserdata(L, &wrapper->ptrs);
+	lua_pushlightuserdata(L, &keys.ptrs);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushlightuserdata(L, ptr);
 	lua_pushvalue(L, -3);
@@ -216,26 +208,21 @@ static int base_ctor(lua_State *L)
 	return 1;
 }
 
-static void init_type_tables(AlWrapper *wrapper, AlWrappedType *type)
+static void init_type_tables(lua_State *L, AlWrappedType *type)
 {
-	lua_State *L = wrapper->lua;
-
 	lua_pushlightuserdata(L, &type->mt);
-	build_mt(wrapper, type);
+	build_mt(L, type);
 	lua_settable(L, LUA_REGISTRYINDEX);
 
 	lua_pushlightuserdata(L, &type->ctor);
-	lua_pushlightuserdata(L, wrapper);
 	lua_pushlightuserdata(L, type);
 	lua_pushcclosure(L, base_ctor, 2);
 	lua_settable(L, LUA_REGISTRYINDEX);
 }
 
-static void register_type(AlWrapper *wrapper, AlWrappedType *type)
+static void register_type(lua_State *L, AlWrappedType *type)
 {
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->types);
+	lua_pushlightuserdata(L, &keys.types);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 
 	lua_pushstring(L, type->reg.name);
@@ -245,18 +232,18 @@ static void register_type(AlWrapper *wrapper, AlWrappedType *type)
 	lua_pop(L, 1);
 }
 
-AlError al_wrapper_register(AlWrapper *wrapper, AlWrapperReg reg, AlWrappedType **result)
+AlError al_wrapper_register(lua_State *L, AlWrapperReg reg, AlWrappedType **result)
 {
 	BEGIN()
 
 	AlWrappedType *type = NULL;
 	TRY(al_malloc(&type, sizeof(AlWrappedType)));
 
-	type->wrapper = wrapper;
+	type->lua = L;
 	type->reg = reg;
 
-	init_type_tables(wrapper, type);
-	register_type(wrapper, type);
+	init_type_tables(L, type);
+	register_type(L, type);
 
 	*result = type;
 
@@ -267,7 +254,7 @@ AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result)
 {
 	BEGIN()
 
-	lua_State *L = type->wrapper->lua;
+	lua_State *L = type->lua;
 
 	lua_pushlightuserdata(L, &type->ctor);
 	lua_gettable(L, LUA_REGISTRYINDEX);
@@ -279,13 +266,11 @@ AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result)
 	PASS()
 }
 
-void al_wrapper_retain(AlWrapper *wrapper, void *ptr)
+void al_wrapper_retain(lua_State *L, void *ptr)
 {
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->retained);
+	lua_pushlightuserdata(L, &keys.retained);
 	lua_gettable(L, LUA_REGISTRYINDEX);
-	al_wrapper_push_userdata(wrapper, ptr);
+	al_wrapper_push_userdata(L, ptr);
 	lua_gettable(L, -2);
 
 	lua_Number numRefs;
@@ -298,22 +283,20 @@ void al_wrapper_retain(AlWrapper *wrapper, void *ptr)
 
 	lua_pop(L, 1);
 
-	al_wrapper_push_userdata(wrapper, ptr);
+	al_wrapper_push_userdata(L, ptr);
 	lua_pushinteger(L, numRefs + 1);
 	lua_settable(L, -3);
 	lua_pop(L, 1);
 }
 
-void al_wrapper_release(AlWrapper *wrapper, void *ptr)
+void al_wrapper_release(lua_State *L, void *ptr)
 {
 	if (!ptr)
 		return;
 
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->retained);
+	lua_pushlightuserdata(L, &keys.retained);
 	lua_gettable(L, LUA_REGISTRYINDEX);
-	al_wrapper_push_userdata(wrapper, ptr);
+	al_wrapper_push_userdata(L, ptr);
 	lua_gettable(L, -2);
 
 	if (lua_isnil(L, -1)) {
@@ -324,7 +307,7 @@ void al_wrapper_release(AlWrapper *wrapper, void *ptr)
 	lua_Number numRefs = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	al_wrapper_push_userdata(wrapper, ptr);
+	al_wrapper_push_userdata(L, ptr);
 
 	if (numRefs > 1) {
 		lua_pushinteger(L, numRefs - 1);
@@ -336,22 +319,18 @@ void al_wrapper_release(AlWrapper *wrapper, void *ptr)
 	lua_pop(L, 1);
 }
 
-void al_wrapper_push_userdata(AlWrapper *wrapper, void *ptr)
+void al_wrapper_push_userdata(lua_State *L, void *ptr)
 {
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->ptrs);
+	lua_pushlightuserdata(L, &keys.ptrs);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushlightuserdata(L, ptr);
 	lua_gettable(L, -2);
 	lua_replace(L, -2);
 }
 
-void al_wrapper_reference(AlWrapper *wrapper)
+void al_wrapper_reference(lua_State *L)
 {
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->references);
+	lua_pushlightuserdata(L, &keys.references);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushvalue(L, -3);
 	lua_gettable(L, -2);
@@ -383,11 +362,9 @@ void al_wrapper_reference(AlWrapper *wrapper)
 	lua_pop(L, 4);
 }
 
-void al_wrapper_unreference(AlWrapper *wrapper)
+void al_wrapper_unreference(lua_State *L)
 {
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->references);
+	lua_pushlightuserdata(L, &keys.references);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushvalue(L, -3);
 	lua_gettable(L, -2);
@@ -415,11 +392,9 @@ void al_wrapper_unreference(AlWrapper *wrapper)
 	lua_pop(L, 4);
 }
 
-static AlWrappedType *get_type(AlWrapper *wrapper, const char *name)
+static AlWrappedType *get_type(lua_State *L, const char *name)
 {
-	lua_State *L = wrapper->lua;
-
-	lua_pushlightuserdata(L, &wrapper->types);
+	lua_pushlightuserdata(L, &keys.types);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushstring(L, name);
 	lua_gettable(L, -2);
@@ -434,10 +409,8 @@ static AlWrappedType *get_type(AlWrapper *wrapper, const char *name)
 
 static int cmd_wrap_ctor(lua_State *L)
 {
-	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
-
 	const char *typeName = luaL_checkstring(L, 1);
-	AlWrappedType *type = get_type(wrapper, typeName);
+	AlWrappedType *type = get_type(L, typeName);
 
 	lua_pushvalue(L, 2);
 	lua_pushlightuserdata(L, &type->ctor);
@@ -453,9 +426,7 @@ static int cmd_wrap_ctor(lua_State *L)
 
 static int cmd_set_prototype(lua_State *L)
 {
-	AlWrapper *wrapper = lua_touserdata(L, lua_upvalueindex(1));
-
-	lua_pushlightuserdata(L, &wrapper->states);
+	lua_pushlightuserdata(L, &keys.states);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushvalue(L, 1);
 	lua_gettable(L, -2);
@@ -479,10 +450,7 @@ static const luaL_Reg lib[] = {
 
 static int luaopen_wrapper(lua_State *L)
 {
-	luaL_newlibtable(L, lib);
-	lua_pushlightuserdata(L, &wrapperKey);
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	luaL_setfuncs(L, lib, 1);
+	luaL_newlib(L, lib);
 
 	return 1;
 }
