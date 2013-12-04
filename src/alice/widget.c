@@ -17,15 +17,18 @@
 static struct {
 	AlHost *host;
 	lua_State *lua;
-	AlWrapper *wrapper;
+	AlWrappedType *type;
 } widgetSystem = {
 	NULL, NULL, NULL
 };
 
 AlLuaKey widgetBindings;
 
-static void _al_widget_init(AlWidget *widget)
+static AlError al_widget_ctor(lua_State *L, void *ptr, void *data)
 {
+	BEGIN()
+
+	AlWidget *widget = ptr;
 	widget->next = NULL;
 	widget->prev = NULL;
 	widget->parent = NULL;
@@ -57,30 +60,13 @@ static void _al_widget_init(AlWidget *widget)
 	widget->keyBinding = false;
 	widget->textBinding = false;
 	widget->keyboardLostBinding = false;
-}
 
-static int al_widget_ctor(lua_State *L)
-{
-	lua_pushvalue(L, lua_upvalueindex(1));
-	lua_call(L, 0, 1);
-	AlWidget *widget = lua_touserdata(L, -1);
-
-	_al_widget_init(widget);
-
-	return 1;
+	PASS()
 }
 
 AlError al_widget_init(AlWidget **result)
 {
-	BEGIN()
-
-	AlWidget *widget = NULL;
-	TRY(al_wrapper_invoke_ctor(widgetSystem.wrapper, &widget));
-	al_wrapper_retain(widgetSystem.wrapper, widget);
-
-	*result = widget;
-
-	PASS()
+	return al_wrapper_invoke_ctor(widgetSystem.type, result, true);
 }
 
 #define set_relation(widget, member, value) _set_relation(widget, &(widget)->member, value)
@@ -88,15 +74,15 @@ AlError al_widget_init(AlWidget **result)
 static void _set_relation(AlWidget *widget, AlWidget **member, AlWidget *value)
 {
 	if (*member) {
-		al_widget_push_userdata(widget);
-		al_widget_push_userdata(*member);
-		al_wrapper_unreference(widgetSystem.wrapper);
+		al_wrapper_push_userdata(widgetSystem.lua, widget);
+		al_wrapper_push_userdata(widgetSystem.lua, *member);
+		al_wrapper_unreference(widgetSystem.lua);
 	}
 
 	if (value) {
-		al_widget_push_userdata(widget);
-		al_widget_push_userdata(value);
-		al_wrapper_reference(widgetSystem.wrapper);
+		al_wrapper_push_userdata(widgetSystem.lua, widget);
+		al_wrapper_push_userdata(widgetSystem.lua, value);
+		al_wrapper_reference(widgetSystem.lua);
 	}
 
 	*member = value;
@@ -112,8 +98,10 @@ static void free_binding(AlWidget *widget, size_t bindingOffset)
 	}
 }
 
-static void _al_widget_free(AlWidget *widget)
+static void _al_widget_free(lua_State *L, void *ptr)
 {
+	AlWidget *widget = ptr;
+
 	if (widget) {
 		al_model_unuse(widget->model.model);
 		al_free(widget->text.value);
@@ -129,7 +117,7 @@ static void _al_widget_free(AlWidget *widget)
 
 void al_widget_free(AlWidget *widget)
 {
-	al_wrapper_release(widgetSystem.wrapper, widget);
+	al_wrapper_release(widgetSystem.lua, widget);
 }
 
 void al_widget_add_child(AlWidget *widget, AlWidget *child)
@@ -239,7 +227,7 @@ static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 		lua_insert(L, -nargs - 2);
 		lua_pop(L, 1);
 
-		al_widget_push_userdata(widget);
+		al_wrapper_push_userdata(widgetSystem.lua, widget);
 		lua_insert(L, -nargs - 1);
 
 		TRY(al_script_call(L, nargs + 1));
@@ -322,21 +310,6 @@ AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 	return widget;
 }
 
-void al_widget_push_userdata(AlWidget *widget)
-{
-	al_wrapper_push_userdata(widgetSystem.wrapper, widget);
-}
-
-void al_widget_reference()
-{
-	al_wrapper_reference(widgetSystem.wrapper);
-}
-
-static void wrapper_widget_free(lua_State *L, void *ptr)
-{
-	_al_widget_free(ptr);
-}
-
 AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
 {
 	BEGIN()
@@ -344,8 +317,13 @@ AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
 	widgetSystem.lua = L;
 	widgetSystem.host = host;
 
-	TRY(al_wrapper_init(&widgetSystem.wrapper, "widget", sizeof(AlWidget), wrapper_widget_free));
-	TRY(al_wrapper_wrap_ctor(widgetSystem.wrapper, al_widget_ctor, NULL));
+	TRY(al_wrapper_register(L, (AlWrapperReg){
+		.name = "widget",
+		.size = sizeof(AlWidget),
+		.init = al_widget_ctor,
+		.initData = NULL,
+		.free = _al_widget_free
+	}, &widgetSystem.type));
 
 	luaL_requiref(L, "widget", luaopen_widget, false);
 	TRY(al_widget_system_register_vars(vars));
@@ -367,9 +345,7 @@ AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
 
 void al_widget_systems_free(void)
 {
-	al_wrapper_free(widgetSystem.wrapper);
-
 	widgetSystem.host = NULL;
 	widgetSystem.lua = NULL;
-	widgetSystem.wrapper = NULL;
+	widgetSystem.type = NULL;
 }
