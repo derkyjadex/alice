@@ -230,7 +230,7 @@ static AlError call_binding(AlWidget *widget, AlLuaKey *binding, int nargs)
 		al_wrapper_push_userdata(widgetSystem.lua, widget);
 		lua_insert(L, -nargs - 1);
 
-		TRY(al_script_call(L, nargs + 1));
+		TRY(al_script_call(L, nargs + 1, 0));
 
 	} else {
 		lua_pop(L, nargs);
