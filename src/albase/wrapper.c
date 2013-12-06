@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "albase/wrapper.h"
+#include "albase/script.h"
 
 static struct {
 	/** Table of registered types, by type name */
@@ -183,6 +184,8 @@ static void build_mt(lua_State *L, AlWrappedType *type)
 
 static int base_ctor(lua_State *L)
 {
+	BEGIN()
+
 	AlWrappedType *type = lua_touserdata(L, lua_upvalueindex(1));
 
 	void *ptr = lua_newuserdata(L, type->reg.size);
@@ -205,7 +208,10 @@ static int base_ctor(lua_State *L)
 	lua_settable(L, -3);
 	lua_pop(L, 1);
 
-	return 1;
+	TRY(type->reg.init(L, ptr, type->reg.initData));
+
+	CATCH_LUA(, "Error constructing %s", type->reg.name)
+	FINALLY_LUA(, 1)
 }
 
 static void init_type_tables(lua_State *L, AlWrappedType *type)
@@ -216,7 +222,7 @@ static void init_type_tables(lua_State *L, AlWrappedType *type)
 
 	lua_pushlightuserdata(L, &type->ctor);
 	lua_pushlightuserdata(L, type);
-	lua_pushcclosure(L, base_ctor, 2);
+	lua_pushcclosure(L, base_ctor, 1);
 	lua_settable(L, LUA_REGISTRYINDEX);
 }
 
@@ -258,14 +264,15 @@ AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result, bool retain)
 
 	lua_pushlightuserdata(L, &type->ctor);
 	lua_gettable(L, LUA_REGISTRYINDEX);
-	lua_call(L, 0, 1);
+	TRY(al_script_call(L, 0, 1));
 
 	*(void **)result = lua_touserdata(L, -1);
-	lua_pop(L, 1);
 
 	if (retain) {
 		al_wrapper_retain(L, *(void **)result);
 	}
+
+	lua_pop(L, 1);
 
 	PASS()
 }
