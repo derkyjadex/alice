@@ -45,7 +45,7 @@ function wrap(type_name, init)
 	local class = wrapper.wrap_ctor(type_name, function(base_ctor)
 		ctor = function(prototype)
 			local obj = base_ctor()
-			return wrapper.set_prototype(type_name, obj, prototype)
+			return wrapper.set_prototype(obj, prototype)
 		end
 
 		return setmetatable(
