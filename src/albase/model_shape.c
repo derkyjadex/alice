@@ -591,6 +591,9 @@ AlError al_model_systems_init(lua_State *L, AlVars *vars)
 
 void al_model_systems_free()
 {
+	al_wrapper_free_objects(modelSystem.shapeType);
+	al_wrapper_free_objects(modelSystem.pathType);
+
 	modelSystem.lua = NULL;
 	modelSystem.shapeType = NULL;
 	modelSystem.pathType = NULL;

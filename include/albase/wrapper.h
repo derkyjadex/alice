@@ -25,6 +25,7 @@ AlError al_wrapper_init(lua_State *L);
 void al_wrapper_free(lua_State *L);
 
 AlError al_wrapper_register(lua_State *L, AlWrapperReg reg, AlWrappedType **type);
+void al_wrapper_free_objects(AlWrappedType *type);
 AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result, bool retain);
 
 void al_wrapper_retain(lua_State *L, void *ptr);

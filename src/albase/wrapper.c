@@ -41,6 +41,7 @@ struct AlWrappedType {
 
 	AlLuaKey mt;
 	AlLuaKey ctor;
+	AlLuaKey objs;
 };
 
 static int luaopen_wrapper(lua_State *L);
@@ -93,36 +94,11 @@ static void remove_table(lua_State *L, AlLuaKey *key)
 
 void al_wrapper_free(lua_State *L)
 {
-	lua_gc(L, LUA_GCSTOP, 0);
-
-	lua_pushlightuserdata(L, &keys.ptrs);
-	lua_gettable(L, LUA_REGISTRYINDEX);
-
-	lua_pushnil(L);
-	while (lua_next(L, -2)) {
-		if (lua_getmetatable(L, -1)) {
-			lua_pushliteral(L, "__gc");
-			lua_gettable(L, -2);
-			lua_pushvalue(L, -3);
-			lua_call(L, 1, 0);
-			lua_pop(L, 1);
-
-			lua_pushnil(L);
-			lua_setmetatable(L, -2);
-		}
-
-		lua_pop(L, 1);
-	}
-
-	lua_pop(L, 1);
-
 	remove_table(L, &keys.types);
 	remove_table(L, &keys.states);
 	remove_table(L, &keys.ptrs);
 	remove_table(L, &keys.retained);
 	remove_table(L, &keys.references);
-
-	lua_gc(L, LUA_GCRESTART, 0);
 }
 
 static int mt_gc(lua_State *L)
@@ -208,6 +184,13 @@ static int base_ctor(lua_State *L)
 	lua_settable(L, -3);
 	lua_pop(L, 1);
 
+	lua_pushlightuserdata(L, &type->objs);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	lua_pushvalue(L, -2);
+	lua_pushboolean(L, true);
+	lua_settable(L, -3);
+	lua_pop(L, 1);
+
 	TRY(type->reg.init(L, ptr, type->reg.initData));
 
 	CATCH_LUA(, "Error constructing %s", type->reg.name)
@@ -223,6 +206,10 @@ static void init_type_tables(lua_State *L, AlWrappedType *type)
 	lua_pushlightuserdata(L, &type->ctor);
 	lua_pushlightuserdata(L, type);
 	lua_pushcclosure(L, base_ctor, 1);
+	lua_settable(L, LUA_REGISTRYINDEX);
+
+	lua_pushlightuserdata(L, &type->objs);
+	build_weak_table(L, "k");
 	lua_settable(L, LUA_REGISTRYINDEX);
 }
 
@@ -254,6 +241,29 @@ AlError al_wrapper_register(lua_State *L, AlWrapperReg reg, AlWrappedType **resu
 	*result = type;
 
 	PASS()
+}
+
+void al_wrapper_free_objects(AlWrappedType *type)
+{
+	if (type) {
+		lua_State *L = type->lua;
+
+		void (*free)(lua_State *, void *) = type->reg.free;
+		type->reg.free = NULL;
+
+		lua_pushlightuserdata(L, &type->objs);
+		lua_gettable(L, LUA_REGISTRYINDEX);
+
+		lua_pushnil(L);
+		while (lua_next(L, -2)) {
+			void *ptr = lua_touserdata(L, -2);
+			free(L, ptr);
+
+			lua_pop(L, 1);
+		}
+
+		lua_pop(L, 1);
+	}
 }
 
 AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result, bool retain)
