@@ -345,8 +345,6 @@ AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
 
 void al_widget_systems_free(void)
 {
-	al_wrapper_free_objects(widgetSystem.type);
-
 	widgetSystem.host = NULL;
 	widgetSystem.lua = NULL;
 	widgetSystem.type = NULL;

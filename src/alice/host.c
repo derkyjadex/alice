@@ -146,7 +146,6 @@ void al_host_free(AlHost *host)
 		al_widget_systems_free();
 		al_model_systems_free();
 
-		al_wrapper_free(host->lua);
 		al_vars_free(host->vars);
 		al_commands_free(host->commands);
 
