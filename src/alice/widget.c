@@ -88,13 +88,13 @@ static void _set_relation(AlWidget *widget, AlWidget **member, AlWidget *value)
 	*member = value;
 }
 
-static void free_binding(AlWidget *widget, size_t bindingOffset)
+static void free_binding(AlWidget *widget, lua_State *L, size_t bindingOffset)
 {
 	AlLuaKey *binding = (void *)widget + bindingOffset;
 	if (*binding) {
-		lua_pushlightuserdata(widgetSystem.lua, binding);
-		lua_pushnil(widgetSystem.lua);
-		lua_settable(widgetSystem.lua, LUA_REGISTRYINDEX);
+		lua_pushlightuserdata(L, binding);
+		lua_pushnil(L);
+		lua_settable(L, LUA_REGISTRYINDEX);
 	}
 }
 
@@ -106,12 +106,12 @@ static void _al_widget_free(lua_State *L, void *ptr)
 		al_model_unuse(widget->model.model);
 		al_free(widget->text.value);
 
-		free_binding(widget, offsetof(AlWidget, downBinding));
-		free_binding(widget, offsetof(AlWidget, upBinding));
-		free_binding(widget, offsetof(AlWidget, motionBinding));
-		free_binding(widget, offsetof(AlWidget, keyBinding));
-		free_binding(widget, offsetof(AlWidget, textBinding));
-		free_binding(widget, offsetof(AlWidget, keyboardLostBinding));
+		free_binding(widget, L, offsetof(AlWidget, downBinding));
+		free_binding(widget, L, offsetof(AlWidget, upBinding));
+		free_binding(widget, L, offsetof(AlWidget, motionBinding));
+		free_binding(widget, L, offsetof(AlWidget, keyBinding));
+		free_binding(widget, L, offsetof(AlWidget, textBinding));
+		free_binding(widget, L, offsetof(AlWidget, keyboardLostBinding));
 	}
 }
 
