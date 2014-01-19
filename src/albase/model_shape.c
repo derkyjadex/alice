@@ -176,7 +176,7 @@ static AlError al_model_shape_ctor(lua_State *L, void *ptr, void *data)
 
 AlError al_model_shape_init(AlModelShape **result)
 {
-	return al_wrapper_invoke_ctor(modelSystem.shapeType, result, true);
+	return al_wrapper_invoke_ctor(modelSystem.shapeType, result);
 }
 
 static void _al_model_shape_free(lua_State *L, void *ptr)
@@ -240,8 +240,9 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			for (int i = 0; i < numPaths; i++) {
 				paths[i] = NULL;
 
-				TRY(al_wrapper_invoke_ctor(modelSystem.pathType, &paths[i], false));
+				TRY(al_wrapper_invoke_ctor(modelSystem.pathType, &paths[i]));
 				reference(shape, paths[i]);
+				al_wrapper_release(modelSystem.lua, paths[i]);
 				TRY(al_model_path_load(paths[i], data));
 			}
 
@@ -332,7 +333,7 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint sta
 		shape->pathsLength *= 2;
 	}
 
-	TRY(al_wrapper_invoke_ctor(modelSystem.pathType, &path, false));
+	TRY(al_wrapper_invoke_ctor(modelSystem.pathType, &path));
 	path->points[0] = start;
 	path->points[1] = end;
 	path->numPoints = 2;
@@ -344,6 +345,7 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint sta
 	shape->paths[index] = path;
 
 	reference(shape, path);
+	al_wrapper_release(modelSystem.lua, path);
 
 	shape->numPaths++;
 

@@ -66,7 +66,7 @@ static AlError al_widget_ctor(lua_State *L, void *ptr, void *data)
 
 AlError al_widget_init(AlWidget **result)
 {
-	return al_wrapper_invoke_ctor(widgetSystem.type, result, true);
+	return al_wrapper_invoke_ctor(widgetSystem.type, result);
 }
 
 #define set_relation(widget, member, value) _set_relation(widget, &(widget)->member, value)

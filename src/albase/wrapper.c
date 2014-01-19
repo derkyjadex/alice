@@ -215,7 +215,7 @@ AlError al_wrapper_register(lua_State *L, AlWrapperReg reg, AlWrappedType **resu
 	PASS()
 }
 
-AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result, bool retain)
+AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result)
 {
 	BEGIN()
 
@@ -226,10 +226,7 @@ AlError al_wrapper_invoke_ctor(AlWrappedType *type, void *result, bool retain)
 	TRY(al_script_call(L, 0, 1));
 
 	*(void **)result = lua_touserdata(L, -1);
-
-	if (retain) {
-		al_wrapper_retain(L, *(void **)result);
-	}
+	al_wrapper_retain(L, *(void **)result);
 
 	lua_pop(L, 1);
 
