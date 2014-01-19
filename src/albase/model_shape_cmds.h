@@ -11,6 +11,6 @@
 #include "albase/vars.h"
 
 int luaopen_model(lua_State *L);
-AlError al_model_vars_init(AlVars *vars);
+AlError al_model_vars_init(lua_State *L);
 
 #endif

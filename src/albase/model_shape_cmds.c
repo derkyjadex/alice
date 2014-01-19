@@ -200,11 +200,11 @@ static int cmd_model_path_hit_test(lua_State *L)
 	return 1;
 }
 
-AlError al_model_vars_init(AlVars *vars)
+AlError al_model_vars_init(lua_State *L)
 {
 	BEGIN()
 
-	TRY(al_vars_register(vars, (AlVarReg){
+	TRY(al_vars_register(L, (AlVarReg){
 		.name = "model_path.colour",
 		.type = AL_VAR_VEC3,
 		.scope = AL_VAR_INSTANCE,

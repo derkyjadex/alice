@@ -563,7 +563,7 @@ bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
 	return result;
 }
 
-AlError al_model_systems_init(lua_State *L, AlVars *vars)
+AlError al_model_systems_init(lua_State *L)
 {
 	BEGIN()
 
@@ -586,7 +586,7 @@ AlError al_model_systems_init(lua_State *L, AlVars *vars)
 	}, &modelSystem.pathType));
 
 	luaL_requiref(L, "model", luaopen_model, false);
-	TRY(al_model_vars_init(vars));
+	TRY(al_model_vars_init(L));
 
 	PASS()
 }

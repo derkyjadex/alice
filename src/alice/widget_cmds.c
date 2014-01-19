@@ -188,7 +188,7 @@ BINDING(key, key);
 BINDING(text, text);
 BINDING(keyboard_lost, keyboardLost);
 
-#define REG_VAR(t, n, x) TRY(al_vars_register(vars, (AlVarReg){ \
+#define REG_VAR(t, n, x) TRY(al_vars_register(L, (AlVarReg){ \
 	.name = "widget."#n, \
 	.type = t, \
 	.scope = AL_VAR_INSTANCE, \
@@ -197,7 +197,7 @@ BINDING(keyboard_lost, keyboardLost);
 	} \
 }));
 
-AlError al_widget_system_register_vars(AlVars *vars)
+AlError al_widget_system_register_vars(lua_State *L)
 {
 	BEGIN()
 

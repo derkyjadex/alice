@@ -11,68 +11,28 @@
 #include "albase/geometry.h"
 #include "albase/lua.h"
 
-struct AlVars {
-	lua_State *lua;
+static struct {
 	AlLuaKey entries;
-};
+} keys;
 
 typedef char * String;
 
-static AlLuaKey varsKey;
 static int luaopen_vars(lua_State *L);
 
-AlError al_vars_init(AlVars **result, lua_State *lua)
+AlError al_vars_init(lua_State *L)
 {
 	BEGIN()
 
-	AlVars *vars = NULL;
-	TRY(al_malloc(&vars, sizeof(AlVars)));
+	lua_pushlightuserdata(L, &keys.entries);
+	lua_newtable(L);
+	lua_settable(L, LUA_REGISTRYINDEX);
 
-	vars->lua = lua;
+	luaL_requiref(L, "vars", luaopen_vars, false);
 
-	lua_pushlightuserdata(lua, &vars->entries);
-	lua_newtable(lua);
-	lua_settable(lua, LUA_REGISTRYINDEX);
-
-	lua_pushlightuserdata(lua, &varsKey);
-	lua_pushlightuserdata(lua, vars);
-	lua_settable(lua, LUA_REGISTRYINDEX);
-
-	luaL_requiref(lua, "vars", luaopen_vars, false);
-
-	*result = vars;
-
-	CATCH({
-		al_free(vars);
-	})
-	FINALLY()
+	PASS()
 }
 
-void al_vars_free(AlVars *vars)
-{
-	if (vars != NULL) {
-		lua_State *L = vars->lua;
-		lua_pushlightuserdata(L, &vars->entries);
-		lua_gettable(L, LUA_REGISTRYINDEX);
-
-		lua_pushnil(L);
-		while (lua_next(L, -2)) {
-			AlVarReg *entry = lua_touserdata(L, -1);
-			al_free(entry);
-			lua_pop(L, 1);
-		}
-
-		lua_pop(L, 1);
-
-		lua_pushlightuserdata(L, &vars->entries);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		al_free(vars);
-	}
-}
-
-AlError al_vars_register(AlVars *vars, AlVarReg reg)
+AlError al_vars_register(lua_State *L, AlVarReg reg)
 {
 	BEGIN()
 
@@ -82,8 +42,7 @@ AlError al_vars_register(AlVars *vars, AlVarReg reg)
 	*entry = reg;
 	entry->name = NULL;
 
-	lua_State *L = vars->lua;
-	lua_pushlightuserdata(L, &vars->entries);
+	lua_pushlightuserdata(L, &keys.entries);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushstring(L, reg.name);
 	lua_pushlightuserdata(L, entry);
@@ -259,10 +218,9 @@ ACCESSOR(AlBlob, pushAlBlob, 1, toAlBlob(L, arg, *ptr))
 
 static AlVarReg *get_entry(lua_State *L)
 {
-	AlVars *vars = lua_touserdata(L, lua_upvalueindex(1));
 	const char *name = luaL_checkstring(L, 1);
 
-	lua_pushlightuserdata(L, &vars->entries);
+	lua_pushlightuserdata(L, &keys.entries);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 	lua_pushvalue(L, 1);
 	lua_gettable(L, -2);
@@ -452,10 +410,7 @@ static const luaL_Reg lib[] = {
 
 static int luaopen_vars(lua_State *L)
 {
-	luaL_newlibtable(L, lib);
-	lua_pushlightuserdata(L, &varsKey);
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	luaL_setfuncs(L, lib, 1);
+	luaL_newlib(L, lib);
 
 	return 1;
 }

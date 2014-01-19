@@ -310,7 +310,7 @@ AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation)
 	return widget;
 }
 
-AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
+AlError al_widget_systems_init(AlHost *host, lua_State *L)
 {
 	BEGIN()
 
@@ -326,7 +326,7 @@ AlError al_widget_systems_init(AlHost *host, lua_State *L, AlVars *vars)
 	}, &widgetSystem.type));
 
 	luaL_requiref(L, "widget", luaopen_widget, false);
-	TRY(al_widget_system_register_vars(vars));
+	TRY(al_widget_system_register_vars(L));
 
 	lua_pushlightuserdata(L, &widgetBindings);
 	lua_newtable(L);

@@ -30,8 +30,6 @@ typedef struct {
 	size_t length;
 } AlBlob;
 
-typedef struct AlVars AlVars;
-
 typedef struct {
 	const char *name;
 	AlVarType type;
@@ -42,9 +40,8 @@ typedef struct {
 	} access;
 } AlVarReg;
 
-AlError al_vars_init(AlVars **result, lua_State *lua);
-void al_vars_free(AlVars *vars);
+AlError al_vars_init(lua_State *L);
 
-AlError al_vars_register(AlVars *vars, AlVarReg reg);
+AlError al_vars_register(lua_State *L, AlVarReg reg);
 
 #endif

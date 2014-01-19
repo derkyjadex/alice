@@ -20,7 +20,7 @@
 typedef struct AlWidget AlWidget;
 struct AlHost;
 
-AlError al_widget_systems_init(struct AlHost *host, lua_State *L, AlVars *vars);
+AlError al_widget_systems_init(struct AlHost *host, lua_State *L);
 void al_widget_systems_free(void);
 
 AlError al_widget_init(AlWidget **widget);

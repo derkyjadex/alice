@@ -21,7 +21,7 @@ typedef struct {
 	double curveBias;
 } AlModelPoint;
 
-AlError al_model_systems_init(lua_State *L, AlVars *vars);
+AlError al_model_systems_init(lua_State *L);
 void al_model_systems_free(void);
 
 AlError al_model_shape_init(AlModelShape **shape);

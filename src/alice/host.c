@@ -23,7 +23,6 @@
 struct AlHost {
 	lua_State *lua;
 	AlCommands *commands;
-	AlVars *vars;
 	bool finished;
 
 	Vec2 screenSize;
@@ -99,7 +98,6 @@ AlError al_host_init(AlHost **result)
 
 	host->lua = NULL;
 	host->commands = NULL;
-	host->vars = NULL;
 	host->finished = false;
 	host->screenSize = (Vec2){1, 1};
 	host->root = NULL;
@@ -117,11 +115,11 @@ AlError al_host_init(AlHost **result)
 	luaL_requiref(host->lua, "host", luaopen_host, false);
 
 	TRY(al_commands_init(&host->commands, host->lua));
-	TRY(al_vars_init(&host->vars, host->lua));
+	TRY(al_vars_init(host->lua));
 	TRY(al_wrapper_init(host->lua));
 
-	TRY(al_model_systems_init(host->lua, host->vars));
-	TRY(al_widget_systems_init(host, host->lua, host->vars));
+	TRY(al_model_systems_init(host->lua));
+	TRY(al_widget_systems_init(host, host->lua));
 
 	TRY(al_script_run_base_scripts(host->lua));
 	TRY(run_alice_scripts(host->lua));
@@ -146,7 +144,6 @@ void al_host_free(AlHost *host)
 		al_widget_systems_free();
 		al_model_systems_free();
 
-		al_vars_free(host->vars);
 		al_commands_free(host->commands);
 
 		lua_close(host->lua);
@@ -168,11 +165,6 @@ lua_State *al_host_get_lua(AlHost *host)
 AlCommands *al_host_get_commands(AlHost *host)
 {
 	return host->commands;
-}
-
-AlVars *al_host_get_vars(AlHost *host)
-{
-	return host->vars;
 }
 
 AlWidget *al_host_get_root(AlHost *host)
