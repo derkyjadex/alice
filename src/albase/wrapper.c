@@ -201,8 +201,11 @@ AlError al_wrapper_register(lua_State *L, AlWrapperReg reg, AlWrappedType **resu
 {
 	BEGIN()
 
-	AlWrappedType *type = NULL;
-	TRY(al_malloc(&type, sizeof(AlWrappedType)));
+	lua_newuserdata(L, sizeof(AlWrappedType));
+	AlWrappedType *type = lua_touserdata(L, -1);
+
+	lua_pushboolean(L, true);
+	lua_settable(L, LUA_REGISTRYINDEX);
 
 	type->lua = L;
 	type->reg = reg;
