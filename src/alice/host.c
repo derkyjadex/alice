@@ -118,7 +118,7 @@ AlError al_host_init(AlHost **result)
 
 	TRY(al_commands_init(&host->commands, host->lua));
 	TRY(al_vars_init(&host->vars, host->lua));
-	TRY(al_wrapper_system_init(host->lua));
+	TRY(al_wrapper_init(host->lua));
 
 	TRY(al_model_systems_init(host->lua, host->vars));
 	TRY(al_widget_systems_init(host, host->lua, host->vars));
@@ -146,7 +146,6 @@ void al_host_free(AlHost *host)
 		al_widget_systems_free();
 		al_model_systems_free();
 
-		al_wrapper_system_free();
 		al_vars_free(host->vars);
 		al_commands_free(host->commands);
 
@@ -344,7 +343,7 @@ static int cmd_get_root_widget(lua_State *L)
 {
 	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
 
-	al_widget_push_userdata(host->root);
+	al_wrapper_push_userdata(L, host->root);
 
 	return 1;
 }

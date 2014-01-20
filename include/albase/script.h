@@ -25,6 +25,6 @@ AlError al_script_run_stream(lua_State *L, AlStream *stream);
 AlError al_script_run_file(lua_State *L, const char *filename);
 AlError al_script_run_buffer(lua_State *L, const void *ptr, size_t size, const char* name);
 void al_script_push_traceback(lua_State *L);
-AlError al_script_call(lua_State *L, int nargs);
+AlError al_script_call(lua_State *L, int nargs, int nresults);
 
 #endif

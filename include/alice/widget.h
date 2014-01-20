@@ -39,6 +39,4 @@ AlError al_widget_send_keyboard_lost(AlWidget *widget);
 
 AlWidget *al_widget_hit_test(AlWidget *widget, Vec2 location, Vec2 *hitLocation);
 
-void al_widget_push_userdata(AlWidget *widget);
-
 #endif

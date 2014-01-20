@@ -19,13 +19,17 @@
 #define COLOUR_TAG AL_DATA_TAG('C', 'O', 'L', 'R')
 #define POINTS_TAG AL_DATA_TAG('P', 'N', 'T', 'S')
 
-static AlWrapper *shapeWrapper = NULL;
-static AlWrapper *pathWrapper = NULL;
+static struct {
+	lua_State *lua;
+	AlWrappedType *shapeType;
+	AlWrappedType *pathType;
+} modelSystem = {NULL, NULL, NULL};
 
-static AlError _al_model_path_init(AlModelPath *path)
+static AlError al_model_path_ctor(lua_State *L, void *ptr, void *data)
 {
 	BEGIN()
 
+	AlModelPath *path = ptr;
 	path->colour = (Vec3){1, 1, 1};
 	path->numPoints = 0;
 	path->pointsLength = 0;
@@ -37,19 +41,10 @@ static AlError _al_model_path_init(AlModelPath *path)
 	PASS()
 }
 
-static int al_model_path_ctor(lua_State *L)
+static void _al_model_path_free(lua_State *L, void *ptr)
 {
-	lua_pushvalue(L, lua_upvalueindex(1));
-	lua_call(L, 0, 1);
-	AlModelPath *path = lua_touserdata(L, -1);
+	AlModelPath *path = ptr;
 
-	_al_model_path_init(path);
-
-	return 1;
-}
-
-static void _al_model_path_free(AlModelPath *path)
-{
 	if (path) {
 		al_free(path->points);
 	}
@@ -161,10 +156,11 @@ static AlError al_model_path_save(AlModelPath *path, AlData *data)
 	})
 }
 
-static AlError _al_model_shape_init(AlModelShape *shape)
+static AlError al_model_shape_ctor(lua_State *L, void *ptr, void *data)
 {
 	BEGIN()
 
+	AlModelShape *shape = ptr;
 	shape->numPaths = 0;
 	shape->pathsLength = 0;
 	shape->paths = NULL;
@@ -172,38 +168,21 @@ static AlError _al_model_shape_init(AlModelShape *shape)
 	TRY(al_malloc(&shape->paths, sizeof(AlModelPath *) * 4));
 	shape->pathsLength = 4;
 
-	CATCH(
+	CATCH({
 		al_model_shape_free(shape);
-	)
+	})
 	FINALLY()
-}
-
-static int al_model_shape_ctor(lua_State *L)
-{
-	lua_pushvalue(L, lua_upvalueindex(1));
-	lua_call(L, 0, 1);
-	AlModelShape *shape = lua_touserdata(L, -1);
-
-	_al_model_shape_init(shape);
-
-	return 1;
 }
 
 AlError al_model_shape_init(AlModelShape **result)
 {
-	BEGIN()
-
-	AlModelShape *shape= NULL;
-	TRY(al_wrapper_invoke_ctor(shapeWrapper, &shape));
-	al_wrapper_retain(shapeWrapper, shape);
-
-	*result = shape;
-
-	PASS()
+	return al_wrapper_invoke_ctor(modelSystem.shapeType, result);
 }
 
-static void _al_model_shape_free(AlModelShape *shape)
+static void _al_model_shape_free(lua_State *L, void *ptr)
 {
+	AlModelShape *shape = ptr;
+
 	if (shape) {
 		al_free(shape->paths);
 	}
@@ -211,29 +190,29 @@ static void _al_model_shape_free(AlModelShape *shape)
 
 void al_model_shape_free(AlModelShape *shape)
 {
-	al_wrapper_release(shapeWrapper, shape);
+	al_wrapper_release(modelSystem.lua, shape);
 }
 
 static void reference(AlModelShape *shape, AlModelPath *path)
 {
-	al_wrapper_push_userdata(shapeWrapper, shape);
-	al_wrapper_push_userdata(pathWrapper, path);
-	al_wrapper_reference(shapeWrapper);
+	al_wrapper_push_userdata(modelSystem.lua, shape);
+	al_wrapper_push_userdata(modelSystem.lua, path);
+	al_wrapper_reference(modelSystem.lua);
 
-	al_wrapper_push_userdata(pathWrapper, path);
-	al_wrapper_push_userdata(shapeWrapper, shape);
-	al_wrapper_reference(pathWrapper);
+	al_wrapper_push_userdata(modelSystem.lua, path);
+	al_wrapper_push_userdata(modelSystem.lua, shape);
+	al_wrapper_reference(modelSystem.lua);
 }
 
 static void unreference(AlModelShape *shape, AlModelPath *path)
 {
-	al_wrapper_push_userdata(shapeWrapper, shape);
-	al_wrapper_push_userdata(pathWrapper, path);
-	al_wrapper_unreference(shapeWrapper);
+	al_wrapper_push_userdata(modelSystem.lua, shape);
+	al_wrapper_push_userdata(modelSystem.lua, path);
+	al_wrapper_unreference(modelSystem.lua);
 
-	al_wrapper_push_userdata(pathWrapper, path);
-	al_wrapper_push_userdata(shapeWrapper, shape);
-	al_wrapper_unreference(pathWrapper);
+	al_wrapper_push_userdata(modelSystem.lua, path);
+	al_wrapper_push_userdata(modelSystem.lua, shape);
+	al_wrapper_unreference(modelSystem.lua);
 }
 
 AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
@@ -261,8 +240,9 @@ AlError al_model_shape_load(AlModelShape *shape, AlStream *stream)
 			for (int i = 0; i < numPaths; i++) {
 				paths[i] = NULL;
 
-				TRY(al_wrapper_invoke_ctor(pathWrapper, &paths[i]));
+				TRY(al_wrapper_invoke_ctor(modelSystem.pathType, &paths[i]));
 				reference(shape, paths[i]);
+				al_wrapper_release(modelSystem.lua, paths[i]);
 				TRY(al_model_path_load(paths[i], data));
 			}
 
@@ -353,7 +333,7 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint sta
 		shape->pathsLength *= 2;
 	}
 
-	TRY(al_wrapper_invoke_ctor(pathWrapper, &path));
+	TRY(al_wrapper_invoke_ctor(modelSystem.pathType, &path));
 	path->points[0] = start;
 	path->points[1] = end;
 	path->numPoints = 2;
@@ -365,6 +345,7 @@ AlError al_model_shape_add_path(AlModelShape *shape, int index, AlModelPoint sta
 	shape->paths[index] = path;
 
 	reference(shape, path);
+	al_wrapper_release(modelSystem.lua, path);
 
 	shape->numPaths++;
 
@@ -582,35 +563,27 @@ bool al_model_path_hit_test(AlModelPath *path, Vec2 point)
 	return result;
 }
 
-void al_model_shape_push_userdata(AlModelShape *shape)
-{
-	al_wrapper_push_userdata(shapeWrapper, shape);
-}
-
-void al_model_path_push_userdata(AlModelPath *path)
-{
-	al_wrapper_push_userdata(pathWrapper, path);
-}
-
-static void wrapper_model_shape_free(lua_State *L, void *ptr)
-{
-	_al_model_shape_free(ptr);
-}
-
-static void wrapper_model_path_free(lua_State *L, void *ptr)
-{
-	_al_model_path_free(ptr);
-}
-
 AlError al_model_systems_init(lua_State *L, AlVars *vars)
 {
 	BEGIN()
 
-	TRY(al_wrapper_init(&shapeWrapper, "model_shape", sizeof(AlModelShape), wrapper_model_shape_free));
-	TRY(al_wrapper_init(&pathWrapper, "model_path", sizeof(AlModelPath), wrapper_model_path_free));
+	modelSystem.lua = L;
 
-	TRY(al_wrapper_wrap_ctor(shapeWrapper, al_model_shape_ctor));
-	TRY(al_wrapper_wrap_ctor(pathWrapper, al_model_path_ctor));
+	TRY(al_wrapper_register(L, (AlWrapperReg){
+		.name = "model_shape",
+		.size = sizeof(AlModelShape),
+		.init = al_model_shape_ctor,
+		.initData = NULL,
+		.free = _al_model_shape_free
+	}, &modelSystem.shapeType));
+
+	TRY(al_wrapper_register(L, (AlWrapperReg){
+		.name = "model_path",
+		.size = sizeof(AlModelPath),
+		.init = al_model_path_ctor,
+		.initData = NULL,
+		.free = _al_model_path_free
+	}, &modelSystem.pathType));
 
 	luaL_requiref(L, "model", luaopen_model, false);
 	TRY(al_model_vars_init(vars));
@@ -620,9 +593,7 @@ AlError al_model_systems_init(lua_State *L, AlVars *vars)
 
 void al_model_systems_free()
 {
-	al_wrapper_free(shapeWrapper);
-	shapeWrapper = NULL;
-
-	al_wrapper_free(pathWrapper);
-	pathWrapper = NULL;
+	modelSystem.lua = NULL;
+	modelSystem.shapeType = NULL;
+	modelSystem.pathType = NULL;
 }

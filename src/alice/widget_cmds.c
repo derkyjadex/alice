@@ -25,7 +25,7 @@ static int cmd_widget_get_relation(lua_State *L, const char *name, size_t offset
 	AlWidget **relation = (void *)widget + offset;
 
 	if (*relation) {
-		al_widget_push_userdata(*relation);
+		al_wrapper_push_userdata(L, *relation);
 	} else {
 		lua_pushnil(L);
 	}
@@ -158,7 +158,7 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 	if (!lua_isnil(L, -1)) {
 		lua_pushvalue(L, 1);
 		lua_pushvalue(L, -2);
-		al_widget_reference();
+		al_wrapper_reference(L);
 	}
 
 	lua_pop(L, 1);
@@ -171,7 +171,7 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 
 	lua_pushvalue(L, 1);
 	lua_pushvalue(L, 2);
-	al_widget_reference();
+	al_wrapper_reference(L);
 
 	lua_pop(L, 1);
 

@@ -14,6 +14,5 @@ extern AlLuaKey widgetBindings;
 
 int luaopen_widget(lua_State *L);
 AlError al_widget_system_register_vars(AlVars *vars);
-void al_widget_reference(void);
 
 #endif

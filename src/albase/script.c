@@ -180,22 +180,23 @@ void al_script_push_traceback(lua_State *L)
 	lua_gettable(L, LUA_REGISTRYINDEX);
 }
 
-AlError al_script_call(lua_State *L, int nargs)
+AlError al_script_call(lua_State *L, int nargs, int nresults)
 {
 	BEGIN()
 
 	al_script_push_traceback(L);
 	lua_insert(L, -nargs - 2);
 
-	int result = lua_pcall(L, nargs, 0, -nargs - 2);
-	if (result) {
+	int result = lua_pcall(L, nargs, nresults, -nargs - 2);
+	if (result != LUA_OK) {
 		const char *message = lua_tostring(L, -1);
 		al_log_error("Error calling script: \n%s", message);
-		lua_pop(L, 1);
+		lua_pop(L, 2);
 		THROW(AL_ERROR_SCRIPT);
+
+	} else {
+		lua_remove(L, -nresults - 1);
 	}
 
-	PASS(
-		lua_pop(L, 1);
-	)
+	PASS()
 }
