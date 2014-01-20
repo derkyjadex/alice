@@ -12,12 +12,9 @@
 #include "albase/common.h"
 #include "albase/lua.h"
 
-typedef struct AlCommands AlCommands;
+AlError al_commands_init(lua_State *L);
 
-AlError al_commands_init(AlCommands **commands, lua_State *lua);
-void al_commands_free(AlCommands *commands);
-AlError al_commands_register(AlCommands *commands, const char *name, lua_CFunction function, ...);
-AlError al_commands_enqueue(AlCommands *commands);
-AlError al_commands_process_queue(AlCommands *commands);
+AlError al_commands_enqueue(lua_State *L);
+AlError al_commands_process_queue(lua_State *L);
 
 #endif

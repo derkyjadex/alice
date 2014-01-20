@@ -12,102 +12,77 @@
 #include "albase/lua.h"
 #include "albase/script.h"
 
-struct AlCommands {
-	lua_State *lua;
-	AlLuaKey queue;
+typedef struct {
 	lua_Number first;
 	lua_Number last;
-};
+} QueueInfo;
 
-static int cmd_enqueue(lua_State *L);
+static struct {
+	AlLuaKey queue;
+	AlLuaKey queueInfo;
+} keys;
 
-AlError al_commands_init(AlCommands **result, lua_State *lua)
+static int luaopen_commands(lua_State *L);
+
+AlError al_commands_init(lua_State *L)
 {
 	BEGIN()
 
-	AlCommands *commands = NULL;
-	TRY(al_malloc(&commands, sizeof(AlCommands)));
+	lua_pushlightuserdata(L, &keys.queue);
+	lua_newtable(L);
+	lua_settable(L, LUA_REGISTRYINDEX);
 
-	commands->lua = lua;
-	commands->first = 0;
-	commands->last = -1;
+	lua_pushlightuserdata(L, &keys.queueInfo);
+	lua_newuserdata(L, sizeof(QueueInfo));
+	QueueInfo *info = lua_touserdata(L, -1);
+	lua_settable(L, LUA_REGISTRYINDEX);
 
-	lua_newtable(lua);
-	lua_setglobal(lua, "commands");
+	info->first = 0;
+	info->last = -1;
 
-	lua_pushlightuserdata(lua, &commands->queue);
-	lua_newtable(lua);
-	lua_settable(lua, LUA_REGISTRYINDEX);
-
-	TRY(al_commands_register(commands, "enqueue", &cmd_enqueue, commands, NULL));
-
-	*result = commands;
+	luaL_requiref(L, "commands", luaopen_commands, false);
 
 	PASS()
 }
 
-void al_commands_free(AlCommands *commands)
+static QueueInfo *get_info(lua_State *L)
 {
-	if (commands != NULL) {
-		lua_State *L = commands->lua;
-		lua_pushnil(L);
-		lua_setglobal(L, "commands");
-		lua_pushlightuserdata(L, &commands->queue);
-		lua_pushnil(L);
-		lua_settable(L, LUA_REGISTRYINDEX);
-
-		al_free(commands);
-	}
-}
-
-AlError al_commands_register(AlCommands *commands, const char *name, lua_CFunction function, ...)
-{
-	lua_State *L = commands->lua;
-	lua_getglobal(L, "commands");
-	lua_pushstring(L, name);
-
-	void *data;
-	int n = 0;
-	va_list ap;
-	va_start(ap, function);
-	while ((data = va_arg(ap, void *))) {
-		lua_pushlightuserdata(L, data);
-		n++;
-	}
-	va_end(ap);
-
-	lua_pushcclosure(L, function, n);
-	lua_settable(L, -3);
+	lua_pushlightuserdata(L, &keys.queueInfo);
+	lua_gettable(L, LUA_REGISTRYINDEX);
+	QueueInfo *info = lua_touserdata(L, -1);
 	lua_pop(L, 1);
 
-	return AL_NO_ERROR;
+	return info;
 }
 
-AlError al_commands_enqueue(AlCommands *commands)
+AlError al_commands_enqueue(lua_State *L)
 {
-	commands->last++;
+	BEGIN()
 
-	lua_State *L = commands->lua;
-	lua_pushlightuserdata(L, &commands->queue);
+	QueueInfo *info = get_info(L);
+	info->last++;
+
+	lua_pushlightuserdata(L, &keys.queue);
 	lua_gettable(L, LUA_REGISTRYINDEX);
-	lua_pushnumber(L, commands->last);
+	lua_pushnumber(L, info->last);
 	lua_pushvalue(L, -3);
 	lua_settable(L, -3);
 	lua_pop(L, 2);
 
-	return AL_NO_ERROR;
+	PASS()
 }
 
-AlError al_commands_process_queue(AlCommands *commands)
+AlError al_commands_process_queue(lua_State *L)
 {
-	lua_State *L = commands->lua;
+	QueueInfo *info = get_info(L);
+
 	al_script_push_traceback(L);
 
-	lua_pushlightuserdata(L, &commands->queue);
+	lua_pushlightuserdata(L, &keys.queue);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 
-	while (commands->first <= commands->last) {
-		lua_pushnumber(L, commands->first);
+	while (info->first <= info->last) {
+		lua_pushnumber(L, info->first);
 		lua_gettable(L, -2);
 
 		int n = (int)lua_rawlen(L, -1);
@@ -124,11 +99,11 @@ AlError al_commands_process_queue(AlCommands *commands)
 		}
 		lua_pop(L, 1);
 
-		lua_pushnumber(L, commands->first);
+		lua_pushnumber(L, info->first);
 		lua_pushnil(L);
 		lua_settable(L, -3);
 
-		commands->first++;
+		info->first++;
 	}
 
 	lua_pop(L, 2);
@@ -152,10 +127,21 @@ static int cmd_enqueue(lua_State *L)
 		lua_settable(L, -3);
 	}
 
-	AlCommands *commands = lua_touserdata(L, lua_upvalueindex(1));
-	TRY(al_commands_enqueue(commands));
+	TRY(al_commands_enqueue(L));
 	lua_pop(L, n);
 
 	CATCH_LUA(, "Error queueing command")
 	FINALLY_LUA(, 0)
+}
+
+static const luaL_Reg lib[] = {
+	{"enqueue", cmd_enqueue},
+	{NULL, NULL}
+};
+
+static int luaopen_commands(lua_State *L)
+{
+	luaL_newlib(L, lib);
+
+	return 1;
 }

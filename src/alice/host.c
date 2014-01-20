@@ -22,7 +22,6 @@
 
 struct AlHost {
 	lua_State *lua;
-	AlCommands *commands;
 	bool finished;
 
 	Vec2 screenSize;
@@ -97,7 +96,6 @@ AlError al_host_init(AlHost **result)
 	TRY(al_malloc(&host, sizeof(AlHost)));
 
 	host->lua = NULL;
-	host->commands = NULL;
 	host->finished = false;
 	host->screenSize = (Vec2){1, 1};
 	host->root = NULL;
@@ -114,7 +112,7 @@ AlError al_host_init(AlHost **result)
 
 	luaL_requiref(host->lua, "host", luaopen_host, false);
 
-	TRY(al_commands_init(&host->commands, host->lua));
+	TRY(al_commands_init(host->lua));
 	TRY(al_vars_init(host->lua));
 	TRY(al_wrapper_init(host->lua));
 
@@ -144,8 +142,6 @@ void al_host_free(AlHost *host)
 		al_widget_systems_free();
 		al_model_systems_free();
 
-		al_commands_free(host->commands);
-
 		lua_close(host->lua);
 
 		al_free(host);
@@ -160,11 +156,6 @@ AlError al_host_run_script(AlHost *host, const char *filename)
 lua_State *al_host_get_lua(AlHost *host)
 {
 	return host->lua;
-}
-
-AlCommands *al_host_get_commands(AlHost *host)
-{
-	return host->commands;
 }
 
 AlWidget *al_host_get_root(AlHost *host)
@@ -258,7 +249,7 @@ void al_host_run(AlHost *host)
 			}
 		} while (SDL_PollEvent(&event));
 
-		al_commands_process_queue(host->commands);
+		al_commands_process_queue(host->lua);
 
 		graphics_render(host->root, false, (Vec2){0, 0});
 	}
