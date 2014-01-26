@@ -9,10 +9,6 @@
 
 #include "albase/mq.h"
 
-#define MemoryBarrierAquireRelease() \
-	SDL_MemoryBarrierAcquire(); \
-	SDL_MemoryBarrierRelease();
-
 struct AlMQ {
 	SDL_mutex *lock;
 	size_t messageSize;
@@ -71,7 +67,7 @@ bool al_mq_push(AlMQ *mq, const void *message)
 	size_t index = mq->end & mq->wrapMask;
 	void *ptr = mq->buffer + index * mq->messageSize;
 
-	MemoryBarrierAquireRelease();
+	SDL_MemoryBarrierAcquire();
 
 	memcpy(ptr, message, mq->messageSize);
 
@@ -103,9 +99,9 @@ bool al_mq_pop(AlMQ *mq, void *message)
 
 	memcpy(message, ptr, mq->messageSize);
 
-	MemoryBarrierAquireRelease();
+	SDL_MemoryBarrierRelease();
 
     mq->start = (mq->start + 1) & mq->incrMask;
-	
+
     return true;
 }
