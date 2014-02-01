@@ -38,6 +38,7 @@
 		1ACE8B6B167E9B9E006DECA1 /* model_shape_cmds.h in Headers */ = {isa = PBXBuildFile; fileRef = 1ACE8B69167E9B9E006DECA1 /* model_shape_cmds.h */; };
 		1AE04D7E1642E4F000AE072E /* wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AE04D7D1642E4F000AE072E /* wrapper.c */; };
 		1AE55F9A1634643000FA402E /* graphics_text.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AE55F991634642F00FA402E /* graphics_text.c */; };
+		1AEF44A31895C20D00259168 /* triple_buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AEF44A21895C20D00259168 /* triple_buffer.c */; };
 		1AF523B31608FD6400B3DDE1 /* framebuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AF523AF1608FD6400B3DDE1 /* framebuffer.c */; };
 		1AF523B41608FD6400B3DDE1 /* model.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AF523B01608FD6400B3DDE1 /* model.c */; };
 		1AF523B51608FD6400B3DDE1 /* shader.c in Sources */ = {isa = PBXBuildFile; fileRef = 1AF523B11608FD6400B3DDE1 /* shader.c */; };
@@ -141,6 +142,8 @@
 		1AE55F8816298C7D00FA402E /* file_widget.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = file_widget.lua; sourceTree = "<group>"; };
 		1AE55F991634642F00FA402E /* graphics_text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = graphics_text.c; sourceTree = "<group>"; };
 		1AE55F9B1634692000FA402E /* graphics_text.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = graphics_text.h; sourceTree = "<group>"; };
+		1AEF44A21895C20D00259168 /* triple_buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = triple_buffer.c; sourceTree = "<group>"; };
+		1AEF44A41895C23100259168 /* triple_buffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = triple_buffer.h; sourceTree = "<group>"; };
 		1AF523AF1608FD6400B3DDE1 /* framebuffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = framebuffer.c; sourceTree = "<group>"; };
 		1AF523B01608FD6400B3DDE1 /* model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = model.c; sourceTree = "<group>"; };
 		1AF523B11608FD6400B3DDE1 /* shader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = shader.c; sourceTree = "<group>"; };
@@ -299,6 +302,7 @@
 				1A909DC61737D011002D8BF7 /* stream_file.c */,
 				1A909DC81737DD4B002D8BF7 /* stream_mem.c */,
 				1A3A94A4174961C90050CF67 /* text.c */,
+				1AEF44A21895C20D00259168 /* triple_buffer.c */,
 				1A5D16F514E6B6B100A79CBA /* vars.c */,
 				1AE04D7D1642E4F000AE072E /* wrapper.c */,
 			);
@@ -321,6 +325,7 @@
 				1A1A332B17DCFABE005BFA9B /* mq.h */,
 				1AA00583160A64F3005195DF /* script.h */,
 				1A909DC51737CED2002D8BF7 /* stream.h */,
+				1AEF44A41895C23100259168 /* triple_buffer.h */,
 				1A5D171514E6C02900A79CBA /* vars.h */,
 				1AE04D7C1642E3FB00AE072E /* wrapper.h */,
 			);
@@ -645,6 +650,7 @@
 				1ACE8B6A167E9B9E006DECA1 /* model_shape_cmds.c in Sources */,
 				1A909DC71737D011002D8BF7 /* stream_file.c in Sources */,
 				1A909DC91737DD4B002D8BF7 /* stream_mem.c in Sources */,
+				1AEF44A31895C20D00259168 /* triple_buffer.c in Sources */,
 				1A909DCC17380916002D8BF7 /* data.c in Sources */,
 				1A3A949F174800150050CF67 /* stream.c in Sources */,
 				1A3A94A5174961CA0050CF67 /* text.c in Sources */,
