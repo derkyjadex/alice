@@ -72,6 +72,13 @@ AlError al_commands_enqueue(lua_State *L)
 	PASS()
 }
 
+bool al_commands_peek_queue(lua_State *L)
+{
+	QueueInfo *info = get_info(L);
+
+	return info->first <= info->last;
+}
+
 AlError al_commands_process_queue(lua_State *L)
 {
 	QueueInfo *info = get_info(L);
