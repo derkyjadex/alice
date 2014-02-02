@@ -216,12 +216,9 @@ static void handle_text(AlHost *host, SDL_TextInputEvent event)
 
 void al_host_run(AlHost *host)
 {
-	SDL_Event event;
-
 	while (!host->finished) {
-
-		SDL_WaitEvent(&event);
-		do {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
@@ -247,11 +244,15 @@ void al_host_run(AlHost *host)
 					host->finished = true;
 					break;
 			}
-		} while (SDL_PollEvent(&event));
+		}
 
 		al_commands_process_queue(host->lua);
 
 		graphics_render(host->root);
+
+		if (!al_commands_peek_queue(host->lua)) {
+			SDL_WaitEvent(NULL);
+		}
 	}
 }
 
