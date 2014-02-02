@@ -86,22 +86,6 @@ static struct {
 	float edgeSpread;
 } fontInfo;
 
-static struct {
-	AlGlShader *shader;
-	GLuint viewportSize;
-	GLuint location;
-	GLuint size;
-	GLuint image;
-	GLuint position;
-
-	AlGlTexture *texture;
-} cursorShader;
-
-static struct {
-	Vec2 textureSize;
-	Vec2 midPoint;
-} cursorInfo;
-
 static GLuint plainVertices;
 
 static void free_shaders()
@@ -120,11 +104,6 @@ static void free_shaders()
 	textShader.shader = NULL;
 	algl_texture_free(textShader.texture);
 	textShader.texture = NULL;
-
-	algl_shader_free(cursorShader.shader);
-	cursorShader.shader = NULL;
-	algl_texture_free(cursorShader.texture);
-	cursorShader.texture = NULL;
 }
 
 static AlError init_shaders()
@@ -137,8 +116,6 @@ static AlError init_shaders()
 	modelShader.shader = NULL;
 	textShader.shader = NULL;
 	textShader.texture = NULL;
-	cursorShader.shader = NULL;
-	cursorShader.texture = NULL;
 
 	TRY(algl_shader_init_with_sources(&plainWidgetShader.shader,
 		AL_VERT_SHADER(widget),
@@ -213,22 +190,6 @@ static AlError init_shaders()
 	fontInfo.edgeCenter = 0.38;
 	fontInfo.edgeSpread = 4.0;
 
-	TRY(algl_shader_init_with_sources(&cursorShader.shader,
-		AL_VERT_SHADER(cursor),
-		AL_FRAG_SHADER(cursor),
-		NULL));
-	ALGL_GET_UNIFORM(cursorShader, viewportSize);
-	ALGL_GET_UNIFORM(cursorShader, location);
-	ALGL_GET_UNIFORM(cursorShader, size);
-	ALGL_GET_UNIFORM(cursorShader, image);
-	ALGL_GET_ATTRIB(cursorShader, position);
-
-	TRY(algl_texture_init(&cursorShader.texture));
-	TRY(algl_texture_load_from_buffer(cursorShader.texture, images_cursor_png, images_cursor_png_size));
-
-	cursorInfo.textureSize = (Vec2){32, 32};
-	cursorInfo.midPoint = (Vec2){16, 16};
-
 	CATCH(
 		free_shaders();
 	)
@@ -255,9 +216,6 @@ static void update_viewport_size()
 
 	glUseProgram(textShader.shader->id);
 	glUniform2f(textShader.viewportSize, viewportSize.x, viewportSize.y);
-
-	glUseProgram(cursorShader.shader->id);
-	glUniform2f(cursorShader.viewportSize, viewportSize.x, viewportSize.y);
 }
 
 AlError graphics_system_init()
@@ -448,38 +406,10 @@ static void render_widget(AlWidget *widget, Vec2 translate, Box2 scissor)
 	}
 }
 
-static void render_cursor(Vec2 location)
-{
-	location = vec2_subtract(location, cursorInfo.midPoint);
-
-	glDisable(GL_SCISSOR_TEST);
-
-	glUseProgram(cursorShader.shader->id);
-	glUniform2f(cursorShader.location, location.x, location.y);
-	glUniform2f(cursorShader.size, cursorInfo.textureSize.x, cursorInfo.textureSize.y);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, cursorShader.texture->id);
-	glUniform1i(cursorShader.image, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, plainVertices);
-
-	glEnableVertexAttribArray(cursorShader.position);
-	glVertexAttribPointer(cursorShader.position, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	glEnable(GL_SCISSOR_TEST);
-}
-
-void graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation)
+void graphics_render(AlWidget *root)
 {
 	if (!root->valid) {
 		render_widget(root, (Vec2){0, 0}, (Box2){{0, 0}, viewportSize});
-
-		if (renderCursor) {
-			render_cursor(cursorLocation);
-		}
 
 		algl_system_swap_buffers();
 	}

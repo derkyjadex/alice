@@ -15,8 +15,6 @@ shaders = Split('''
 	shaders/model.frag
 	shaders/text.vert
 	shaders/text.frag
-	shaders/cursor.vert
-	shaders/cursor.frag
 ''')
 
 scripts = Split('''
@@ -34,7 +32,6 @@ scripts = Split('''
 
 images = Split('''
 	images/font.png
-	images/cursor.png
 ''')
 
 sources.append(env.Resources('shaders', shaders))

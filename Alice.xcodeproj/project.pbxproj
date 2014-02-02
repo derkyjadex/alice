@@ -77,10 +77,7 @@
 		1A42FD67160DED7300807A51 /* images.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = images.h; sourceTree = "<group>"; };
 		1A42FD68160DED7300807A51 /* shaders.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
 		1A42FD69160DED7300807A51 /* graphics.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = graphics.c; sourceTree = "<group>"; };
-		1A42FD6C160DEDB400807A51 /* cursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cursor.png; sourceTree = "<group>"; };
 		1A42FD6D160DEDB400807A51 /* font.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = font.png; sourceTree = "<group>"; };
-		1A42FD6F160DEDD000807A51 /* cursor.frag */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; path = cursor.frag; sourceTree = "<group>"; };
-		1A42FD70160DEDD000807A51 /* cursor.vert */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; path = cursor.vert; sourceTree = "<group>"; };
 		1A42FD71160DEDD000807A51 /* model.frag */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; path = model.frag; sourceTree = "<group>"; };
 		1A42FD72160DEDD000807A51 /* model.vert */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; path = model.vert; sourceTree = "<group>"; };
 		1A42FD73160DEDD000807A51 /* text.frag */ = {isa = PBXFileReference; explicitFileType = sourcecode.glsl; path = text.frag; sourceTree = "<group>"; };
@@ -239,7 +236,6 @@
 		1A42FD6B160DEDB400807A51 /* images */ = {
 			isa = PBXGroup;
 			children = (
-				1A42FD6C160DEDB400807A51 /* cursor.png */,
 				1A42FD6D160DEDB400807A51 /* font.png */,
 			);
 			path = images;
@@ -248,8 +244,6 @@
 		1A42FD6E160DEDD000807A51 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
-				1A42FD6F160DEDD000807A51 /* cursor.frag */,
-				1A42FD70160DEDD000807A51 /* cursor.vert */,
 				1A42FD71160DEDD000807A51 /* model.frag */,
 				1A42FD72160DEDD000807A51 /* model.vert */,
 				1A42FD73160DEDD000807A51 /* text.frag */,
@@ -525,8 +519,6 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/src/alice/shaders/cursor.vert",
-				"$(SRCROOT)/src/alice/shaders/cursor.frag",
 				"$(SRCROOT)/src/alice/shaders/model.vert",
 				"$(SRCROOT)/src/alice/shaders/model.frag",
 				"$(SRCROOT)/src/alice/shaders/text.vert",
@@ -574,7 +566,6 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/src/alice/images/font.png",
-				"$(SRCROOT)/src/alice/images/cursor.png",
 			);
 			name = "Compile Images";
 			outputPaths = (

@@ -14,6 +14,6 @@ AlError graphics_system_init(void);
 void graphics_system_free(void);
 Vec2 graphics_screen_size(void);
 
-void graphics_render(AlWidget *root, bool renderCursor, Vec2 cursorLocation);
+void graphics_render(AlWidget *root);
 
 #endif

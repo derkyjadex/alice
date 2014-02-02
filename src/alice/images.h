@@ -12,7 +12,4 @@
 extern const char images_font_png[];
 extern const size_t images_font_png_size;
 
-extern const char images_cursor_png[];
-extern const size_t images_cursor_png_size;
-
 #endif

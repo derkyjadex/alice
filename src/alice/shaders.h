@@ -12,6 +12,5 @@
 AL_SHADER_DECLARE(widget)
 AL_SHADER_DECLARE(model)
 AL_SHADER_DECLARE(text)
-AL_SHADER_DECLARE(cursor)
 
 #endif

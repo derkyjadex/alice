@@ -251,7 +251,7 @@ void al_host_run(AlHost *host)
 
 		al_commands_process_queue(host->lua);
 
-		graphics_render(host->root, false, (Vec2){0, 0});
+		graphics_render(host->root);
 	}
 }
 
