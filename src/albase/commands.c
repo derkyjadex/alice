@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012 James Deery
+ * Copyright (c) 2011-2014 James Deery
  * Released under the MIT license <http://opensource.org/licenses/MIT>.
  * See COPYING for details.
  */
@@ -75,13 +75,14 @@ AlError al_commands_enqueue(lua_State *L)
 AlError al_commands_process_queue(lua_State *L)
 {
 	QueueInfo *info = get_info(L);
+	lua_Number last = info->last;
 
 	al_script_push_traceback(L);
 
 	lua_pushlightuserdata(L, &keys.queue);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 
-	while (info->first <= info->last) {
+	while (info->first <= last) {
 		lua_pushnumber(L, info->first);
 		lua_gettable(L, -2);
 
