@@ -22,7 +22,6 @@
 
 struct AlHost {
 	lua_State *lua;
-	bool finished;
 
 	Vec2 screenSize;
 
@@ -96,7 +95,6 @@ AlError al_host_init(AlHost **result)
 	TRY(al_malloc(&host, sizeof(AlHost)));
 
 	host->lua = NULL;
-	host->finished = false;
 	host->screenSize = (Vec2){1, 1};
 	host->root = NULL;
 	host->grabbingWidget = NULL;
@@ -216,7 +214,7 @@ static void handle_text(AlHost *host, SDL_TextInputEvent event)
 
 void al_host_run(AlHost *host)
 {
-	while (!host->finished) {
+	while (true) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -241,8 +239,7 @@ void al_host_run(AlHost *host)
 					break;
 
 				case SDL_QUIT:
-					host->finished = true;
-					break;
+					return;
 			}
 		}
 
@@ -317,8 +314,10 @@ AlWidget *al_host_get_keyboard_widget(AlHost *host)
 
 static int cmd_exit(lua_State *L)
 {
-	AlHost *host = lua_touserdata(L, lua_upvalueindex(1));
-	host->finished = true;
+	SDL_Event quit = {
+		.type = SDL_QUIT
+	};
+	SDL_PushEvent(&quit);
 
 	return 0;
 }
