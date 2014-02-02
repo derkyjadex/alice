@@ -72,8 +72,13 @@ function Widget.prototype:add_to(parent)
 	return parent:add_child(self)
 end
 
-function Widget.prototype:bind_property(name, observable)
+function Widget.prototype:bind_property(name, observable, format)
 	local var = self[name]
+
+	if format then
+		observable = Computed(observable, format)
+	end
+
 	observable.changed:add(function(...)
 		var(self, ...)
 		self:invalidate()
