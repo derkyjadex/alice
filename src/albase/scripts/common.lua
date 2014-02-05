@@ -15,6 +15,15 @@ function clamp(value, min, max)
 	return value
 end
 
+function mix(a, b, t)
+	local c = {}
+	for i=1,#a do
+		c[i] = (1 - t) * a[i] + t * b[i]
+	end
+
+	return c
+end
+
 function Multicast()
 	return setmetatable(
 		{},
