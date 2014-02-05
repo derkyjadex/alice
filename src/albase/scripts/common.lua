@@ -4,7 +4,15 @@
 -- See COPYING for details.
 
 function clamp(value, min, max)
-	return math.min(math.max(min, value), max)
+	if min and value < min then
+		value = min
+	end
+
+	if max and value > max then
+		value = max
+	end
+
+	return value
 end
 
 function Multicast()
