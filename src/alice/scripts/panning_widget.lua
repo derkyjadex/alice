@@ -8,7 +8,7 @@ PanningWidget = Widget:derive(function(self)
 
 	local value_binding = function() end
 	local mouse_x, mouse_y
-	local scale = 1
+	local scale_x, scale_y = 1, 1
 	local x, y = 0, 0
 
 	self:fill_colour(0, 0, 0, 1)
@@ -21,14 +21,15 @@ PanningWidget = Widget:derive(function(self)
 			self:release_mouse(mouse_x, mouse_y)
 		end)
 		:bind_motion(function(_, x_, y_)
-			x, y = x + x_ / scale, y + y_ / scale
+			x, y = x + x_ / scale_x, y + y_ / scale_y
 			value_binding(x, y)
 		end)
 
 	self.scale = make_accessor(
-		function(_) return 1 end,
-		function(_, new_scale)
-			scale = new_scale
+		function(_) return scale_x, scale_y end,
+		function(_, new_scale_x, new_scale_y)
+			scale_x = new_scale_x
+			scale_y = new_scale_y or new_scale_x
 			return self
 		end)
 
