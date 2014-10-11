@@ -5,6 +5,7 @@
  */
 
 #include <SDL2/SDL_atomic.h>
+#include <stdbool.h>
 
 #include "albase/triple_buffer.h"
 
