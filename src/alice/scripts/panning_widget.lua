@@ -9,6 +9,7 @@ PanningWidget = Widget:derive(function(self)
 	local value_binding = function() end
 	local mouse_x, mouse_y
 	local scale_x, scale_y = 1, 1
+	local min_x, min_y, max_x, max_y
 	local x, y = 0, 0
 
 	self:fill_colour(0, 0, 0, 1)
@@ -22,6 +23,8 @@ PanningWidget = Widget:derive(function(self)
 		end)
 		:bind_motion(function(_, x_, y_)
 			x, y = x + x_ / scale_x, y + y_ / scale_y
+			x = clamp(x, min_x, max_x)
+			y = clamp(y, min_y, max_y)
 			value_binding(x, y)
 		end)
 
@@ -32,6 +35,11 @@ PanningWidget = Widget:derive(function(self)
 			scale_y = new_scale_y or new_scale_x
 			return self
 		end)
+
+	function self:range(new_min_x, new_min_y, new_max_x, new_max_y)
+		min_x, min_y, max_x, max_y = new_min_x, new_min_y, new_max_x, new_max_y
+		return self
+	end
 
 	function self:bind_value(observable)
 		value_binding = Binding(observable, function(new_x, new_y)
