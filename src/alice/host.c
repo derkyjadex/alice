@@ -214,6 +214,8 @@ static void handle_text(AlHost *host, SDL_TextInputEvent event)
 
 void al_host_run(AlHost *host)
 {
+	Uint32 lastFrame = SDL_GetTicks();
+
 	while (true) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -247,9 +249,12 @@ void al_host_run(AlHost *host)
 
 		graphics_render(host->root);
 
-		if (!al_commands_peek_queue(host->lua)) {
-			SDL_WaitEvent(NULL);
+		Uint32 now = SDL_GetTicks();
+		if (lastFrame + 16 > now) {
+			SDL_Delay(lastFrame + 16 - now);
 		}
+
+		lastFrame = SDL_GetTicks();
 	}
 }
 
