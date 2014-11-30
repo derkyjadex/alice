@@ -148,7 +148,7 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 
 	AlWidget *widget = lua_touserdata(L, 1);
 	AlLuaKey *binding = (void *)widget + bindingOffset;
-	*binding = true;
+	*binding = !lua_isnil(L, 2);
 
 	lua_pushlightuserdata(L, &widgetBindings);
 	lua_gettable(L, LUA_REGISTRYINDEX);
@@ -158,7 +158,7 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 	if (!lua_isnil(L, -1)) {
 		lua_pushvalue(L, 1);
 		lua_pushvalue(L, -2);
-		al_wrapper_reference(L);
+		al_wrapper_unreference(L);
 	}
 
 	lua_pop(L, 1);
@@ -169,9 +169,11 @@ static int cmd_widget_bind(lua_State *L, const char *name, size_t bindingOffset)
 
 	lua_pop(L, 1);
 
-	lua_pushvalue(L, 1);
-	lua_pushvalue(L, 2);
-	al_wrapper_reference(L);
+	if (!lua_isnil(L, 2)) {
+		lua_pushvalue(L, 1);
+		lua_pushvalue(L, 2);
+		al_wrapper_reference(L);
+	}
 
 	lua_pop(L, 1);
 
