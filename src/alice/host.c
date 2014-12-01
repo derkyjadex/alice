@@ -389,6 +389,47 @@ static int cmd_release_keyboard(lua_State *L)
 	return 0;
 }
 
+static int cmd_get_modifiers(lua_State *L)
+{
+	SDL_Keymod mods = SDL_GetModState();
+
+	lua_createtable(L, 0, 4);
+
+#if defined(__APPLE__)
+	if (mods & KMOD_GUI) {
+#else
+	if (mods & KMOD_CTRL) {
+#endif
+		lua_pushstring(L, "cmd");
+		lua_pushboolean(L, true);
+		lua_settable(L, -3);
+	}
+
+	if (mods & KMOD_ALT) {
+		lua_pushstring(L, "alt");
+		lua_pushboolean(L, true);
+		lua_settable(L, -3);
+	}
+
+#if defined(__APPLE__)
+	if (mods & KMOD_CTRL) {
+#else
+	if (mods & KMOD_GUI) {
+#endif
+		lua_pushstring(L, "alt2");
+		lua_pushboolean(L, true);
+		lua_settable(L, -3);
+	}
+
+	if (mods & KMOD_SHIFT) {
+		lua_pushstring(L, "shift");
+		lua_pushboolean(L, true);
+		lua_settable(L, -3);
+	}
+
+	return 1;
+}
+
 static const luaL_Reg lib[] = {
 	{"exit", cmd_exit},
 	{"get_root_widget", cmd_get_root_widget},
@@ -396,6 +437,7 @@ static const luaL_Reg lib[] = {
 	{"release_mouse", cmd_release_mouse},
 	{"grab_keyboard", cmd_grab_keyboard},
 	{"release_keyboard", cmd_release_keyboard},
+	{"get_modifiers", cmd_get_modifiers},
 	{NULL, NULL}
 };
 
